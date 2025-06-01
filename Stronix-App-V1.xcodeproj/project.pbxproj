@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix-App-V1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Stronix-App-V1.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -15,6 +16,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
+				Database/database_stronix.db,
 			);
 			target = 9D70A7C52DDD84580085BAAF /* Stronix-App-V1 */;
 		};
@@ -22,7 +24,40 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Stronix_App_V1App.swift,
-				Views/ContentView.swift,
+				Models/Database/UpdateData.swift,
+				Models/Database/VersionControl.swift,
+				Models/TrainingModels.swift,
+				Services/AuthService.swift,
+				Services/Database/DatabaseManager.swift,
+				Services/Network/APIService.swift,
+				Services/Update/UpdateService.swift,
+				Services/Update/VersionService.swift,
+				Utilities/Constants/APIConfig.swift,
+				Utilities/Constants/DBConfig.swift,
+				Views/Actions/ActionDetailView.swift,
+				Views/Actions/ActionListView.swift,
+				Views/BodyMeasurement/AddMeasurementSheet.swift,
+				Views/BodyMeasurement/BodyMeasurementChange.swift,
+				Views/BodyMeasurement/BodyMeasurementDetail.swift,
+				Views/BodyMeasurement/BodyMeasurementOverview.swift,
+				Views/BodyMeasurement/BodyMeasurementTabView.swift,
+				Views/BodyMeasurement/NutritionView.swift,
+				Views/MainTabView.swift,
+				Views/Plans/CreatePlanView.swift,
+				Views/Plans/EditPlanView.swift,
+				Views/Plans/PlanActionSelectView.swift,
+				Views/Plans/PlanListView.swift,
+				Views/Profile/ArticlesView.swift,
+				Views/Profile/ForgotPasswordView.swift,
+				Views/Profile/GuideView.swift,
+				Views/Profile/LoginView.swift,
+				Views/Profile/ProfileMainView.swift,
+				Views/Profile/RegisterView.swift,
+				Views/Profile/SettingsView.swift,
+				Views/Profile/ToolsView.swift,
+				Views/Profile/UserInfoView.swift,
+				Views/Training/QuickStartTrainingView.swift,
+				Views/Training/TrainingPlanDetailView.swift,
 			);
 			target = 9D70A7C52DDD84580085BAAF /* Stronix-App-V1 */;
 		};
@@ -66,6 +101,7 @@
 		9D70A7BD2DDD84580085BAAF = {
 			isa = PBXGroup;
 			children = (
+				9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */,
 				9D70A7D52DDD86840085BAAF /* Stronix-App */,
 				9D70A7C72DDD84590085BAAF /* Products */,
 			);
@@ -290,6 +326,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Stronix-App-V1-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -327,6 +364,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Stronix-App-V1-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

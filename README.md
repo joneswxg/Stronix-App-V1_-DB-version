@@ -44,41 +44,91 @@ D2 APP功能描述: 一款健身训练记录的软件,针对健身房的workout�
 5.9 科普: 提供新发布的文章标题, app内只提供链接到微信公众号发表的文章
 
 具体的项目结构：
-stronix/
-   ├── Sources/
-   │   ├── App/          # 应用程序入口
-   │   ├── Views/        # 视图组件
-   │   │   ├── Actions/  # 动作相关视图
-   │   │   ├── Plans/    # 计划相关视图
-   │   │   ├── Training/ # 训练相关视图
-   │   │   ├── History/  # 历史记录视图
-   │   │   └── Profile/  # 个人资料视图
-   │   ├── Models/       # 数据模型
-   │   ├── ViewModels/   # 视图模型
-   │   ├── Services/     # 服务层
-   │   └── Utilities/    # 工具类
-   ├── Resources/
-   │   ├── Assets.xcassets/  # 资源文件
-   │   ├── Localization/     # 本地化文件
-   │   └── Fonts/           # 字体文件
-   └── Tests/
-       ├── UnitTests/       # 单元测试
-       └── UITests/         # UI测试
-backend/
-   ├── src/
-   │   └── stronix/
-   │       ├── routes/     # API路由
-   │       ├── models/     # 数据模型
-   │       ├── services/   # 业务逻辑
-   │       └── utils/      # 工具函数
-   ├── tests/
-   │   ├── unit/          # 单元测试
-   │   └── integration/   # 集成测试
-   ├── config/            # 配置文件
-   ├── static/            # 静态文件
-   │   ├── images/        # 图片资源
-   │   └── videos/        # 视频资源
-   └── templates/         # 模板文
+Stronix-App-V1/
+├── Stronix-App/                  # iOS 前端
+│   ├── Sources/
+│   │   ├── App/                 # 应用程序入口
+│   │   │
+│   │   ├── Views/              # 视图组件
+│   │   │   ├── Actions/        # 动作相关视图
+│   │   │   │   └── ActionListView.swift
+│   │   │   ├── Plans/          # 计划相关视图
+│   │   │   ├── Training/       # 训练相关视图
+│   │   │   ├── History/        # 历史记录视图
+│   │   │   └── Profile/        # 个人资料视图
+│   │   │
+│   │   ├── Models/             # 数据模型
+│   │   │   ├── Database/       # 【新增】数据库模型
+│   │   │   │   ├── VersionControl.swift
+│   │   │   │   └── UpdateData.swift
+│   │   │   └── [原有模型]
+│   │   │
+│   │   ├── ViewModels/         # 视图模型
+│   │   │   └── [原有视图模型]
+│   │   │
+│   │   ├── Services/           # 服务层
+│   │   │   ├── Database/       # 【新增】数据库服务
+│   │   │   │   └── DatabaseManager.swift
+│   │   │   ├── Update/         # 【新增】更新服务
+│   │   │   │   ├── UpdateService.swift
+│   │   │   │   └── VersionService.swift
+│   │   │   └── Network/        # 【新增】网络服务
+│   │   │       └── APIService.swift
+│   │   │
+│   │   └── Utilities/          # 工具类
+│   │       ├── Constants/      # 【新增】常量配置
+│   │       │   ├── APIConfig.swift
+│   │       │   └── DBConfig.swift
+│   │       └── [原有工具类]
+│   │
+│   ├── Resources/
+│   │   ├── Assets.xcassets/    # 资源文件
+│   │   ├── Localization/       # 本地化文件
+│   │   ├── Fonts/             # 字体文件
+│   │   └── Database/          # 【新增】数据库文件
+│   │       └── database_stronix.db
+│   │
+│   └── Tests/
+│       ├── UnitTests/          # 单元测试
+│       └── UITests/            # UI测试
+│
+├── backend/                     # 后端服务
+│   ├── app.py                  # 主服务入口
+│   │
+│   ├── src/
+│   │   └── stronix/
+│   │       ├── routes/         # API路由
+│   │       │   ├── version.py  # 【新增】版本控制接口
+│   │       │   └── [原有路由]
+│   │       │
+│   │       ├── models/         # 数据模型
+│   │       │   ├── version.py  # 【新增】版本模型
+│   │       │   └── [原有模型]
+│   │       │
+│   │       ├── services/       # 业务逻辑
+│   │       │   ├── database/   # 【新增】数据库服务
+│   │       │   │   └── db_service.py
+│   │       │   ├── version_service.py  # 【新增】版本服务
+│   │       │   └── [原有服务]
+│   │       │
+│   │       └── utils/          # 工具函数
+│   │
+│   ├── tests/
+│   │   ├── unit/              # 单元测试
+│   │   └── integration/       # 集成测试
+│   │
+│   ├── config/                # 配置文件
+│   │   └── database.py        # 数据库配置
+│   │
+│   ├── static/                # 静态文件
+│   │   ├── images/           # 图片资源
+│   │   │   └── actions/      # 训练动作图片
+│   │   └── videos/           # 视频资源
+│   │
+│   └── templates/             # 模板文件
+│
+└── README.md                  # 项目说明文档
+
 数据库表格说明
 1.记录训练动作 (对应训练动作模块) : app提供的训练动作所需要的信息.
 action                                        

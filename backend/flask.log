@@ -1,0 +1,7 @@
+Starting Flask server...
+Debug mode: False
+Registered blueprints: dict_keys(['target_muscle', 'database'])
+ * Serving Flask app 'app'
+ * Debug mode: on
+Address already in use
+Port 6000 is in use by another program. Either identify and stop that program, or start the server with a different port.
