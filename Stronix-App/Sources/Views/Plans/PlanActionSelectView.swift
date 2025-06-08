@@ -8,6 +8,18 @@ struct PlanActionSelectView: View {
     @State private var selectedEquipmentId: Int = 0
     @State private var searchText = ""
     
+    // 添加回调闭包 - 支持单个动作选择
+    let onActionSelected: ((ActionInfo) -> Void)?
+    let onActionsSelected: (([ActionListView.Action]) -> Void)?
+    let allowMultipleSelection: Bool
+    
+    // 修改初始化方法
+    init(onActionSelected: ((ActionInfo) -> Void)? = nil, onActionsSelected: (([ActionListView.Action]) -> Void)? = nil) {
+        self.onActionSelected = onActionSelected
+        self.onActionsSelected = onActionsSelected
+        self.allowMultipleSelection = onActionsSelected != nil
+    }
+    
     var body: some View {
         NavigationView {
             GeometryReader { mainGeometry in
@@ -81,11 +93,20 @@ struct PlanActionSelectView: View {
                                         SelectableActionCard(
                                             action: action,
                                             isSelected: selectedActions.contains(action.id),
+                                            allowMultipleSelection: allowMultipleSelection,
                                             onToggle: {
-                                                if selectedActions.contains(action.id) {
-                                                    selectedActions.remove(action.id)
+                                                if allowMultipleSelection {
+                                                    // 多选模式
+                                                    if selectedActions.contains(action.id) {
+                                                        selectedActions.remove(action.id)
+                                                    } else {
+                                                        selectedActions.insert(action.id)
+                                                    }
                                                 } else {
-                                                    selectedActions.insert(action.id)
+                                                    // 单选模式 - 直接选择并关闭
+                                                    let actionInfo = ActionInfo(id: action.id, name: action.name, imageUrl: action.image_url)
+                                                    onActionSelected?(actionInfo)
+                                                    dismiss()
                                                 }
                                             }
                                         )
@@ -102,20 +123,26 @@ struct PlanActionSelectView: View {
             }
             .navigationTitle("选择训练动作")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
                         dismiss()
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("确定(\(selectedActions.count))") {
-                        // TODO: 保存选中的动作
-                        dismiss()
+                
+                // 只在多选模式下显示确定按钮
+                if allowMultipleSelection {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("确定(\(selectedActions.count))") {
+                            // 获取选中的动作并通过回调传递
+                            let selectedActionsList = filteredActions.filter { selectedActions.contains($0.id) }
+                            onActionsSelected?(selectedActionsList)
+                            dismiss()
+                        }
+                        .disabled(selectedActions.isEmpty)
                     }
-                    .disabled(selectedActions.isEmpty)
                 }
-            }
+            })
         }
         .onAppear {
             Task {
@@ -181,16 +208,17 @@ struct PlanActionSelectView: View {
 struct SelectableActionCard: View {
     let action: ActionListView.Action
     let isSelected: Bool
+    let allowMultipleSelection: Bool
     let onToggle: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 动作图片
             ZStack {
-                AsyncImage(url: URL(string: "http://localhost:6000/api/action/images/\(action.image_url.components(separatedBy: "/").last ?? "")")) { image in
+                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(action.image_url)")) { image in
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fit)
                 } placeholder: {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
@@ -201,17 +229,6 @@ struct SelectableActionCard: View {
                 }
                 .frame(height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                
-                // 选中状态覆盖层
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 24))
-                        )
-                }
             }
             
             // 动作信息
@@ -220,6 +237,7 @@ struct SelectableActionCard: View {
                     .font(.system(size: 14, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .foregroundColor(.black)
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 8)
@@ -238,5 +256,7 @@ struct SelectableActionCard: View {
 }
 
 #Preview {
-    PlanActionSelectView()
+    PlanActionSelectView { action in
+        print("选择了动作: \(action.name)")
+    }
 } 

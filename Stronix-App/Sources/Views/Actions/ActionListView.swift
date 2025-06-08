@@ -18,16 +18,26 @@ struct ActionListView: View {
         let target_muscle_ids: [Int]
     }
     
-    struct TargetMuscle: Identifiable, Codable {
+    struct TargetMuscle: Identifiable, Codable, Equatable {
         let id: Int
         let name: String
         let display_name: String
+        
+        // 实现Equatable协议
+        static func == (lhs: TargetMuscle, rhs: TargetMuscle) -> Bool {
+            return lhs.id == rhs.id
+        }
     }
     
-    struct Equipment: Identifiable, Codable {
+    struct Equipment: Identifiable, Codable, Equatable {
         let id: Int
         let name: String
         let display_name: String
+        
+        // 实现Equatable协议
+        static func == (lhs: Equipment, rhs: Equipment) -> Bool {
+            return lhs.id == rhs.id
+        }
     }
     
     // MARK: - 状态属性
@@ -94,7 +104,7 @@ struct ActionListView: View {
                         Spacer()
                         Text("STRONIX")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.black)
+                            .foregroundColor(.blue)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -162,6 +172,47 @@ struct ActionListView: View {
                             if viewModel.isLoading {
                                 ProgressView("加载中...")
                                     .frame(maxWidth: .infinity, minHeight: 200)
+                            } else if let error = viewModel.error {
+                                VStack(spacing: 16) {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.system(size: 48))
+                                        .foregroundColor(.orange)
+                                    
+                                    Text("加载失败")
+                                        .font(.system(size: 16, weight: .medium))
+                                    
+                                    Text(error.localizedDescription)
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Button("重试") {
+                                        Task {
+                                            await viewModel.loadActionsByTargetMuscle(targetMuscleId: selectedTargetMuscleId)
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 8)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 200)
+                            } else if filteredActions.isEmpty {
+                                VStack(spacing: 16) {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 48))
+                                        .foregroundColor(.gray)
+                                    
+                                    Text("暂无动作")
+                                        .font(.system(size: 16, weight: .medium))
+                                    
+                                    Text("请尝试切换其他肌肉群或调整筛选条件")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 200)
                             } else {
                                 LazyVGrid(columns: [
                                     GridItem(.flexible()),
@@ -184,6 +235,16 @@ struct ActionListView: View {
             .onAppear {
                 Task {
                     await viewModel.loadInitialData()
+                    // 同步选中的目标肌肉ID
+                    if let firstMuscle = viewModel.targetMuscles.first {
+                        selectedTargetMuscleId = firstMuscle.id
+                    }
+                }
+            }
+            .onChange(of: viewModel.targetMuscles) { oldValue, newValue in
+                // 当目标肌肉数据加载完成时，同步选中状态
+                if selectedTargetMuscleId == 1 && !newValue.isEmpty {
+                    selectedTargetMuscleId = newValue.first?.id ?? 1
                 }
             }
         }
@@ -207,7 +268,7 @@ struct ActionCard: View {
         NavigationLink(destination: ActionDetailView(action: action)) {
             VStack(alignment: .leading, spacing: 8) {
                 // 动作图片 - 使用静态图片显示以提高性能
-                AsyncImage(url: URL(string: "http://localhost:6000/api/action/images/\(action.image_url)")) { image in
+                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(action.image_url)")) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -254,23 +315,30 @@ class ActionListViewModel: ObservableObject {
     @Published var error: Error?
     
     func loadInitialData() async {
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.isLoading = true
         }
         
         do {
-            async let targetMusclesTask = loadTargetMusclesFromAPI()
-            async let equipmentsTask = loadEquipmentsFromAPI()
+            // 并行加载目标肌肉和设备数据
+            async let targetMusclesTask: Void = loadTargetMusclesFromAPI()
+            async let equipmentsTask: Void = loadEquipmentsFromAPI()
             
             let (_, _) = try await (targetMusclesTask, equipmentsTask)
             
-            // 默认加载第一个目标肌肉的动作
-            if let firstMuscle = targetMuscles.first {
-                await loadActionsByTargetMuscle(targetMuscleId: firstMuscle.id)
+            // 等待目标肌肉数据加载完成后，加载第一个目标肌肉的动作
+            await MainActor.run {
+                if let firstMuscle = self.targetMuscles.first {
+                    Task {
+                        await self.loadActionsByTargetMuscle(targetMuscleId: firstMuscle.id)
+                    }
+                } else {
+                    self.isLoading = false
+                }
             }
             
         } catch {
-            DispatchQueue.main.async {
+            await MainActor.run {
                 self.error = error
                 self.isLoading = false
             }
@@ -278,38 +346,44 @@ class ActionListViewModel: ObservableObject {
     }
     
     func loadTargetMusclesFromAPI() async throws {
-        guard let url = URL(string: "http://localhost:6000/api/action/target_muscle") else { return }
+        guard let url = URL(string: "http://127.0.0.1:6000/api/action/target_muscle") else { return }
         let (data, _) = try await URLSession.shared.data(from: url)
         let response = try JSONDecoder().decode(TargetMuscleResponse.self, from: data)
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.targetMuscles = response.result
         }
     }
     
     func loadEquipmentsFromAPI() async throws {
-        guard let url = URL(string: "http://localhost:6000/api/action/equipment") else { return }
+        guard let url = URL(string: "http://127.0.0.1:6000/api/action/equipment") else { return }
         let (data, _) = try await URLSession.shared.data(from: url)
         let response = try JSONDecoder().decode(EquipmentResponse.self, from: data)
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.equipments = response.result
         }
     }
     
     func loadActionsByTargetMuscle(targetMuscleId: Int) async {
-        DispatchQueue.main.async {
+        await MainActor.run {
             self.isLoading = true
+            self.error = nil // 清除之前的错误状态
         }
         
         do {
-            guard let url = URL(string: "http://localhost:6000/api/action/actions?target_muscle_id=\(targetMuscleId)") else { return }
+            guard let url = URL(string: "http://127.0.0.1:6000/api/action/actions?target_muscle_id=\(targetMuscleId)") else { 
+                await MainActor.run {
+                    self.isLoading = false
+                }
+                return 
+            }
             let (data, _) = try await URLSession.shared.data(from: url)
             let response = try JSONDecoder().decode(ActionResponse.self, from: data)
-            DispatchQueue.main.async {
+            await MainActor.run {
                 self.actions = response.result
                 self.isLoading = false
             }
         } catch {
-            DispatchQueue.main.async {
+            await MainActor.run {
                 self.error = error
                 self.isLoading = false
             }

@@ -3,7 +3,7 @@ import Foundation
 
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var authService = AuthService.shared
+    @ObservedObject private var authService = AuthService.shared
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
@@ -163,6 +163,32 @@ struct LoginView: View {
                     }
                     .padding(.top, 20)
                     
+                    // 测试账户提示
+                    VStack(spacing: 8) {
+                        Text("测试账户")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.gray)
+                        
+                        VStack(spacing: 4) {
+                            Text("邮箱: iostest@example.com")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                            Text("密码: password123")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
+                        
+                        Button(action: {
+                            email = "iostest@example.com"
+                            password = "password123"
+                        }) {
+                            Text("使用测试账户")
+                                .font(.system(size: 12))
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .padding(.top, 16)
+                    
                     Spacer()
                 }
             }
@@ -187,19 +213,30 @@ struct LoginView: View {
     }
     
     private func loginWithEmail() {
+        print("🚀 开始登录流程")
+        print("📧 邮箱: \(email)")
+        print("🔒 密码长度: \(password.count)")
+        
         Task {
             do {
+                print("📡 发送登录请求...")
                 let response = try await authService.login(email: email, password: password)
+                print("📨 收到登录响应: success=\(response.success), message=\(response.message)")
+                
                 if !response.success {
                     await MainActor.run {
                         errorMessage = response.message
                         showError = true
+                        print("❌ 登录失败: \(response.message)")
                     }
+                } else {
+                    print("✅ 登录成功")
                 }
             } catch {
                 await MainActor.run {
                     errorMessage = error.localizedDescription
                     showError = true
+                    print("❌ 登录异常: \(error)")
                 }
             }
         }

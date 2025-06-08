@@ -7,8 +7,7 @@ struct ProfileMainView: View {
     @State private var showArticles = false
     @State private var showTools = false
     @State private var showGuide = false
-    @State private var isLoggedIn = false // 模拟登录状态
-    @State private var userName = "未登录"
+    @ObservedObject private var authService = AuthService.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -39,15 +38,11 @@ struct ProfileMainView: View {
                                 .foregroundColor(.blue)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(userName)
+                                Text(authService.currentUser?.username ?? "未登录")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.black)
                                 
-                                if isLoggedIn {
-                                    Text("健身爱好者")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
-                                } else {
+                                if !authService.isLoggedIn {
                                     Text("点击登录")
                                         .font(.system(size: 14))
                                         .foregroundColor(.blue)
@@ -56,7 +51,7 @@ struct ProfileMainView: View {
                             
                             Spacer()
                             
-                            if !isLoggedIn {
+                            if !authService.isLoggedIn {
                                 Button(action: {
                                     showLogin = true
                                 }) {
@@ -135,7 +130,7 @@ struct ProfileMainView: View {
                         }
                         
                         // 退出登录按钮（仅在已登录时显示）
-                        if isLoggedIn {
+                        if authService.isLoggedIn {
                             Button(action: {
                                 logout()
                             }) {
@@ -181,8 +176,7 @@ struct ProfileMainView: View {
     }
     
     private func logout() {
-        isLoggedIn = false
-        userName = "未登录"
+        authService.logout()
     }
     
     private func shareApp() {

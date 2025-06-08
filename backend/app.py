@@ -3,14 +3,21 @@ from flask import Blueprint
 from src.stronix.routes.ActionRoute import action_bp
 from src.stronix.routes.database import database_bp
 from src.stronix.routes.AuthRoute import auth_bp
+from src.stronix.routes.PlanRoutes import plan_bp
+from src.stronix.routes.TrainingHistoryRoutes import training_history_bp
 import os
 
 app = Flask(__name__)
+
+# 设置会话密钥（用于session）
+app.secret_key = 'your-secret-key-here'  # 在生产环境中应该使用更安全的密钥
 
 # 注册蓝图
 app.register_blueprint(action_bp)
 app.register_blueprint(database_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(plan_bp)  # 计划蓝图已经包含了 /api/plans 前缀
+app.register_blueprint(training_history_bp)  # 训练历史蓝图已经包含了 /api/training 前缀
 
 if __name__ == "__main__":
     # 禁用 Flask 的默认输出

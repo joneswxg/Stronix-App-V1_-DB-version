@@ -58,43 +58,12 @@ struct UserInfoView: View {
                             .background(Color.white)
                             .cornerRadius(12)
                             
-                            // 健身目标
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("健身目标")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 16)
-                                
-                                Picker("健身目标", selection: $fitnessGoal) {
-                                    ForEach(goalOptions, id: \.self) { option in
-                                        Text(option).tag(option)
-                                    }
-                                }
-                                .pickerStyle(MenuPickerStyle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                                .background(Color.white)
-                                .cornerRadius(12)
-                            }
+                            
                         }
                     }
                     .padding(.horizontal, 16)
                     
-                    // 健身数据统计
-                    VStack(spacing: 16) {
-                        Text("健身数据")
-                            .font(.system(size: 18, weight: .semibold))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                        
-                        VStack(spacing: 12) {
-                            StatCard(title: "总训练次数", value: "0", subtitle: "次")
-                            StatCard(title: "总训练时长", value: "0", subtitle: "小时")
-                            StatCard(title: "总训练容量", value: "0", subtitle: "kg")
-                            StatCard(title: "连续训练天数", value: "0", subtitle: "天")
-                        }
-                        .padding(.horizontal, 16)
-                    }
+                    
                     
                     // 保存按钮
                     Button(action: {

@@ -218,4 +218,45 @@ def logout():
     return jsonify({
         'success': True,
         'message': '登出成功'
-    }), 200 
+    }), 200
+
+@auth_bp.route('/refresh-token', methods=['POST'])
+def refresh_token():
+    """刷新访问token"""
+    try:
+        data = request.get_json()
+        
+        # 验证必需字段
+        if not data or not data.get('refresh_token'):
+            return jsonify({
+                'success': False,
+                'message': 'refresh_token为必填项',
+                'access_token': None
+            }), 400
+        
+        refresh_token = data.get('refresh_token')
+        
+        # 调用认证服务刷新token
+        new_access_token = AuthService.refresh_access_token(refresh_token)
+        
+        if new_access_token:
+            return jsonify({
+                'success': True,
+                'message': 'Token刷新成功',
+                'access_token': new_access_token,
+                'token': new_access_token  # 保持向后兼容
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Refresh token无效或已过期',
+                'access_token': None
+            }), 401
+            
+    except Exception as e:
+        print(f"刷新token API错误: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'刷新token失败: {str(e)}',
+            'access_token': None
+        }), 500 

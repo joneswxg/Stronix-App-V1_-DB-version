@@ -7,15 +7,45 @@ class AuthService:
     # 在实际项目中，这个密钥应该从环境变量获取
     SECRET_KEY = "stronix_secret_key_2024"
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_HOURS = 24
+    ACCESS_TOKEN_EXPIRE_DAYS = 30  # 改为30天
+    REFRESH_TOKEN_EXPIRE_DAYS = 90  # refresh token 90天
+    
+    @staticmethod
+    def generate_tokens(user_id):
+        """生成访问token和刷新token"""
+        try:
+            # 生成访问token
+            access_payload = {
+                'user_id': user_id,
+                'exp': datetime.utcnow() + timedelta(days=AuthService.ACCESS_TOKEN_EXPIRE_DAYS),
+                'iat': datetime.utcnow(),
+                'type': 'access'
+            }
+            
+            # 生成刷新token
+            refresh_payload = {
+                'user_id': user_id,
+                'exp': datetime.utcnow() + timedelta(days=AuthService.REFRESH_TOKEN_EXPIRE_DAYS),
+                'iat': datetime.utcnow(),
+                'type': 'refresh'
+            }
+            
+            access_token = jwt.encode(access_payload, AuthService.SECRET_KEY, algorithm=AuthService.ALGORITHM)
+            refresh_token = jwt.encode(refresh_payload, AuthService.SECRET_KEY, algorithm=AuthService.ALGORITHM)
+            
+            return access_token, refresh_token
+            
+        except Exception as e:
+            print(f"生成token错误: {e}")
+            return None, None
     
     @staticmethod
     def generate_token(user_id):
-        """生成JWT token"""
+        """生成JWT token（保持向后兼容）"""
         try:
             payload = {
                 'user_id': user_id,
-                'exp': datetime.utcnow() + timedelta(hours=AuthService.ACCESS_TOKEN_EXPIRE_HOURS),
+                'exp': datetime.utcnow() + timedelta(days=AuthService.ACCESS_TOKEN_EXPIRE_DAYS),  # 改为30天
                 'iat': datetime.utcnow()
             }
             
@@ -52,6 +82,34 @@ class AuthService:
             return None
     
     @staticmethod
+    def refresh_access_token(refresh_token):
+        """使用refresh token刷新access token"""
+        try:
+            payload = jwt.decode(refresh_token, AuthService.SECRET_KEY, algorithms=[AuthService.ALGORITHM])
+            user_id = payload.get('user_id')
+            token_type = payload.get('type')
+            
+            if user_id and token_type == 'refresh':
+                # 验证用户是否仍然存在
+                user = UserModel.get_user_by_id(user_id)
+                if user:
+                    # 生成新的access token
+                    new_access_token = AuthService.generate_token(user_id)
+                    return new_access_token
+            
+            return None
+            
+        except jwt.ExpiredSignatureError:
+            print("Refresh token已过期")
+            return None
+        except jwt.InvalidTokenError:
+            print("无效的refresh token")
+            return None
+        except Exception as e:
+            print(f"刷新token错误: {e}")
+            return None
+    
+    @staticmethod
     def register_user(username, email, password, gender=None, height=None, weight=None):
         """用户注册"""
         try:
@@ -59,20 +117,24 @@ class AuthService:
             user, message = UserModel.create_user(username, email, password, gender, height, weight)
             
             if user:
-                # 生成token
-                token = AuthService.generate_token(user['id'])
-                if token:
+                # 生成tokens
+                access_token, refresh_token = AuthService.generate_tokens(user['id'])
+                if access_token and refresh_token:
                     return {
                         'success': True,
                         'message': message,
                         'user': user,
-                        'token': token
+                        'access_token': access_token,
+                        'refresh_token': refresh_token,
+                        'token': access_token  # 保持向后兼容
                     }
                 else:
                     return {
                         'success': False,
                         'message': '用户创建成功但token生成失败',
                         'user': None,
+                        'access_token': None,
+                        'refresh_token': None,
                         'token': None
                     }
             else:
@@ -80,6 +142,8 @@ class AuthService:
                     'success': False,
                     'message': message,
                     'user': None,
+                    'access_token': None,
+                    'refresh_token': None,
                     'token': None
                 }
                 
@@ -89,6 +153,8 @@ class AuthService:
                 'success': False,
                 'message': f'注册失败: {str(e)}',
                 'user': None,
+                'access_token': None,
+                'refresh_token': None,
                 'token': None
             }
     
@@ -100,20 +166,24 @@ class AuthService:
             user, message = UserModel.authenticate_user(email, password)
             
             if user:
-                # 生成token
-                token = AuthService.generate_token(user['id'])
-                if token:
+                # 生成tokens
+                access_token, refresh_token = AuthService.generate_tokens(user['id'])
+                if access_token and refresh_token:
                     return {
                         'success': True,
                         'message': message,
                         'user': user,
-                        'token': token
+                        'access_token': access_token,
+                        'refresh_token': refresh_token,
+                        'token': access_token  # 保持向后兼容
                     }
                 else:
                     return {
                         'success': False,
                         'message': '登录成功但token生成失败',
                         'user': None,
+                        'access_token': None,
+                        'refresh_token': None,
                         'token': None
                     }
             else:
@@ -121,6 +191,8 @@ class AuthService:
                     'success': False,
                     'message': message,
                     'user': None,
+                    'access_token': None,
+                    'refresh_token': None,
                     'token': None
                 }
                 
@@ -130,6 +202,8 @@ class AuthService:
                 'success': False,
                 'message': f'登录失败: {str(e)}',
                 'user': None,
+                'access_token': None,
+                'refresh_token': None,
                 'token': None
             }
     

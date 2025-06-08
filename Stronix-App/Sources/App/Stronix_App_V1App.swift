@@ -11,7 +11,7 @@ import SwiftUI
 struct Stronix_App_V1App: App {
     var body: some Scene {
         WindowGroup {
-            ActionListView()
+            MainTabView()
         }
     }
 }
