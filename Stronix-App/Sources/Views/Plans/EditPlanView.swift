@@ -833,8 +833,8 @@ struct EditingActionCard: View {
                 Menu {
                     Button(action: {
                         // 使用当前组的ID来安全删除
-                        let currentSet = action.sets[safe: index]
-                        if let setId = currentSet?.id {
+                        if index < action.sets.count {
+                            let setId = action.sets[index].id
                             action.sets.removeAll { $0.id == setId }
                             onUpdate(action)
                         }
@@ -886,9 +886,4 @@ private func extractImageFileName(from fullPath: String) -> String {
     return URL(fileURLWithPath: fullPath).lastPathComponent
 }
 
-// MARK: - Array Safe Access Extension
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
-} 
+ 

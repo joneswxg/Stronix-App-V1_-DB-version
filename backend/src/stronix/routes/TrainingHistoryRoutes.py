@@ -15,7 +15,10 @@ def get_current_user_id() -> int:
     """获取当前登录用户ID"""
     # 从请求头获取token
     auth_header = request.headers.get('Authorization')
+    print(f"🔍 认证头: {auth_header}")
+    
     if not auth_header or not auth_header.startswith('Bearer '):
+        print("❌ 认证头格式错误或缺失")
         raise TrainingHistoryError(
             get_error_message('UNAUTHORIZED'),
             TrainingHistoryErrorCode.UNAUTHORIZED,
@@ -23,15 +26,20 @@ def get_current_user_id() -> int:
         )
     
     token = auth_header.split(' ')[1]
+    print(f"🔑 提取的token: {token[:20]}...")
+    
     user = AuthService.verify_token(token)
+    print(f"👤 验证结果: {user}")
     
     if not user:
+        print("❌ Token验证失败")
         raise TrainingHistoryError(
             get_error_message('UNAUTHORIZED'),
             TrainingHistoryErrorCode.UNAUTHORIZED,
             'UNAUTHORIZED'
         )
     
+    print(f"✅ 用户验证成功，用户ID: {user['id']}")
     return user['id']
 
 def get_language() -> str:
@@ -221,6 +229,106 @@ def get_training_history_detail(history_id: int):
         )), e.code
     except Exception as e:
         print(f"获取训练历史详情时出错: {str(e)}")
+        traceback.print_exc()
+        return jsonify(create_response(
+            message=get_error_message('SERVER_ERROR', get_language()),
+            code=TrainingHistoryErrorCode.SERVER_ERROR
+        )), TrainingHistoryErrorCode.SERVER_ERROR
+
+@training_history_bp.route('/history/<int:history_id>', methods=['DELETE'])
+def delete_training_history(history_id: int):
+    """删除训练历史"""
+    try:
+        user_id = get_current_user_id()
+        language = get_language()
+        
+        # 删除训练历史
+        training_history_service.delete_training_history(history_id, user_id, language)
+        
+        return jsonify(create_response(
+            message="删除训练历史成功" if language == 'zh_CN' else "Delete training history successfully"
+        ))
+        
+    except TrainingHistoryError as e:
+        return jsonify(create_response(
+            message=e.message,
+            code=e.code
+        )), e.code
+    except Exception as e:
+        print(f"删除训练历史时出错: {str(e)}")
+        traceback.print_exc()
+        return jsonify(create_response(
+            message=get_error_message('SERVER_ERROR', get_language()),
+            code=TrainingHistoryErrorCode.SERVER_ERROR
+        )), TrainingHistoryErrorCode.SERVER_ERROR
+
+@training_history_bp.route('/statistics', methods=['GET'])
+def get_training_statistics():
+    """获取训练统计数据"""
+    try:
+        user_id = get_current_user_id()
+        language = get_language()
+        
+        # 获取查询参数
+        time_range = request.args.get('time_range', 'week', type=str)
+        
+        print(f"📊 获取训练统计请求参数: time_range={time_range}")
+        
+        # 获取训练统计
+        statistics = training_history_service.get_training_statistics(user_id, time_range, language)
+        
+        return jsonify(create_response(
+            data=statistics,
+            message="获取训练统计成功" if language == 'zh_CN' else "Get training statistics successfully"
+        ))
+        
+    except TrainingHistoryError as e:
+        return jsonify(create_response(
+            message=e.message,
+            code=e.code
+        )), e.code
+    except Exception as e:
+        print(f"获取训练统计时出错: {str(e)}")
+        traceback.print_exc()
+        return jsonify(create_response(
+            message=get_error_message('SERVER_ERROR', get_language()),
+            code=TrainingHistoryErrorCode.SERVER_ERROR
+        )), TrainingHistoryErrorCode.SERVER_ERROR
+
+@training_history_bp.route('/action-progress', methods=['GET'])
+def get_action_progress():
+    """获取特定动作的进步数据"""
+    try:
+        user_id = get_current_user_id()
+        language = get_language()
+        
+        # 获取查询参数
+        action_name = request.args.get('action_name', type=str)
+        
+        if not action_name:
+            raise TrainingHistoryError(
+                get_error_message('INVALID_REQUEST', language),
+                TrainingHistoryErrorCode.INVALID_REQUEST,
+                'INVALID_REQUEST'
+            )
+        
+        print(f"💪 获取动作进步请求参数: action_name={action_name}")
+        
+        # 获取动作进步数据
+        progress = training_history_service.get_action_progress(user_id, action_name, language)
+        
+        return jsonify(create_response(
+            data=progress,
+            message="获取动作进步数据成功" if language == 'zh_CN' else "Get action progress successfully"
+        ))
+        
+    except TrainingHistoryError as e:
+        return jsonify(create_response(
+            message=e.message,
+            code=e.code
+        )), e.code
+    except Exception as e:
+        print(f"获取动作进步数据时出错: {str(e)}")
         traceback.print_exc()
         return jsonify(create_response(
             message=get_error_message('SERVER_ERROR', get_language()),

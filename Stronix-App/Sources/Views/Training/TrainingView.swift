@@ -38,194 +38,29 @@ struct TrainingView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // 顶部信息栏 - 训练容量信息
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("训练容量：\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("实时更新，随训练进度变化")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                }
-                Spacer()
-            }
-            .padding(16)
-            .background(Color.cyan.opacity(0.1))
-            .cornerRadius(12)
-            .padding(.horizontal, 16)
-            
-            // 训练计划名称
-            VStack(alignment: .leading, spacing: 8) {
-                Text("训练计划")
-                    .font(.system(size: 14, weight: .medium))
-                    .padding(.horizontal, 16)
-                
-                Text(trainingManager.planName)
-                    .font(.system(size: 18, weight: .medium))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-                    .padding(.horizontal, 16)
-            }
-            
-            // 总计时器
-            VStack(alignment: .leading, spacing: 8) {
-                Text("训练时长")
-                    .font(.system(size: 14, weight: .medium))
-                    .padding(.horizontal, 16)
-                
-                Text(trainingManager.formattedTrainingTime())
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 16)
-            }
-            
-            // 训练动作标题
-            HStack {
-                Text("训练动作")
-                    .font(.system(size: 16, weight: .medium))
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            
-            // 训练动作列表
+            topInfoBar
+            planNameSection
+            totalTimerSection
+            actionListHeader
+
             if !trainingManager.editingActions.isEmpty {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(Array(trainingManager.editingActions.enumerated()), id: \.element.id) { index, action in
-                            let canDeleteAction = trainingManager.editingActions.count > 1
-                            
-                            TrainingActionCardWrapper(
-                                action: action,
-                                editingActions: $trainingManager.editingActions,
-                                completedSets: $trainingManager.completedSets,
-                                setNotes: $trainingManager.setNotes,
-                                showNoteInput: .constant(Set<String>()),
-                                setRestTimers: $setRestTimers,
-                                onDelete: {
-                                    if canDeleteAction {
-                                        deleteAction(action)
-                                    }
-                                },
-                                onUpdate: { updatedAction in
-                                    updateAction(updatedAction)
-                                },
-                                onSetCompleted: { setId, restTime in
-                                    handleSetCompleted(setId: setId, restTime: restTime)
-                                },
-                                onRestTimerTapped: { setId, restTime in
-                                    handleRestTimerTapped(setId: setId, restTime: restTime)
-                                },
-                                canDelete: canDeleteAction
-                            )
-                            .padding(.horizontal, 16)
-                        }
-                        
-                        // 添加动作按钮
-                        Button(action: {
-                            showActionSelect = true
-                        }) {
-                            HStack {
-                                Image(systemName: "plus.circle")
-                                Text("添加动作")
-                            }
-                            .foregroundColor(.blue)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color(white: 0.97))
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal, 16)
-                        
-                        Spacer(minLength: 20)
-                    }
-                }
+                actionListContent
             } else {
-                // 空状态
-                Button(action: {
-                    showActionSelect = true
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("添加动作")
-                    }
-                    .foregroundColor(.blue)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color(white: 0.97))
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 16)
-                
-                Spacer()
+                emptyActionListContent
             }
         }
         .padding(.top, 16)
         .navigationTitle("训练中")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("取消锻炼") {
-                    showCancelAlert = true
-                }
-                .foregroundColor(.red)
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    handleComplete()
-                }) {
-                    HStack {
-                        if isCompleting {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Text("完成")
-                        }
-                    }
-                }
-                .foregroundColor(.blue)
-                .fontWeight(.medium)
-                .disabled(isCompleting)
-            }
+            trainingViewToolbar
         }
         .sheet(isPresented: $showActionSelect) {
             PlanActionSelectView { selectedAction in
                 addAction(selectedAction)
             }
         }
-        .overlay(
-            // 休息计时器浮动窗口
-            Group {
-                if showRestTimer {
-                    RestTimerOverlay(
-                        restTime: $currentRestTime,
-                        isRunning: !isRestTimerPaused,
-                        onPause: {
-                            toggleRestTimer()
-                        },
-                        onReset: {
-                            resetRestTimer()
-                        },
-                        onSkip: {
-                            skipRestTimer()
-                        },
-                        onClose: {
-                            closeRestTimer()
-                        },
-                        onAddTime: {
-                            addRestTime(10)
-                        },
-                        onSubtractTime: {
-                            subtractRestTime(10)
-                        }
-                    )
-                    .transition(.scale.combined(with: .opacity))
-                    .animation(.spring(), value: showRestTimer)
-                }
-            }
-        )
+        .overlay(restTimerOverlay)
         .alert("确认取消锻炼", isPresented: $showCancelAlert) {
             Button("恢复", role: .cancel) { }
             Button("取消锻炼", role: .destructive) {
@@ -524,6 +359,195 @@ struct TrainingView: View {
             completionError = "保存训练记录失败: \(error.localizedDescription)"
             showCompletionError = true
             print("❌ 保存训练历史失败: \(error)")
+        }
+    }
+    
+    // MARK: - 视图拆分
+    private var topInfoBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("训练容量：\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg")
+                    .font(.system(size: 14, weight: .medium))
+                Text("实时更新，随训练进度变化")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color.cyan.opacity(0.1))
+        .cornerRadius(12)
+        .padding(.horizontal, 16)
+    }
+
+    private var planNameSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("训练计划")
+                .font(.system(size: 14, weight: .medium))
+                .padding(.horizontal, 16)
+
+            Text(trainingManager.planName)
+                .font(.system(size: 18, weight: .medium))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(8)
+                .padding(.horizontal, 16)
+        }
+    }
+
+    private var totalTimerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("训练时长")
+                .font(.system(size: 14, weight: .medium))
+                .padding(.horizontal, 16)
+
+            Text(trainingManager.formattedTrainingTime())
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.blue)
+                .padding(.horizontal, 16)
+        }
+    }
+
+    private var actionListHeader: some View {
+        HStack {
+            Text("训练动作")
+                .font(.system(size: 16, weight: .medium))
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private var actionListContent: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(Array(trainingManager.editingActions.enumerated()), id: \.element.id) { index, action in
+                    let canDeleteAction = trainingManager.editingActions.count > 1
+
+                    TrainingActionCardWrapper(
+                        action: action,
+                        editingActions: $trainingManager.editingActions,
+                        completedSets: $trainingManager.completedSets,
+                        setNotes: $trainingManager.setNotes,
+                        showNoteInput: .constant(Set<String>()),
+                        setRestTimers: $setRestTimers,
+                        onDelete: {
+                            if canDeleteAction {
+                                deleteAction(action)
+                            }
+                        },
+                        onUpdate: { updatedAction in
+                            updateAction(updatedAction)
+                        },
+                        onSetCompleted: { setId, restTime in
+                            handleSetCompleted(setId: setId, restTime: restTime)
+                        },
+                        onRestTimerTapped: { setId, restTime in
+                            handleRestTimerTapped(setId: setId, restTime: restTime)
+                        },
+                        canDelete: canDeleteAction
+                    )
+                    .padding(.horizontal, 16)
+                }
+
+                Button(action: {
+                    showActionSelect = true
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                        Text("添加动作")
+                    }
+                    .foregroundColor(.blue)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color(white: 0.97))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, 16)
+
+                Spacer(minLength: 20)
+            }
+        }
+    }
+
+    private var emptyActionListContent: some View {
+        VStack {
+            Button(action: {
+                showActionSelect = true
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("添加动作")
+                }
+                .foregroundColor(.blue)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(white: 0.97))
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, 16)
+
+            Spacer()
+        }
+    }
+
+    private var trainingViewToolbar: some ToolbarContent {
+        Group {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("取消锻炼") {
+                    showCancelAlert = true
+                }
+                .foregroundColor(.red)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    handleComplete()
+                }) {
+                    HStack {
+                        if isCompleting {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Text("完成")
+                        }
+                    }
+                }
+                .foregroundColor(.blue)
+                .fontWeight(.medium)
+                .disabled(isCompleting)
+            }
+        }
+    }
+
+    private var restTimerOverlay: some View {
+        Group {
+            if showRestTimer {
+                RestTimerOverlay(
+                    restTime: $currentRestTime,
+                    isRunning: !isRestTimerPaused,
+                    onPause: {
+                        toggleRestTimer()
+                    },
+                    onReset: {
+                        resetRestTimer()
+                    },
+                    onSkip: {
+                        skipRestTimer()
+                    },
+                    onClose: {
+                        closeRestTimer()
+                    },
+                    onAddTime: {
+                        addRestTime(10)
+                    },
+                    onSubtractTime: {
+                        subtractRestTime(10)
+                    }
+                )
+                .transition(.scale.combined(with: .opacity))
+                .animation(.spring(), value: showRestTimer)
+            }
         }
     }
 }
@@ -1016,7 +1040,8 @@ struct TrainingActionCard: View {
                     if action.sets.count > 1 {
                         Button(action: {
                             // 使用更安全的删除方式，通过ID匹配而不是索引
-                            if let setToRemove = action.sets.first(where: { $0.id == action.sets[safe: index]?.id }) {
+                            if index < action.sets.count {
+                                let setToRemove = action.sets[index]
                                 action.sets.removeAll { $0.id == setToRemove.id }
                                 completedSets.remove(setId)
                                 setNotes.removeValue(forKey: setId)

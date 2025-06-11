@@ -12,296 +12,294 @@ struct PlanListView: View {
     @AppStorage("PlanListView_hasInitiallyLoaded") private var hasInitiallyLoaded = false
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Logo区域 - 与ActionListView保持一致
-                HStack {
-                    Image("StronixLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 35)
-                    Spacer()
-                    Text("STRONIX")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.black)
-                    
-                    // 登录状态指示器
-                    if authService.isLoggedIn {
-                        Button(action: {
-                            authService.logout()
-                        }) {
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.blue)
-                        }
-                    } else {
-                        Button(action: {
-                            showLogin = true
-                        }) {
-                            Image(systemName: "person.circle")
-                                .font(.system(size: 20))
-                                .foregroundColor(.gray)
-                        }
+        VStack(spacing: 0) {
+            // Logo区域 - 与ActionListView保持一致
+            HStack {
+                Image("StronixLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 35)
+                Spacer()
+                Text("STRONIX")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(.blue)
+                
+                // 登录状态指示器
+                if authService.isLoggedIn {
+                    Button(action: {
+                        authService.logout()
+                    }) {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.blue)
+                    }
+                } else {
+                    Button(action: {
+                        showLogin = true
+                    }) {
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 20))
+                            .foregroundColor(.gray)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.white)
-                .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
-                
-                if !authService.isLoggedIn {
-                    // 未登录状态视图
-                    VStack(spacing: 20) {
-                        Spacer()
-                        
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 64))
-                            .foregroundColor(.gray.opacity(0.5))
-                        
-                        Text("请先登录")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.black)
-                        
-                        Text("登录后可以查看和管理您的训练计划")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                        
-                        Button(action: {
-                            showLogin = true
-                        }) {
-                            Text("立即登录")
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.white)
+            .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+            
+            if !authService.isLoggedIn {
+                // 未登录状态视图
+                VStack(spacing: 20) {
+                    Spacer()
+                    
+                    Image(systemName: "person.circle")
+                        .font(.system(size: 64))
+                        .foregroundColor(.gray.opacity(0.5))
+                    
+                    Text("请先登录")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.black)
+                    
+                    Text("登录后可以查看和管理您的训练计划")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                    
+                    Button(action: {
+                        showLogin = true
+                    }) {
+                        Text("立即登录")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 120, height: 44)
+                            .background(Color.blue)
+                            .cornerRadius(22)
+                    }
+                    
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(white: 0.95))
+            } else if !viewModel.hasAnyPlans && !viewModel.isLoadingTemplates && !viewModel.isLoadingPersonal {
+                // 空状态视图
+                VStack(spacing: 20) {
+                    Spacer()
+                    Text("您还没有创建任何训练计划")
+                        .font(.system(size: 16))
+                        .foregroundColor(.gray)
+                    
+                    Button(action: {
+                        showCreatePlan = true
+                    }) {
+                        Text("创建计划")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 120, height: 44)
+                            .background(Color.blue)
+                            .cornerRadius(22)
+                    }
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(white: 0.95))
+            } else {
+                VStack(spacing: 0) {
+                    // 快速开始按钮
+                    NavigationLink(destination: QuickStartTrainingView()) {
+                        HStack {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                            
+                            Text("快速开始")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.white)
-                                .frame(width: 120, height: 44)
-                                .background(Color.blue)
-                                .cornerRadius(22)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
                         }
-                        
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(white: 0.95))
-                } else if !viewModel.hasAnyPlans && !viewModel.isLoadingTemplates && !viewModel.isLoadingPersonal {
-                    // 空状态视图
-                    VStack(spacing: 20) {
-                        Spacer()
-                        Text("您还没有创建任何训练计划")
-                            .font(.system(size: 16))
-                            .foregroundColor(.gray)
-                        
-                        Button(action: {
-                            showCreatePlan = true
-                        }) {
-                            Text("创建计划")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(width: 120, height: 44)
-                                .background(Color.blue)
-                                .cornerRadius(22)
-                        }
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(white: 0.95))
-                } else {
-                    VStack(spacing: 0) {
-                        // 快速开始按钮
-                        NavigationLink(destination: QuickStartTrainingView()) {
-                            HStack {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                                
-                                Text("快速开始")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
-                            .cornerRadius(10)
-                            .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        )
+                        .cornerRadius(10)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color(white: 0.98))
+                    
+                    // 标签页切换器
+                    HStack(spacing: 0) {
+                        // 计划模版标签
+                        Button(action: {
+                            selectedTab = 0
+                        }) {
+                            VStack(spacing: 4) {
+                                HStack(spacing: 4) {
+                                    Text("计划模版")
+                                        .font(.system(size: 16, weight: selectedTab == 0 ? .medium : .regular))
+                                        .foregroundColor(selectedTab == 0 ? .blue : .gray)
+                                    
+                                    if viewModel.isLoadingTemplates {
+                                        ProgressView()
+                                            .scaleEffect(0.6)
+                                    }
+                                }
+                                
+                                Rectangle()
+                                    .fill(selectedTab == 0 ? Color.blue : Color.clear)
+                                    .frame(height: 2)
+                            }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color(white: 0.98))
+                        .frame(maxWidth: .infinity)
                         
-                        // 标签页切换器
-                        HStack(spacing: 0) {
-                            // 计划模版标签
-                            Button(action: {
-                                selectedTab = 0
-                            }) {
-                                VStack(spacing: 4) {
+                        // 个人计划标签
+                        Button(action: {
+                            selectedTab = 1
+                        }) {
+                            VStack(spacing: 4) {
+                                HStack(spacing: 8) {
                                     HStack(spacing: 4) {
-                                        Text("计划模版")
-                                            .font(.system(size: 16, weight: selectedTab == 0 ? .medium : .regular))
-                                            .foregroundColor(selectedTab == 0 ? .blue : .gray)
+                                        Text("个人计划")
+                                            .font(.system(size: 16, weight: selectedTab == 1 ? .medium : .regular))
+                                            .foregroundColor(selectedTab == 1 ? .blue : .gray)
                                         
-                                        if viewModel.isLoadingTemplates {
+                                        if viewModel.isLoadingPersonal {
                                             ProgressView()
                                                 .scaleEffect(0.6)
                                         }
                                     }
                                     
-                                    Rectangle()
-                                        .fill(selectedTab == 0 ? Color.blue : Color.clear)
-                                        .frame(height: 2)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            
-                            // 个人计划标签
-                            Button(action: {
-                                selectedTab = 1
-                            }) {
-                                VStack(spacing: 4) {
-                                    HStack(spacing: 8) {
-                                        HStack(spacing: 4) {
-                                            Text("个人计划")
-                                                .font(.system(size: 16, weight: selectedTab == 1 ? .medium : .regular))
-                                                .foregroundColor(selectedTab == 1 ? .blue : .gray)
-                                            
-                                            if viewModel.isLoadingPersonal {
-                                                ProgressView()
-                                                    .scaleEffect(0.6)
-                                            }
-                                        }
-                                        
-                                        if selectedTab == 1 {
-                                            Button(action: {
-                                                showCreatePlan = true
-                                            }) {
-                                                Image(systemName: "plus.circle.fill")
-                                                    .foregroundColor(.blue)
-                                                    .font(.system(size: 18))
-                                            }
+                                    if selectedTab == 1 {
+                                        Button(action: {
+                                            showCreatePlan = true
+                                        }) {
+                                            Image(systemName: "plus.circle.fill")
+                                                .foregroundColor(.blue)
+                                                .font(.system(size: 18))
                                         }
                                     }
-                                    
-                                    Rectangle()
-                                        .fill(selectedTab == 1 ? Color.blue : Color.clear)
-                                        .frame(height: 2)
                                 }
+                                
+                                Rectangle()
+                                    .fill(selectedTab == 1 ? Color.blue : Color.clear)
+                                    .frame(height: 2)
                             }
-                            .frame(maxWidth: .infinity)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.white)
-                        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
-                        
-                        // 内容区域
-                        TabView(selection: $selectedTab) {
-                            // 计划模版页面
-                            TemplatesView(viewModel: viewModel)
-                                .tag(0)
-                            
-                            // 个人计划页面
-                            PersonalPlansView(viewModel: viewModel)
-                                .tag(1)
-                        }
-                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                        .animation(.easeInOut(duration: 0.3), value: selectedTab)
+                        .frame(maxWidth: .infinity)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.white)
+                    .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                    
+                    // 内容区域
+                    TabView(selection: $selectedTab) {
+                        // 计划模版页面
+                        TemplatesView(viewModel: viewModel)
+                            .tag(0)
+                        
+                        // 个人计划页面
+                        PersonalPlansView(viewModel: viewModel)
+                            .tag(1)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    .animation(.easeInOut(duration: 0.3), value: selectedTab)
                 }
             }
-            .sheet(isPresented: $showCreatePlan) {
-                CreatePlanView()
-                    .onDisappear {
-                        // 创建计划后刷新数据
-                        if authService.isLoggedIn {
-                            // 确保模态视图状态已关闭
-                            self.showCreatePlan = false
-                            // 延迟刷新，让视图层级稳定下来
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // 增加延迟到0.5秒
-                                print("🔄 CreatePlanView onDisappear - 延迟刷新数据")
-                                viewModel.refresh()
-                                hasInitiallyLoaded = true
-                            }
-                        }
-                    }
-            }
-            .sheet(isPresented: $showLogin) {
-                LoginView()
-                    .onDisappear {
-                        // 登录后刷新数据
-                        if authService.isLoggedIn {
+        }
+        .sheet(isPresented: $showCreatePlan) {
+            CreatePlanView()
+                .onDisappear {
+                    // 创建计划后刷新数据
+                    if authService.isLoggedIn {
+                        // 确保模态视图状态已关闭
+                        self.showCreatePlan = false
+                        // 延迟刷新，让视图层级稳定下来
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // 增加延迟到0.5秒
+                            print("🔄 CreatePlanView onDisappear - 延迟刷新数据")
                             viewModel.refresh()
                             hasInitiallyLoaded = true
                         }
                     }
-            }
-            .alert("错误", isPresented: $viewModel.showError) {
-                Button("确定") {
-                    viewModel.showError = false
                 }
-                Button("重试") {
-                    viewModel.refresh()
-                }
-                if !authService.isLoggedIn {
-                    Button("登录") {
-                        showLogin = true
+        }
+        .sheet(isPresented: $showLogin) {
+            LoginView()
+                .onDisappear {
+                    // 登录后刷新数据
+                    if authService.isLoggedIn {
+                        viewModel.refresh()
+                        hasInitiallyLoaded = true
                     }
                 }
-            } message: {
-                Text(viewModel.errorMessage ?? "未知错误")
+        }
+        .alert("错误", isPresented: $viewModel.showError) {
+            Button("确定") {
+                viewModel.showError = false
             }
-            .refreshable {
-                if authService.isLoggedIn {
-                    viewModel.refresh()
+            Button("重试") {
+                viewModel.refresh()
+            }
+            if !authService.isLoggedIn {
+                Button("登录") {
+                    showLogin = true
                 }
             }
-            .onAppear {
-                print("🔍 PlanListView onAppear - isLoggedIn: \(authService.isLoggedIn), hasInitiallyLoaded: \(hasInitiallyLoaded), isEditPlanPresented: \(isEditPlanPresented)")
-                
-                // 如果EditPlan正在显示，不执行任何操作
-                if isEditPlanPresented {
-                    print("🔍 PlanListView onAppear - EditPlan正在显示，跳过刷新")
-                    return
-                }
-                
-                // 只在真正需要时进行token检查和数据加载
-                if !hasInitiallyLoaded {
-                    Task {
-                        // 检查token有效性
-                        await authService.refreshTokenIfNeeded()
-                        
-                        // 首次加载时检查登录状态并加载数据
-                        if authService.isLoggedIn {
-                            print("🔄 PlanListView 首次加载数据")
-                            viewModel.refresh()
-                            hasInitiallyLoaded = true
-                        } else {
-                            // 未登录时也标记为已加载，避免重复检查
-                            hasInitiallyLoaded = true
-                        }
+        } message: {
+            Text(viewModel.errorMessage ?? "未知错误")
+        }
+        .refreshable {
+            if authService.isLoggedIn {
+                viewModel.refresh()
+            }
+        }
+        .onAppear {
+            print("🔍 PlanListView onAppear - isLoggedIn: \(authService.isLoggedIn), hasInitiallyLoaded: \(hasInitiallyLoaded), isEditPlanPresented: \(isEditPlanPresented)")
+            
+            // 如果EditPlan正在显示，不执行任何操作
+            if isEditPlanPresented {
+                print("🔍 PlanListView onAppear - EditPlan正在显示，跳过刷新")
+                return
+            }
+            
+            // 只在真正需要时进行token检查和数据加载
+            if !hasInitiallyLoaded {
+                Task {
+                    // 检查token有效性
+                    await authService.refreshTokenIfNeeded()
+                    
+                    // 首次加载时检查登录状态并加载数据
+                    if authService.isLoggedIn {
+                        print("🔄 PlanListView 首次加载数据")
+                        viewModel.refresh()
+                        hasInitiallyLoaded = true
+                    } else {
+                        // 未登录时也标记为已加载，避免重复检查
+                        hasInitiallyLoaded = true
                     }
                 }
             }
-            .onChange(of: authService.isLoggedIn) { isLoggedIn in
-                if isLoggedIn {
-                    // 登录成功后刷新数据
-                    viewModel.refresh()
-                    hasInitiallyLoaded = true
-                } else {
-                    // 登出后清空数据并重置加载标记
-                    viewModel.clearData()
-                    hasInitiallyLoaded = false
-                }
+        }
+        .onChange(of: authService.isLoggedIn) { isLoggedIn in
+            if isLoggedIn {
+                // 登录成功后刷新数据
+                viewModel.refresh()
+                hasInitiallyLoaded = true
+            } else {
+                // 登出后清空数据并重置加载标记
+                viewModel.clearData()
+                hasInitiallyLoaded = false
             }
         }
     }

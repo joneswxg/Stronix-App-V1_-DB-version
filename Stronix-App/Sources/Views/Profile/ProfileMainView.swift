@@ -20,7 +20,7 @@ struct ProfileMainView: View {
                 Spacer()
                 Text("STRONIX")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.black)
+                    .foregroundColor(.blue)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)

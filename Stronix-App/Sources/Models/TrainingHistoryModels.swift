@@ -73,4 +73,28 @@ struct UpdatePlanSetFromTraining: Codable {
     let left_weight: Double?
     let right_weight: Double?
     let order: Int
+}
+
+// MARK: - UI 显示相关数据模型
+
+/// 训练详情UI数据结构
+struct TrainingDetailData {
+    let planName: String
+    let duration: String
+    let totalVolume: String
+    let exercises: [ExerciseDetail]
+}
+
+/// 动作详情UI结构
+struct ExerciseDetail {
+    let name: String
+    let sets: [SetDetail]
+}
+
+/// 组数详情UI结构
+struct SetDetail {
+    let number: Int
+    let weight: Int
+    let reps: Int
+    let actualReps: Int
 } 

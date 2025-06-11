@@ -276,6 +276,173 @@ class TrainingHistoryService: ObservableObject {
             }
         }
     }
+    
+    /// 删除训练历史
+    func deleteTrainingHistory(historyId: Int) async throws {
+        print("🗑️ 开始删除训练历史，ID: \(historyId)")
+        
+        let url = URL(string: "\(baseURL)/training/history/\(historyId)")!
+        print("🔗 请求URL: \(url)")
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "DELETE"
+        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
+        
+        // 添加认证头
+        if let token = getAuthToken() {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            print("🔑 使用认证token: Bearer \(String(token.prefix(10)))...")
+        } else {
+            print("⚠️ 警告：没有找到认证token")
+            throw NetworkError.unauthorized
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ HTTP响应无效")
+            throw NetworkError.invalidResponse
+        }
+        
+        print("🔍 删除请求响应状态码: \(httpResponse.statusCode)")
+        
+        if httpResponse.statusCode == 200 {
+            // 尝试解析标准API响应格式
+            do {
+                let result = try JSONDecoder().decode(APIErrorResponse.self, from: data)
+                if result.code == 200 {
+                    print("✅ 训练历史删除成功: \(result.message)")
+                } else {
+                    print("❌ 删除失败，服务器返回错误: \(result.message)")
+                    throw NetworkError.serverError(result.message)
+                }
+            } catch {
+                // 如果解析失败，可能是空响应或其他格式，但状态码200表示成功
+                print("✅ 训练历史删除成功（响应解析失败但状态码正确）")
+            }
+        } else if httpResponse.statusCode == 401 {
+            print("❌ 认证失败，请重新登录")
+            throw NetworkError.unauthorized
+        } else {
+            // 处理错误响应
+            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                print("❌ 删除训练历史失败: \(errorData.message)")
+                throw NetworkError.serverError(errorData.message)
+            } else {
+                print("❌ 删除失败，状态码: \(httpResponse.statusCode)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("❌ 响应内容: \(responseString)")
+                }
+                throw NetworkError.invalidResponse
+            }
+        }
+    }
+    
+    /// 获取训练统计数据
+    func getTrainingStatistics(timeRange: String = "week") async throws -> TrainingStatisticsResponse {
+        print("📊 获取训练统计数据，时间范围: \(timeRange)")
+        
+        var urlComponents = URLComponents(string: "\(baseURL)/training/statistics")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "time_range", value: timeRange)
+        ]
+        
+        guard let url = urlComponents.url else {
+            throw NetworkError.invalidResponse
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
+        
+        // 添加认证头
+        if let token = getAuthToken() {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else {
+            print("⚠️ 警告：没有找到认证token")
+            throw NetworkError.unauthorized
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(TrainingStatisticsAPIResponse.self, from: data)
+            if let statisticsData = result.data {
+                print("✅ 获取训练统计成功")
+                return statisticsData
+            } else {
+                throw NetworkError.decodingError
+            }
+        } else if httpResponse.statusCode == 401 {
+            print("❌ 认证失败，请重新登录")
+            throw NetworkError.unauthorized
+        } else {
+            // 处理错误响应
+            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                print("❌ 获取训练统计失败: \(errorData.message)")
+                throw NetworkError.serverError(errorData.message)
+            } else {
+                throw NetworkError.invalidResponse
+            }
+        }
+    }
+    
+    /// 获取动作进步数据
+    func getActionProgress(actionName: String) async throws -> ActionProgressResponse {
+        print("💪 获取动作进步数据: \(actionName)")
+        
+        var urlComponents = URLComponents(string: "\(baseURL)/training/action-progress")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "action_name", value: actionName)
+        ]
+        
+        guard let url = urlComponents.url else {
+            throw NetworkError.invalidResponse
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
+        
+        // 添加认证头
+        if let token = getAuthToken() {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else {
+            print("⚠️ 警告：没有找到认证token")
+            throw NetworkError.unauthorized
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(ActionProgressAPIResponse.self, from: data)
+            if let progressData = result.data {
+                print("✅ 获取动作进步数据成功")
+                return progressData
+            } else {
+                throw NetworkError.decodingError
+            }
+        } else if httpResponse.statusCode == 401 {
+            print("❌ 认证失败，请重新登录")
+            throw NetworkError.unauthorized
+        } else {
+            // 处理错误响应
+            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                print("❌ 获取动作进步数据失败: \(errorData.message)")
+                throw NetworkError.serverError(errorData.message)
+            } else {
+                throw NetworkError.invalidResponse
+            }
+        }
+    }
 }
 
 /// 训练历史API响应包装器
@@ -304,6 +471,20 @@ struct TrainingDatesAPIResponse: Codable {
     let code: Int
     let message: String
     let data: TrainingDatesResponse?
+}
+
+/// 训练统计API响应包装器
+struct TrainingStatisticsAPIResponse: Codable {
+    let code: Int
+    let message: String
+    let data: TrainingStatisticsResponse?
+}
+
+/// 动作进步API响应包装器
+struct ActionProgressAPIResponse: Codable {
+    let code: Int
+    let message: String
+    let data: ActionProgressResponse?
 }
 
 /// API错误响应
@@ -364,6 +545,58 @@ struct TrainingHistoryDetailItem: Codable {
     let right_weight: Double?
     let is_completed: Bool
     let action_name: String?
+}
+
+/// 训练统计响应
+struct TrainingStatisticsResponse: Codable {
+    let core_metrics: CoreMetrics
+    let volume_trend: [VolumeTrendData]
+    let plan_usage: [PlanUsageDataAPI]
+    let time_range: String
+}
+
+/// 核心指标
+struct CoreMetrics: Codable {
+    let training_count: Int
+    let total_volume: Double
+    let total_duration: Int
+    let streak_days: Int
+}
+
+/// 容量趋势数据
+struct VolumeTrendData: Codable {
+    let date: String
+    let volume: Double
+}
+
+/// 计划使用数据（API响应）
+struct PlanUsageDataAPI: Codable {
+    let plan_name: String
+    let count: Int
+    let percentage: Int
+}
+
+/// 动作进步响应
+struct ActionProgressResponse: Codable {
+    let action_name: String
+    let current_record: ActionRecord
+    let best_record: ActionRecord
+    let progress_data: [ProgressData]
+}
+
+/// 动作记录
+struct ActionRecord: Codable {
+    let max_weight: Double
+    let date: String
+    let max_reps: Int
+}
+
+/// 进步数据
+struct ProgressData: Codable {
+    let date: String
+    let max_weight: Double
+    let total_volume: Double
+    let max_reps: Int
 }
 
 /// 网络错误枚举

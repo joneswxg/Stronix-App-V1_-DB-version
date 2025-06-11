@@ -580,8 +580,8 @@ struct EditingExerciseCard: View {
                 // 组菜单
                 Menu {
                     Button(action: {
-                        let currentSet = exercise.sets[safe: index]
-                        if let setId = currentSet?.id {
+                        if index < exercise.sets.count {
+                            let setId = exercise.sets[index].id
                             exercise.sets.removeAll { $0.id == setId }
                             onUpdate(exercise)
                         }

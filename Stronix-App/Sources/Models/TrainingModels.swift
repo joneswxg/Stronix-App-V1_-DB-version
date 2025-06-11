@@ -377,7 +377,7 @@ struct TrainingHistory: Identifiable {
     let planId: Int
     let planName: String
     let date: Date
-    let duration: Int // 训练时长（分钟）
+    let duration: Int // 训练时长（秒）
     let totalVolume: Int
     let completedActions: Int
     let totalActions: Int

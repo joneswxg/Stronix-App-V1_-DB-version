@@ -47,6 +47,7 @@ struct CalendarView: View {
     @State private var selectedDateString: String?
     @State private var trainingDatesInMonth: Set<String> = []
     @State private var isLoadingMonth = false
+    @State private var sheetId = UUID() // 添加唯一标识符，确保Sheet能正确重新加载
     
     @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
     
@@ -110,7 +111,8 @@ struct CalendarView: View {
         }
         .sheet(isPresented: $showingDetailView) {
             if let dateString = selectedDateString {
-                HistoryDetailView(selectedDateString: dateString)
+                HistoryListView(selectedDateString: dateString)
+                    .id(sheetId) // 使用唯一ID确保每次都重新创建视图
             }
         }
     }
@@ -161,10 +163,17 @@ struct CalendarView: View {
                 ) {
                     print("📅 点击日期: \(calendarDate.dateString)")
                     
-                    // 直接导航到详情页面，让详情页面负责查询该日期的数据
-                    selectedDateString = calendarDate.dateString
-                    showingDetailView = true
-                    print("📱 导航到日期详情: \(calendarDate.dateString)")
+                    // 确保先重置状态，然后设置新值
+                    showingDetailView = false
+                    selectedDateString = nil
+                    
+                    // 使用异步延迟确保状态重置完成
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        selectedDateString = calendarDate.dateString
+                        sheetId = UUID() // 生成新的ID，确保Sheet重新加载
+                        showingDetailView = true
+                        print("📱 导航到日期详情: \(calendarDate.dateString)")
+                    }
                 }
             }
         }

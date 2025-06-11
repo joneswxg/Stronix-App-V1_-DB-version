@@ -60,17 +60,8 @@ struct MainTabView: View {
         )
         .onChange(of: selectedTab) { oldValue, newValue in
             print("🔄 MainTabView selectedTab 变化: \(oldValue) -> \(newValue)")
-            if newValue == 0 && oldValue != 0 && lastUserSelectedTab != 0 {
-                print("⚠️ MainTabView 意外跳转到体测页面！之前在: \(oldValue)，用户最后选择: \(lastUserSelectedTab)")
-                // 恢复到用户最后选择的标签页
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    print("🔄 MainTabView 恢复到用户最后选择的标签页: \(lastUserSelectedTab)")
-                    selectedTab = lastUserSelectedTab
-                }
-            } else if newValue != 0 {
-                // 用户主动选择了非体测页面，记录下来
-                lastUserSelectedTab = newValue
-            }
+            // 记录用户选择的标签页（包括体测页面）
+            lastUserSelectedTab = newValue
         }
         .onAppear {
             print("🔄 MainTabView onAppear - selectedTab: \(selectedTab)")
