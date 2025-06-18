@@ -1,14 +1,18 @@
 import SwiftUI
+import Combine
 
 struct NutritionView: View {
     @StateObject private var calculator = NutritionCalculator()
+    @State private var showingMifflinInfo = false
+    @State private var showingKatchInfo = false
+    @State private var showingCaloriesInfo = false
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     // 标题
-                    Text("专业营养热量计算器")
+                    Text("营养热量计算器")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.top)
@@ -16,16 +20,124 @@ struct NutritionView: View {
                     // 计算方法选择
                     Picker("计算方法", selection: $calculator.calculationMethod) {
                         Text("基础代谢计算").tag(CalculationMethod.mifflinStJeor)
-                        Text("体脂率精确计算").tag(CalculationMethod.katchMcArdle)
+                        Text("体脂率基础代谢计算").tag(CalculationMethod.katchMcArdle)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
                     
                     // 基础信息输入
                     VStack(alignment: .leading, spacing: 15) {
-                        Text("基础信息")
-                            .font(.headline)
-                            .padding(.horizontal)
+                        HStack {
+                            Text("基础信息")
+                                .font(.headline)
+                            
+                            if calculator.calculationMethod == .mifflinStJeor {
+                                Button(action: {
+                                    showingMifflinInfo = true
+                                }) {
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(.blue)
+                                }
+                                .sheet(isPresented: $showingMifflinInfo) {
+                                    NavigationView {
+                                        ScrollView {
+                                            VStack(alignment: .leading, spacing: 15) {
+                                                Text("Mifflin-St Jeor 方程")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("Mifflin-St Jeor 方程是目前普遍认为最准确的基础代谢率（BMR）计算公式之一。")
+                                                    .font(.body)
+                                                
+                                                Text("计算公式：")
+                                                    .font(.headline)
+                                                    .padding(.top)
+                                                
+                                                VStack(alignment: .leading, spacing: 5) {
+                                                    Text("男性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) + 5")
+                                                        .font(.system(.body, design: .monospaced))
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 5)
+                                                        .background(Color.gray.opacity(0.1))
+                                                        .cornerRadius(5)
+                                                    
+                                                    Text("女性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) - 161")
+                                                        .font(.system(.body, design: .monospaced))
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 5)
+                                                        .background(Color.gray.opacity(0.1))
+                                                        .cornerRadius(5)
+                                                }
+                                                
+                                                Text("该公式根据性别、年龄、体重和身高来估算身体在休息状态下每天消耗的卡路里。适用于大多数成年人，不考虑体脂率。")
+                                                    .font(.body)
+                                                    .padding(.top)
+                                            }
+                                            .padding()
+                                        }
+                                        .navigationTitle("Mifflin-St Jeor 方程")
+                                        .navigationBarTitleDisplayMode(.inline)
+                                        .navigationBarItems(trailing: Button("关闭") {
+                                            showingMifflinInfo = false
+                                        })
+                                    }
+                                }
+                            } else if calculator.calculationMethod == .katchMcArdle {
+                                Button(action: {
+                                    showingKatchInfo = true
+                                }) {
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(.blue)
+                                }
+                                .sheet(isPresented: $showingKatchInfo) {
+                                    NavigationView {
+                                        ScrollView {
+                                            VStack(alignment: .leading, spacing: 15) {
+                                                Text("Katch-McArdle 方程")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("Katch-McArdle 方程是一种针对已知体脂率人群的基础代谢率（BMR）计算公式。")
+                                                    .font(.body)
+                                                
+                                                Text("计算公式：")
+                                                    .font(.headline)
+                                                    .padding(.top)
+                                                
+                                                VStack(alignment: .leading, spacing: 5) {
+                                                    Text("BMR = 370 + (21.6 × 去脂体重kg)")
+                                                        .font(.system(.body, design: .monospaced))
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 5)
+                                                        .background(Color.gray.opacity(0.1))
+                                                        .cornerRadius(5)
+                                                    
+                                                    Text("去脂体重 = 体重kg × (1 - 体脂率% ÷ 100)")
+                                                        .font(.system(.body, design: .monospaced))
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 5)
+                                                        .background(Color.gray.opacity(0.1))
+                                                        .cornerRadius(5)
+                                                }
+                                                
+                                                Text("这个公式被认为比Mifflin-St Jeor方程更准确，因为它考虑了瘦体重（Lean Body Mass），而瘦体重是影响基础代谢率的关键因素。适用于健身人群或对体脂率有准确了解的人。")
+                                                    .font(.body)
+                                                    .padding(.top)
+                                            }
+                                            .padding()
+                                        }
+                                        .navigationTitle("Katch-McArdle 方程")
+                                        .navigationBarTitleDisplayMode(.inline)
+                                        .navigationBarItems(trailing: Button("关闭") {
+                                            showingKatchInfo = false
+                                        })
+                                    }
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal)
                         
                         VStack(spacing: 10) {
                             HStack {
@@ -151,11 +263,94 @@ struct NutritionView: View {
                             HStack {
                                 Text("目标热量:")
                                     .font(.subheadline)
+                                
+                                Button(action: {
+                                    showingCaloriesInfo = true
+                                }) {
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(.blue)
+                                }
+                                .sheet(isPresented: $showingCaloriesInfo) {
+                                    NavigationView {
+                                        ScrollView {
+                                            VStack(alignment: .leading, spacing: 15) {
+                                                Text("目标热量说明")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("目标热量是根据您的基础代谢率（BMR）、活动水平和健身目标计算得出的每日所需卡路里摄入量。")
+                                                    .font(.body)
+                                                
+                                                Text("TDEE计算公式：")
+                                                    .font(.headline)
+                                                    .padding(.top)
+                                                
+                                                Text("TDEE = BMR（基础代谢率）× 活动系数")
+                                                    .font(.system(.body, design: .monospaced))
+                                                    .padding(.horizontal, 10)
+                                                    .padding(.vertical, 5)
+                                                    .background(Color.gray.opacity(0.1))
+                                                    .cornerRadius(5)
+                                                
+                                                Text("TDEE（Total Daily Energy Expenditure）是您每日总能量消耗，包括基础代谢、日常活动、运动等所有消耗的热量。")
+                                                    .font(.body)
+                                                    .padding(.top, 5)
+                                                
+                                                Text("热量范围依据：")
+                                                    .font(.headline)
+                                                    .padding(.top)
+                                                
+                                                VStack(alignment: .leading, spacing: 10) {
+                                                    Text("• 减脂：TDEE - 300~500 卡路里")
+                                                        .font(.body)
+                                                    Text("  创造适度热量缺口，帮助减少脂肪，同时避免过快减重导致肌肉流失。")
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                        .padding(.leading, 10)
+                                                    
+                                                    Text("• 维持：TDEE ± 100 卡路里")
+                                                        .font(.body)
+                                                        .padding(.top, 5)
+                                                    Text("  保持现有体重和体组成，允许小幅波动。")
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                        .padding(.leading, 10)
+                                                    
+                                                    Text("• 增肌：TDEE + 300~500 卡路里")
+                                                        .font(.body)
+                                                        .padding(.top, 5)
+                                                    Text("  提供足够的热量盈余，支持肌肉生长，同时避免过量导致过多脂肪堆积。")
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                        .padding(.leading, 10)
+                                                }
+                                                
+                                                Text("建议值是该范围的中间值，用于后续蛋白质、碳水化合物和脂肪的比例计算。实际摄入可根据身体反应和目标进展在范围内调整。")
+                                                    .font(.body)
+                                                    .padding(.top)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .padding()
+                                        }
+                                        .navigationTitle("目标热量说明")
+                                        .navigationBarTitleDisplayMode(.inline)
+                                        .navigationBarItems(trailing: Button("关闭") {
+                                            showingCaloriesInfo = false
+                                        })
+                                    }
+                                }
+                                
                                 Spacer()
-                                Text("\(Int(calculator.totalCalories)) 卡路里")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("\(Int(calculator.totalCaloriesRange.lowerBound)) - \(Int(calculator.totalCaloriesRange.upperBound)) 卡路里")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.blue)
+                                    Text("建议值: \(Int(calculator.totalCalories)) 卡路里")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                             .padding(.horizontal)
                             
@@ -168,7 +363,12 @@ struct NutritionView: View {
                                     range: calculator.proteinRange,
                                     color: .red,
                                     grams: calculator.proteinGrams,
-                                    calories: calculator.proteinCalories
+                                    calories: calculator.proteinCalories,
+                                    weight: calculator.weight,
+                                    goal: calculator.goal,
+                                    onValueChanged: { newValue in
+                                        calculator.proteinPercentage = newValue
+                                    }
                                 )
                                 
                                 // 碳水化合物
@@ -178,7 +378,12 @@ struct NutritionView: View {
                                     range: calculator.carbRange,
                                     color: .green,
                                     grams: calculator.carbGrams,
-                                    calories: calculator.carbCalories
+                                    calories: calculator.carbCalories,
+                                    weight: calculator.weight,
+                                    goal: calculator.goal,
+                                    onValueChanged: { newValue in
+                                        calculator.carbPercentage = newValue
+                                    }
                                 )
                                 
                                 // 脂肪
@@ -188,20 +393,45 @@ struct NutritionView: View {
                                     range: calculator.fatRange,
                                     color: .orange,
                                     grams: calculator.fatGrams,
-                                    calories: calculator.fatCalories
+                                    calories: calculator.fatCalories,
+                                    weight: calculator.weight,
+                                    goal: calculator.goal,
+                                    onValueChanged: { newValue in
+                                        calculator.fatPercentage = newValue
+                                    }
                                 )
                             }
                             .padding(.horizontal)
                             
                             // 热量分配验证
-                            HStack {
-                                Text("总热量分配:")
-                                Spacer()
-                                Text("\(Int(calculator.currentTotalCalories)) / \(Int(calculator.totalCalories)) 卡路里")
-                                    .foregroundColor(abs(calculator.currentTotalCalories - calculator.totalCalories) < 10 ? .green : .red)
+                            VStack(spacing: 5) {
+                                HStack {
+                                    Text("当前热量分配:")
+                                    Spacer()
+                                    Text("\(Int(calculator.currentTotalCalories)) 卡路里")
+                                        .foregroundColor(calculator.currentTotalCalories <= calculator.maxCalories ? .green : .red)
+                                }
+                                .padding(.horizontal)
+                                .font(.footnote)
+                                
+                                HStack {
+                                    Text("建议范围:")
+                                    Spacer()
+                                    Text("\(Int(calculator.totalCaloriesRange.lowerBound)) - \(Int(calculator.totalCaloriesRange.upperBound)) 卡路里")
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal)
+                                .font(.caption)
+                                
+                                HStack {
+                                    Text("最大限制:")
+                                    Spacer()
+                                    Text("\(Int(calculator.maxCalories)) 卡路里")
+                                        .foregroundColor(.orange)
+                                }
+                                .padding(.horizontal)
+                                .font(.caption)
                             }
-                            .padding(.horizontal)
-                            .font(.footnote)
                         }
                         .background(Color.blue.opacity(0.05))
                         .cornerRadius(10)
@@ -224,17 +454,52 @@ struct MacroSlider: View {
     let color: Color
     let grams: Double
     let calories: Double
+    let weight: Double
+    let goal: Goal
+    let onValueChanged: (Double) -> Void
+    
+    var recommendedIntake: String {
+        let gramsPerKg = grams / weight
+        switch name {
+        case "蛋白质":
+            switch goal {
+            case .weightLoss: return "建议: 2.0-2.5g/kg"
+            case .maintenance: return "建议: 1.6-2.0g/kg"
+            case .muscleGain: return "建议: 1.6-2.2g/kg"
+            }
+        case "碳水化合物":
+            switch goal {
+            case .weightLoss: return "建议: 3.0-4.5g/kg"
+            case .maintenance: return "建议: 3.5-5.0g/kg"
+            case .muscleGain: return "建议: 4.5-6.5g/kg"
+            }
+        case "脂肪":
+            switch goal {
+            case .weightLoss: return "建议: 0.8-1.2g/kg"
+            case .maintenance: return "建议: 0.8-1.2g/kg"
+            case .muscleGain: return "建议: 0.8-1.0g/kg"
+            }
+        default:
+            return ""
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Text(recommendedIntake)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
                 Text("\(Int(value))%")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .fontWeight(.medium)
+                    .foregroundColor(color)
             }
             
             HStack {
@@ -242,7 +507,12 @@ struct MacroSlider: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 
-                Slider(value: $value, in: range, step: 1)
+                Slider(value: Binding(
+                    get: { value },
+                    set: { newValue in
+                        onValueChanged(newValue)
+                    }
+                ), in: range, step: 1)
                     .accentColor(color)
                 
                 Text("\(range.upperBound, specifier: "%.0f")%")
@@ -251,7 +521,7 @@ struct MacroSlider: View {
             }
             
             HStack {
-                Text("\(grams, specifier: "%.1f")g")
+                Text("\(grams, specifier: "%.1f")g (\(grams/weight, specifier: "%.1f")g/kg)")
                     .font(.caption)
                     .foregroundColor(color)
                 Spacer()
@@ -279,6 +549,9 @@ class NutritionCalculator: ObservableObject {
     @Published var carbPercentage: Double = 50
     @Published var fatPercentage: Double = 30
     
+    // 监听目标变化
+    private var goalObserver: AnyCancellable?
+    
     var bmr: Double {
         switch calculationMethod {
         case .mifflinStJeor:
@@ -292,39 +565,55 @@ class NutritionCalculator: ObservableObject {
         return bmr * activityLevel.multiplier
     }
     
-    var totalCalories: Double {
+    var totalCaloriesRange: ClosedRange<Double> {
         switch goal {
         case .weightLoss:
-            return tdee - 400
+            return (tdee - 500)...(tdee - 300)
+        case .maintenance:
+            return (tdee - 100)...(tdee + 100)
+        case .muscleGain:
+            return (tdee + 300)...(tdee + 500)
+        }
+    }
+    
+    var maxCalories: Double {
+        switch goal {
+        case .weightLoss:
+            return tdee - 300
         case .maintenance:
             return tdee
         case .muscleGain:
-            return tdee + 300
+            return tdee + 500
         }
+    }
+    
+    var totalCalories: Double {
+        let range = totalCaloriesRange
+        return (range.lowerBound + range.upperBound) / 2
     }
     
     // 营养素范围根据目标调整
     var proteinRange: ClosedRange<Double> {
         switch goal {
         case .weightLoss: return 25...35
-        case .maintenance: return 15...25
+        case .maintenance: return 20...30
         case .muscleGain: return 20...30
         }
     }
     
     var carbRange: ClosedRange<Double> {
         switch goal {
-        case .weightLoss: return 30...40
-        case .maintenance: return 45...55
-        case .muscleGain: return 40...50
+        case .weightLoss: return 35...45
+        case .maintenance: return 40...45
+        case .muscleGain: return 55...65
         }
     }
     
     var fatRange: ClosedRange<Double> {
         switch goal {
-        case .weightLoss: return 25...35
+        case .weightLoss: return 20...30
         case .maintenance: return 25...35
-        case .muscleGain: return 20...30
+        case .muscleGain: return 15...20
         }
     }
     
@@ -370,6 +659,11 @@ class NutritionCalculator: ObservableObject {
     init() {
         // 确保营养素比例在合理范围内
         updateMacroPercentages()
+        
+        // 监听目标变化，自动调整营养素比例
+        goalObserver = $goal.sink { [weak self] _ in
+            self?.updateMacroPercentages()
+        }
     }
     
     private func updateMacroPercentages() {
@@ -377,18 +671,20 @@ class NutritionCalculator: ObservableObject {
         switch goal {
         case .weightLoss:
             proteinPercentage = 30
-            carbPercentage = 35
-            fatPercentage = 35
+            carbPercentage = 40
+            fatPercentage = 25
         case .maintenance:
-            proteinPercentage = 20
-            carbPercentage = 50
+            proteinPercentage = 25
+            carbPercentage = 42
             fatPercentage = 30
         case .muscleGain:
             proteinPercentage = 25
-            carbPercentage = 45
-            fatPercentage = 30
+            carbPercentage = 60
+            fatPercentage = 15
         }
     }
+    
+
 }
 
 // 枚举定义
@@ -416,10 +712,10 @@ enum ActivityLevel: CaseIterable {
     var description: String {
         switch self {
         case .sedentary: return "几乎不运动，办公室工作"
-        case .light: return "轻度运动 1-3天/周"
-        case .moderate: return "中度运动 3-5天/周"
-        case .active: return "高强度运动 6-7天/周"
-        case .veryActive: return "极高强度运动，体力劳动"
+        case .light: return "轻度运动 1-3天/周低强度训练,偶尔健身、散步的上班族"
+        case .moderate: return "中度运动 3-5天/周,每周 3 次健身房的健身爱好者"
+        case .active: return "高强度运动 6-7天/周,运动员、健身教练"
+        case .veryActive: return "极高强度运动，体力劳动,建筑工人、每日 2 次训练的运动员"
         }
     }
     

@@ -97,4 +97,5 @@ struct SetDetail {
     let weight: Int
     let reps: Int
     let actualReps: Int
+    let isCompleted: Bool
 } 

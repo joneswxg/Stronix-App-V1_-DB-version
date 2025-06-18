@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct BodyMeasurementDetail: View {
+    @StateObject private var viewModel = BodyMeasurementViewModel()
     @State private var selectedDate = Date()
     @State private var currentData: DetailedMeasurementData = DetailedMeasurementData.sampleData
+    @State private var currentIndex = 0
+    @State private var showingDeleteAlert = false
+    @State private var showingBMRInfo = false
     
     var body: some View {
         ScrollView {
@@ -10,11 +14,12 @@ struct BodyMeasurementDetail: View {
                 // 日期导航
                 HStack {
                     Button(action: {
-                        selectedDate = Calendar.current.date(byAdding: .day, value: -1, to: selectedDate) ?? selectedDate
+                        navigateToPrevious()
                     }) {
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.gray)
+                            .foregroundColor(currentIndex > 0 ? .gray : .gray.opacity(0.3))
                     }
+                    .disabled(currentIndex <= 0)
                     
                     Spacer()
                     
@@ -30,17 +35,18 @@ struct BodyMeasurementDetail: View {
                     Spacer()
                     
                     Button(action: {
-                        selectedDate = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate) ?? selectedDate
+                        navigateToNext()
                     }) {
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.gray)
+                            .foregroundColor(currentIndex < viewModel.measurements.count - 1 ? .gray : .gray.opacity(0.3))
                     }
+                    .disabled(currentIndex >= viewModel.measurements.count - 1)
                     
                     Button(action: {
-                        // 删除功能
+                        showingDeleteAlert = true
                     }) {
                         Image(systemName: "trash")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.red)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -54,7 +60,7 @@ struct BodyMeasurementDetail: View {
                             title: "体重",
                             value: currentData.weight,
                             unit: "kg",
-                            change: currentData.weightChange,
+                            change: currentData.weightChange.change,
                             progressValue: 0.6,
                             labels: ["低标准", "标准", "超标准"]
                         )
@@ -63,7 +69,7 @@ struct BodyMeasurementDetail: View {
                             title: "骨骼肌量",
                             value: currentData.muscleMass,
                             unit: "kg",
-                            change: currentData.muscleMassChange,
+                            change: currentData.muscleMassChange.change,
                             progressValue: 0.7,
                             labels: ["低标准", "标准", "超标准"]
                         )
@@ -72,7 +78,7 @@ struct BodyMeasurementDetail: View {
                             title: "体脂肪",
                             value: currentData.bodyFat,
                             unit: "kg",
-                            change: currentData.bodyFatChange,
+                            change: currentData.bodyFatChange.change,
                             progressValue: 0.3,
                             labels: ["低标准", "标准", "超标准"]
                         )
@@ -86,7 +92,7 @@ struct BodyMeasurementDetail: View {
                             title: "BMI",
                             value: currentData.bmi,
                             unit: "kg/m²",
-                            change: currentData.bmiChange,
+                            change: currentData.bmiChange.change,
                             progressValue: 0.5,
                             labels: ["低标准", "标准", "超标准"]
                         )
@@ -95,7 +101,7 @@ struct BodyMeasurementDetail: View {
                             title: "体脂百分比",
                             value: currentData.bodyFatPercentage,
                             unit: "%",
-                            change: currentData.bodyFatPercentageChange,
+                            change: currentData.bodyFatPercentageChange.change,
                             progressValue: 0.4,
                             labels: ["低标准", "标准", "超标准"]
                         )
@@ -109,7 +115,7 @@ struct BodyMeasurementDetail: View {
                             title: "内脏脂肪等级",
                             value: Double(currentData.visceralFatLevel),
                             unit: "Lv",
-                            change: currentData.visceralFatChange,
+                            change: currentData.visceralFatChange.change,
                             progressValue: 0.2,
                             labels: ["低", "高"],
                             isSimpleScale: true
@@ -124,10 +130,14 @@ struct BodyMeasurementDetail: View {
                             title: "基础代谢率",
                             value: Double(currentData.basalMetabolicRate),
                             unit: "kcal",
-                            change: currentData.bmrChange,
+                            change: currentData.bmrChange.change,
                             progressValue: 0.0,
                             labels: [],
-                            showProgress: false
+                            showProgress: false,
+                            showInfoButton: true,
+                            onInfoTapped: {
+                                showingBMRInfo = true
+                            }
                         )
                     }
                 }
@@ -136,6 +146,31 @@ struct BodyMeasurementDetail: View {
             }
         }
         .background(Color(UIColor.systemGroupedBackground))
+        .onAppear {
+            Task {
+                await viewModel.loadMeasurements()
+                updateCurrentData()
+            }
+        }
+        .onChange(of: viewModel.measurements) { _ in
+            updateCurrentData()
+        }
+        .onChange(of: currentIndex) { _ in
+            updateCurrentData()
+        }
+        .alert("删除确认", isPresented: $showingDeleteAlert) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive) {
+                deleteCurrentMeasurement()
+            }
+        } message: {
+            Text("确定要删除这条体测记录吗？此操作无法撤销。")
+        }
+        .alert("基础代谢率计算公式", isPresented: $showingBMRInfo) {
+            Button("确定", role: .cancel) { }
+        } message: {
+            Text("使用 Katch-McArdle 公式计算：\n\n1. 首先计算瘦体重（LBM）\n   LBM = 体重 × (1 - 体脂百分比 ÷ 100)\n\n2. 然后计算基础代谢率\n   BMR = 370 + (21.6 × LBM)")
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -149,6 +184,56 @@ struct BodyMeasurementDetail: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
+    }
+    
+    // MARK: - 数据管理函数
+    private func updateCurrentData() {
+        guard !viewModel.measurements.isEmpty, currentIndex < viewModel.measurements.count else {
+            return
+        }
+        
+        let current = viewModel.measurements[currentIndex]
+        let previous = currentIndex > 0 ? viewModel.measurements[currentIndex - 1] : nil
+        
+        currentData = DetailedMeasurementData(
+            current: current,
+            previous: previous,
+            userAge: 25, // TODO: 从用户信息获取
+            userGender: "male" // TODO: 从用户信息获取
+        )
+        
+        selectedDate = current.measurementDate
+    }
+    
+    private func navigateToPrevious() {
+        if currentIndex > 0 {
+            currentIndex -= 1
+        }
+    }
+    
+    private func navigateToNext() {
+        if currentIndex < viewModel.measurements.count - 1 {
+            currentIndex += 1
+        }
+    }
+    
+    private func deleteCurrentMeasurement() {
+        guard !viewModel.measurements.isEmpty, currentIndex < viewModel.measurements.count else {
+            return
+        }
+        
+        let measurementToDelete = viewModel.measurements[currentIndex]
+        
+        Task {
+            let success = await viewModel.deleteMeasurement(measurementToDelete.id)
+            if success {
+                // 调整当前索引
+                if currentIndex >= viewModel.measurements.count {
+                    currentIndex = max(0, viewModel.measurements.count - 1)
+                }
+                updateCurrentData()
+            }
+        }
     }
 }
 
@@ -190,14 +275,30 @@ struct MetricRow: View {
     let labels: [String]
     var isSimpleScale: Bool = false
     var showProgress: Bool = true
+    var showInfoButton: Bool = false
+    var onInfoTapped: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.black)
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.black)
+                    
+                    if showInfoButton {
+                        Button(action: {
+                            onInfoTapped?()
+                        }) {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 14))
+                        }
+                    }
+                }
+                
                 Spacer()
+                
                 Button(action: {}) {
                     Image(systemName: "chevron.right")
                         .foregroundColor(.gray)
@@ -259,40 +360,7 @@ struct MetricRow: View {
     }
 }
 
-// 详细测量数据模型
-struct DetailedMeasurementData {
-    let weight: Double
-    let weightChange: Double
-    let muscleMass: Double
-    let muscleMassChange: Double
-    let bodyFat: Double
-    let bodyFatChange: Double
-    let bmi: Double
-    let bmiChange: Double
-    let bodyFatPercentage: Double
-    let bodyFatPercentageChange: Double
-    let visceralFatLevel: Int
-    let visceralFatChange: Double
-    let basalMetabolicRate: Int
-    let bmrChange: Double
-    
-    static let sampleData = DetailedMeasurementData(
-        weight: 74.9,
-        weightChange: 0.0,
-        muscleMass: 37.1,
-        muscleMassChange: 0.0,
-        bodyFat: 9.8,
-        bodyFatChange: 0.0,
-        bmi: 23.6,
-        bmiChange: 0.0,
-        bodyFatPercentage: 13.1,
-        bodyFatPercentageChange: 0.0,
-        visceralFatLevel: 3,
-        visceralFatChange: 0,
-        basalMetabolicRate: 1776,
-        bmrChange: 0
-    )
-}
+
 
 #Preview {
     BodyMeasurementDetail()

@@ -5,6 +5,7 @@ from src.stronix.routes.database import database_bp
 from src.stronix.routes.AuthRoute import auth_bp
 from src.stronix.routes.PlanRoutes import plan_bp
 from src.stronix.routes.TrainingHistoryRoutes import training_history_bp
+from src.stronix.routes.BodyMeasurementRoutes import body_measurement_bp
 import os
 
 app = Flask(__name__)
@@ -18,6 +19,7 @@ app.register_blueprint(database_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(plan_bp)  # 计划蓝图已经包含了 /api/plans 前缀
 app.register_blueprint(training_history_bp)  # 训练历史蓝图已经包含了 /api/training 前缀
+app.register_blueprint(body_measurement_bp)  # 体测蓝图已经包含了 /api/body-measurements 前缀
 
 if __name__ == "__main__":
     # 禁用 Flask 的默认输出

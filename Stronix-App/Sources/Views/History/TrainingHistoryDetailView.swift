@@ -70,7 +70,8 @@ struct TrainingHistoryDetailView: View {
                     number: detail.set_number,
                     weight: Int(detail.weight ?? 0),
                     reps: detail.reps ?? 0,
-                    actualReps: detail.reps ?? 0
+                    actualReps: detail.reps ?? 0,
+                    isCompleted: detail.is_completed
                 )
             }
             
@@ -342,9 +343,11 @@ struct ExerciseCard: View {
                 
                 Spacer()
                 
-                Image(systemName: "checkmark")
-                    .font(.subheadline)
-                    .foregroundColor(.green)
+                if set.isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.subheadline)
+                        .foregroundColor(.green)
+                }
             }
             .padding(.vertical, 2)
         }

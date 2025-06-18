@@ -43,7 +43,7 @@ struct EditHistoryDetailView: View {
                         weight: set.weight,
                         reps: set.reps,
                         actualReps: set.actualReps,
-                        isCompleted: true
+                        isCompleted: set.isCompleted
                     )
                 }
             )
@@ -611,14 +611,14 @@ struct EditingExerciseCard: View {
             ExerciseDetail(
                 name: "杠铃卧推",
                 sets: [
-                    SetDetail(number: 1, weight: 60, reps: 12, actualReps: 12),
-                    SetDetail(number: 2, weight: 60, reps: 10, actualReps: 10)
+                    SetDetail(number: 1, weight: 60, reps: 12, actualReps: 12, isCompleted: true),
+                    SetDetail(number: 2, weight: 60, reps: 10, actualReps: 10, isCompleted: false)
                 ]
             )
         ]
     )
     
-    return EditHistoryDetailView(
+    EditHistoryDetailView(
         selectedDate: Date(),
         historyData: sampleData
     )

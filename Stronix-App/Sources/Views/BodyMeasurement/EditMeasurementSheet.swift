@@ -1,24 +1,38 @@
 import SwiftUI
 
-struct AddMeasurementSheet: View {
+struct EditMeasurementSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BodyMeasurementViewModel
+    let record: BodyMeasurementRecord
     
-    @State private var selectedDate = Date()
-    @State private var weight = ""
-    @State private var height = ""
-    @State private var bodyFatPercentage = ""
-    @State private var muscleMass = ""
-    @State private var visceralFatLevel = ""
+    @State private var selectedDate: Date
+    @State private var weight: String
+    @State private var height: String
+    @State private var bodyFatPercentage: String
+    @State private var muscleMass: String
+    @State private var visceralFatLevel: String
     @State private var isSaving = false
     @State private var showingDatePicker = false
+    
+    init(viewModel: BodyMeasurementViewModel, record: BodyMeasurementRecord) {
+        self.viewModel = viewModel
+        self.record = record
+        
+        // 初始化状态变量
+        self._selectedDate = State(initialValue: record.measurementDate)
+        self._weight = State(initialValue: String(format: "%.1f", record.weight_kg))
+        self._height = State(initialValue: String(format: "%.1f", record.height_cm))
+        self._bodyFatPercentage = State(initialValue: String(format: "%.1f", record.body_fat_percentage))
+        self._muscleMass = State(initialValue: String(format: "%.1f", record.skeletal_muscle_mass_kg))
+        self._visceralFatLevel = State(initialValue: String(record.visceral_fat_level))
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // 标题区域
                 VStack(spacing: 16) {
-                    Text("手动输入体测仪测试结果")
+                    Text("编辑体测记录")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.black)
                         .padding(.top, 20)
@@ -47,9 +61,9 @@ struct AddMeasurementSheet: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // 添加结果标题
+                // 编辑数据标题
                 HStack {
-                    Text("添加结果")
+                    Text("编辑数据")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.black)
                     Spacer()
@@ -60,35 +74,35 @@ struct AddMeasurementSheet: View {
                 
                 // 输入字段
                 VStack(spacing: 16) {
-                    InputField(
+                    EditInputField(
                         title: "体重",
                         value: $weight,
                         unit: "kg",
                         placeholder: "请输入体重"
                     )
                     
-                    InputField(
+                    EditInputField(
                         title: "身高",
                         value: $height,
                         unit: "cm",
                         placeholder: "请输入身高"
                     )
                     
-                    InputField(
+                    EditInputField(
                         title: "体脂百分比",
                         value: $bodyFatPercentage,
                         unit: "%",
                         placeholder: "请输入体脂百分比"
                     )
                     
-                    InputField(
+                    EditInputField(
                         title: "骨骼肌量",
                         value: $muscleMass,
                         unit: "kg",
                         placeholder: "请输入骨骼肌量"
                     )
                     
-                    InputField(
+                    EditInputField(
                         title: "内脏脂肪等级",
                         value: $visceralFatLevel,
                         unit: "Lv",
@@ -97,24 +111,12 @@ struct AddMeasurementSheet: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // 提示信息
-                VStack(spacing: 4) {
-                    Text("由于报告纸上只会显示小数点一位数，")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                    Text("所以手动输入时可能会产生微小的误差")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                }
-                .padding(.top, 20)
-                .padding(.horizontal, 20)
-                
                 Spacer()
                 
-                // 确认按钮
+                // 保存按钮
                 Button(action: {
                     Task {
-                        await saveData()
+                        await saveChanges()
                     }
                 }) {
                     HStack {
@@ -123,7 +125,7 @@ struct AddMeasurementSheet: View {
                                 .scaleEffect(0.8)
                                 .foregroundColor(.white)
                         }
-                        Text(isSaving ? "保存中..." : "确认")
+                        Text(isSaving ? "保存中..." : "保存修改")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
                     }
@@ -140,12 +142,9 @@ struct AddMeasurementSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
                         dismiss()
-                    }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.gray)
                     }
                 }
             }
@@ -199,7 +198,7 @@ struct AddMeasurementSheet: View {
         return formatter.string(from: date)
     }
     
-    private func saveData() async {
+    private func saveChanges() async {
         guard let weightValue = Double(weight),
               let heightValue = Double(height),
               let bodyFatValue = Double(bodyFatPercentage),
@@ -210,80 +209,39 @@ struct AddMeasurementSheet: View {
         
         isSaving = true
         
-        // 格式化日期为API需要的格式
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let timestampString = formatter.string(from: selectedDate)
+        // 这里需要调用更新API
+        // 暂时使用删除+添加的方式来模拟更新
+        let deleteSuccess = await viewModel.deleteMeasurement(record.id)
         
-        let request = CreateBodyMeasurementRequest(
-            user_id: AuthService.shared.currentUser?.id ?? 0,
-            measurement_timestamp: timestampString,
-            weight_kg: weightValue,
-            height_cm: heightValue,
-            body_fat_percentage: bodyFatValue,
-            skeletal_muscle_mass_kg: muscleMassValue,
-            visceral_fat_level: visceralFatValue
-        )
-        
-        let success = await viewModel.addMeasurement(request)
+        if deleteSuccess {
+            // 格式化日期为API需要的格式
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let timestampString = formatter.string(from: selectedDate)
+            
+            let request = CreateBodyMeasurementRequest(
+                user_id: AuthService.shared.currentUser?.id ?? 0,
+                measurement_timestamp: timestampString,
+                weight_kg: weightValue,
+                height_cm: heightValue,
+                body_fat_percentage: bodyFatValue,
+                skeletal_muscle_mass_kg: muscleMassValue,
+                visceral_fat_level: visceralFatValue
+            )
+            
+            let addSuccess = await viewModel.addMeasurement(request)
+            
+            if addSuccess {
+                dismiss()
+            }
+        }
         
         isSaving = false
-        
-        if success {
-            dismiss()
-        }
-        // 如果失败，错误信息会在viewModel中处理
     }
 }
 
-// 日期选择器组件
-struct DatePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var selectedDate: Date
-    @State private var tempDate: Date
-    
-    init(selectedDate: Binding<Date>) {
-        self._selectedDate = selectedDate
-        self._tempDate = State(initialValue: selectedDate.wrappedValue)
-    }
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                DatePicker(
-                    "选择日期",
-                    selection: $tempDate,
-                    in: ...Date(),
-                    displayedComponents: [.date]
-                )
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("选择测试日期")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("确定") {
-                        selectedDate = tempDate
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-    }
-}
-
-// 输入字段组件
-struct InputField: View {
+// 编辑输入字段组件
+struct EditInputField: View {
     let title: String
     @Binding var value: String
     let unit: String
@@ -321,5 +279,19 @@ struct InputField: View {
 }
 
 #Preview {
-    AddMeasurementSheet(viewModel: BodyMeasurementViewModel())
+    EditMeasurementSheet(
+        viewModel: BodyMeasurementViewModel(),
+        record: BodyMeasurementRecord(
+            id: 1,
+            user_id: 1,
+            measurement_timestamp: "2024-01-15 10:30:00",
+            weight_kg: 75.5,
+            height_cm: 175.0,
+            body_fat_percentage: 15.2,
+            skeletal_muscle_mass_kg: 35.8,
+            visceral_fat_level: 5,
+            created_at: "2024-01-15 10:30:00",
+            updated_at: "2024-01-15 10:30:00"
+        )
+    )
 } 
