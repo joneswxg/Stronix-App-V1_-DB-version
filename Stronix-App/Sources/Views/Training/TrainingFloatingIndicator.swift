@@ -76,25 +76,6 @@ struct TrainingFloatingIndicator: View {
 }
 
 #Preview {
-    ZStack {
-        Color.gray.opacity(0.1)
-            .ignoresSafeArea()
-        
-        TrainingFloatingIndicator {
-            print("返回训练页面")
-        }
-    }
-    .onAppear {
-        // 模拟训练状态
-        let manager = TrainingSessionManager.shared
-        let samplePlan = TrainingPlan(
-            id: 1,
-            name: "测试训练计划",
-            creator: "我",
-            createdDate: "2024-01-01",
-            lastTraining: "未开始",
-            volume: 0
-        )
-        manager.startTraining(with: samplePlan)
-    }
+    // 预览代码暂时注释，等待类型定义完成
+    Text("TrainingFloatingIndicator Preview")
 } 

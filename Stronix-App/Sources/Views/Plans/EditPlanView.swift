@@ -1,9 +1,10 @@
 import SwiftUI
+import UIKit
 
 struct EditPlanView: View {
     @Environment(\.dismiss) private var dismiss
     let plan: TrainingPlan
-    let onSaveSuccess: (() -> Void)?
+    let onSaveSuccess: ((TrainingPlan?) -> Void)?
     
     @State private var planName: String
     @State private var planDescription: String
@@ -21,7 +22,15 @@ struct EditPlanView: View {
     // 编辑中的动作数据
     @State private var editingActions: [EditingAction] = []
     
-    init(plan: TrainingPlan, onSaveSuccess: (() -> Void)? = nil) {
+    // 自定义键盘状态
+    @StateObject private var keyboardManager = CustomKeyboardManager()
+    
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
+    init(plan: TrainingPlan, onSaveSuccess: ((TrainingPlan?) -> Void)? = nil) {
         self.plan = plan
         self.onSaveSuccess = onSaveSuccess
         self._planName = State(initialValue: plan.name)
@@ -69,81 +78,113 @@ struct EditPlanView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // 顶部信息栏
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("训练计划总容量：\(Int(totalVolume)) kg")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("实时计算，随输入更新")
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
-                        }
-                        Spacer()
-                    }
-                    .padding(16)
-                    .background(Color.cyan.opacity(0.1))
-                    .cornerRadius(12)
-                    .padding(.horizontal, 16)
-                    
-                    // 计划名称
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("计划名称")
-                            .font(.system(size: 14, weight: .medium))
-                            .padding(.horizontal, 16)
-                        
-                        TextField("输入计划名称", text: $planName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal, 16)
-                            .disabled(isSaving)
-                    }
-                    
-                    // 计划描述
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("计划描述")
-                            .font(.system(size: 14, weight: .medium))
-                            .padding(.horizontal, 16)
-                        
-                        TextField("输入计划描述", text: $planDescription, axis: .vertical)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .lineLimit(3...6)
-                            .padding(.horizontal, 16)
-                            .disabled(isSaving)
-                    }
-                    
-                    // 训练动作标题
-                    HStack {
-                        Text("训练动作")
-                            .font(.system(size: 16, weight: .medium))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    
-                    // 训练动作列表
-                    if !editingActions.isEmpty {
-                        VStack(spacing: 12) {
-                            ForEach(editingActions, id: \.id) { action in
-                                EditingActionCardWrapper(
-                                    action: action,
-                                    editingActions: $editingActions,
-                                    onDelete: {
-                                        deleteAction(action)
-                                    },
-                                    onUpdate: { updatedAction in
-                                        updateAction(updatedAction)
-                                    },
-                                    isDisabled: isSaving
-                                )
-                                .padding(.horizontal, 16)
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // 顶部信息栏
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("训练计划总容量：\(Int(totalVolume)) kg")
+                                    .font(.system(size: 14, weight: .medium))
+                                Text("实时计算，随输入更新")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.gray)
                             }
+                            Spacer()
+                        }
+                        .padding(16)
+                        .background(Color.cyan.opacity(0.1))
+                        .cornerRadius(12)
+                        .padding(.horizontal, 16)
+                        
+                        // 计划名称
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("计划名称")
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 16)
                             
-                            // 添加动作按钮
+                            TextField("输入计划名称", text: $planName)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(.horizontal, 16)
+                                .disabled(isSaving)
+                                .onTapGesture {
+                                    // 当点击计划名称输入框时，隐藏自定义键盘
+                                    if keyboardManager.isShowing {
+                                        keyboardManager.cancelKeyboard()
+                                    }
+                                }
+                        }
+                        
+                        // 计划描述
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("计划描述")
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 16)
+                            
+                            TextField("输入计划描述", text: $planDescription, axis: .vertical)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .lineLimit(3...6)
+                                .padding(.horizontal, 16)
+                                .disabled(isSaving)
+                                .onTapGesture {
+                                    // 当点击计划描述输入框时，隐藏自定义键盘
+                                    if keyboardManager.isShowing {
+                                        keyboardManager.cancelKeyboard()
+                                    }
+                                }
+                        }
+                        
+                        // 训练动作标题
+                        HStack {
+                            Text("训练动作")
+                                .font(.system(size: 16, weight: .medium))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        // 训练动作列表
+                        if !editingActions.isEmpty {
+                            VStack(spacing: 12) {
+                                ForEach(editingActions, id: \.id) { action in
+                                    EditingActionCardWrapper(
+                                        action: action,
+                                        editingActions: $editingActions,
+                                        onDelete: {
+                                            deleteAction(action)
+                                        },
+                                        onUpdate: { updatedAction in
+                                            updateAction(updatedAction)
+                                        },
+                                        isDisabled: isSaving,
+                                        keyboardManager: keyboardManager
+                                    )
+                                    .padding(.horizontal, 16)
+                                }
+                                
+                                // 添加动作按钮
+                                Button(action: {
+                                    showActionSelect = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus.circle")
+                                        Text("添加动作")
+                                    }
+                                    .foregroundColor(.blue)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color(white: 0.97))
+                                    .cornerRadius(12)
+                                }
+                                .padding(.horizontal, 16)
+                                .disabled(isSaving)
+                            }
+                        } else {
+                            // 空状态
                             Button(action: {
                                 showActionSelect = true
                             }) {
                                 HStack {
-                                    Image(systemName: "plus.circle")
+                                    Image(systemName: "plus.circle.fill")
                                     Text("添加动作")
                                 }
                                 .foregroundColor(.blue)
@@ -155,31 +196,45 @@ struct EditPlanView: View {
                             .padding(.horizontal, 16)
                             .disabled(isSaving)
                         }
-                    } else {
-                        // 空状态
-                        Button(action: {
-                            showActionSelect = true
-                        }) {
-                            HStack {
-                                Image(systemName: "plus.circle.fill")
-                                Text("添加动作")
-                            }
-                            .foregroundColor(.blue)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color(white: 0.97))
-                            .cornerRadius(12)
+                        
+                        // 底部间距
+                        Spacer(minLength: 50)
+                        
+                        // 为键盘预留空间
+                        if keyboardManager.isShowing {
+                            Spacer()
+                                .frame(height: 280)
                         }
-                        .padding(.horizontal, 16)
-                        .disabled(isSaving)
                     }
-                    
-                    // 底部间距
-                    Spacer(minLength: 50)
+                    .padding(.top, 20)
                 }
-                .padding(.top, 20)
+                .background(Color(UIColor.systemGroupedBackground))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // 点击空白区域隐藏键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
+                        hideSystemKeyboard()
+                    }
+                }
+                
+                // 自定义键盘
+                if keyboardManager.isShowing {
+                    CustomNumberKeyboard(
+                        value: $keyboardManager.currentValue,
+                        isShowing: $keyboardManager.isShowing,
+                        step: keyboardManager.step,
+                        maxValue: keyboardManager.maxValue,
+                        isInteger: keyboardManager.isInteger,
+                        keyboardManager: keyboardManager
+                    )
+                    .onChange(of: keyboardManager.isShowing) { _, isShowing in
+                        if !isShowing {
+                            hideSystemKeyboard()
+                        }
+                    }
+                }
             }
-            .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("编辑训练计划")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(content: {
@@ -213,9 +268,12 @@ struct EditPlanView: View {
                 }
             })
             .sheet(isPresented: $showActionSelect) {
-                PlanActionSelectView { selectedAction in
-                    addAction(selectedAction)
-                }
+                PlanActionSelectView(
+                    onActionSelected: { selectedAction in
+                        addAction(selectedAction)
+                    },
+                    existingActionIds: Set(editingActions.map { $0.actionId })
+                )
             }
             .overlay(
                 // 简化的Toast提示
@@ -272,13 +330,16 @@ struct EditPlanView: View {
     }
     
     private func savePlan() async {
-        print("🔄 EditPlanView.savePlan() 开始")
-        print("🔄 EditPlanView.savePlan() 当前登录状态: \(AuthService.shared.isLoggedIn)")
-        print("🔄 EditPlanView.savePlan() 当前用户: \(AuthService.shared.currentUser?.username ?? "无")")
-        print("🔄 EditPlanView.savePlan() Token存在: \(AuthService.shared.getAuthToken() != nil)")
+        // 防止重复调用
+        guard !isSaving else {
+            print("⚠️ EditPlanView.savePlan() 正在保存中，跳过重复调用")
+            return
+        }
         
-        // 移除认证检查，让API调用自己处理
-        // 这样可以避免在token实际有效时被误判为无效
+        print("🔄 EditPlanView.savePlan() 开始")
+        print("🔄 EditPlanView.savePlan() 当前登录状态: \(LocalUserService.shared.isLoggedIn)")
+        print("🔄 EditPlanView.savePlan() 当前用户: \(LocalUserService.shared.currentUser?.username ?? "无")")
+        print("🔄 EditPlanView.savePlan() 当前用户ID: \(LocalUserService.shared.currentUser?.id ?? 0)")
         
         isSaving = true
         preventDismiss = true // 防止在保存过程中意外关闭
@@ -286,19 +347,19 @@ struct EditPlanView: View {
         let updateActions = editingActions.enumerated().map { index, action in
             UpdatePlanAction(
                 action_id: action.actionId,
+                order: index + 1,
                 rest: action.restTime,
-                note: action.note,
+                note: action.note.isEmpty ? nil : action.note,
                 record_bilateral: action.recordBilateral,
                 sets: action.sets.enumerated().map { setIndex, set in
                     UpdatePlanSet(
+                        order: setIndex + 1,
                         weight: action.recordBilateral ? nil : set.weight,
                         reps: set.reps,
                         left_weight: action.recordBilateral ? set.leftWeight : 0.0,
-                        right_weight: action.recordBilateral ? set.rightWeight : 0.0,
-                        order: setIndex + 1
+                        right_weight: action.recordBilateral ? set.rightWeight : 0.0
                     )
-                },
-                order: index + 1
+                }
             )
         }
 
@@ -313,7 +374,28 @@ struct EditPlanView: View {
                 actions: updateActions
             )
             
-            try await PlanService.shared.updatePlan(planId: plan.id, planData: request)
+            print("🔄 EditPlanView.savePlan() 请求数据:")
+            print("  - 计划ID: \(plan.id)")
+            print("  - 计划名称: \(planName)")
+            print("  - 计划描述: \(planDescription)")
+            print("  - 计划难度: \(plan.difficulty ?? "无")")
+            print("  - 动作数量: \(updateActions.count)")
+            
+            for (index, action) in updateActions.enumerated() {
+                print("  - 动作\(index + 1): action_id=\(action.action_id), order=\(action.order), 组数=\(action.sets.count)")
+                print("    休息时间: \(action.rest)秒, 双侧训练: \(action.record_bilateral)")
+                for (setIndex, set) in action.sets.enumerated() {
+                    if action.record_bilateral {
+                        print("    组\(setIndex + 1): 左\(set.left_weight ?? 0)kg, 右\(set.right_weight ?? 0)kg, \(set.reps)次")
+                    } else {
+                        print("    组\(setIndex + 1): \(set.weight ?? 0)kg, \(set.reps)次")
+                    }
+                }
+            }
+            
+            // 获取当前用户ID
+            let currentUserId = LocalUserService.shared.currentUser?.id ?? 0
+            try await LocalPlanService.shared.updatePlan(planId: plan.id, planData: request, user_id: currentUserId)
             
             print("🔄 EditPlanView.savePlan() API调用成功")
             isSaving = false
@@ -369,7 +451,7 @@ struct EditPlanView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     showToast = false
                     // 调用回调，让父视图处理关闭和后续逻辑
-                    onSaveSuccess?()
+                    onSaveSuccess?(savedPlan)
                     // 注意：此处不再直接 dismiss() 或 showPlanDetail = true，
                     // 这些逻辑将由调用方（PlanListView）在 onSaveSuccess 中处理
                 }
@@ -378,9 +460,9 @@ struct EditPlanView: View {
         } catch {
             print("🔄 EditPlanView.savePlan() 保存失败: \(error.localizedDescription)")
             print("🔄 EditPlanView.savePlan() 错误类型: \(type(of: error))")
-            if let apiError = error as? APIError {
-                print("🔄 EditPlanView.savePlan() API错误: \(apiError)")
-                if case .unauthorized = apiError {
+            if let localError = error as? LocalPlanError {
+                print("🔄 EditPlanView.savePlan() Local错误: \(localError)")
+                if case .unauthorized = localError {
                     print("🔄 EditPlanView.savePlan() 认证失败")
                     await MainActor.run {
                         toastMessage = "登录已过期，请重新登录后再保存"
@@ -389,7 +471,7 @@ struct EditPlanView: View {
                     }
                 } else {
                     await MainActor.run {
-                        toastMessage = "保存失败: \(apiError.localizedDescription)"
+                        toastMessage = "保存失败: \(localError.message)"
                         showToast = true
                         preventDismiss = false
                     }
@@ -437,6 +519,7 @@ struct EditingActionCardWrapper: View {
     let onDelete: () -> Void
     let onUpdate: (EditingAction) -> Void
     let isDisabled: Bool
+    let keyboardManager: CustomKeyboardManager
     
     private var actionBinding: Binding<EditingAction> {
         Binding(
@@ -456,7 +539,8 @@ struct EditingActionCardWrapper: View {
             action: actionBinding,
             onDelete: onDelete,
             onUpdate: onUpdate,
-            isDisabled: isDisabled
+            isDisabled: isDisabled,
+            keyboardManager: keyboardManager
         )
     }
 }
@@ -468,6 +552,7 @@ struct EditingActionCard: View {
     let onDelete: () -> Void
     let onUpdate: (EditingAction) -> Void
     let isDisabled: Bool
+    let keyboardManager: CustomKeyboardManager
     
     @State private var showDeleteAlert = false
     @State private var showRestTimer = false
@@ -543,18 +628,20 @@ struct EditingActionCard: View {
     private var actionHeader: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                // 动作图片 - 从服务器加载静态图片
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(extractImageFileName(from: action.imageUrl))")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .foregroundColor(.gray)
-                        )
+                // 动作图片 - 从本地bundle加载
+                Group {
+                    if let uiImage = loadLocalActionImage(fileName: extractImageFileName(from: action.imageUrl)) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .overlay(
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
                 .frame(width: 50, height: 50)
                 .background(Color.gray.opacity(0.1))
@@ -739,6 +826,11 @@ struct EditingActionCard: View {
         }
     }
     
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
     // MARK: - 单组行
     private func setRow(index: Int) -> some View {
         // 边界检查，确保索引有效
@@ -755,76 +847,128 @@ struct EditingActionCard: View {
                 
                 if action.recordBilateral {
                     // 左侧重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].leftWeight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "left_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].leftWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].leftWeight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].leftWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].leftWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                     .disabled(isDisabled)
                     
                     // 右侧重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].rightWeight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "right_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].rightWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].rightWeight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].rightWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].rightWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                     .disabled(isDisabled)
                 } else {
                     // 普通重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].weight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].weight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].weight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].weight == 0 ? "0" : String(format: "%.1f", action.sets[index].weight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                     .disabled(isDisabled)
                 }
                 
                 // 次数输入
-                TextField("0", value: Binding(
-                    get: { 
-                        guard index < action.sets.count else { return 0 }
-                        return action.sets[index].reps 
-                    },
-                    set: { newValue in
-                        guard index < action.sets.count else { return }
-                        action.sets[index].reps = newValue
+                Button(action: {
+                    hideSystemKeyboard()
+                    let inputId = "reps_\(action.id)_\(index)"
+                    keyboardManager.showKeyboard(
+                        inputId: inputId,
+                        initialValue: Double(action.sets[index].reps),
+                        isInteger: true,
+                        step: 1.0,
+                        maxValue: 999.0
+                    ) { newValue in
+                        action.sets[index].reps = Int(newValue)
                         onUpdate(action)
                     }
-                ), format: .number)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.numberPad)
-                .frame(width: 40)
-                .multilineTextAlignment(.center)
+                }) {
+                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(index)"
+                    let isSelected = isActive && keyboardManager.isValueSelected
+                    
+                    Text("\(action.sets[index].reps)")
+                        .font(.system(size: 14))
+                        .foregroundColor(isSelected ? .white : .black)
+                        .frame(width: 40, height: 32)
+                        .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
+                }
                 .disabled(isDisabled)
                 
                 Spacer()
@@ -856,27 +1000,8 @@ struct EditingActionCard: View {
 }
 
 #Preview {
-    let samplePlan = TrainingPlan(
-        id: 1,
-        name: "测试计划",
-        creator: "我",
-        createdDate: "2024-01-01",
-        lastTraining: "未开始",
-        volume: 0,
-        actions: [
-            TrainingAction(
-                id: 1,
-                name: "深蹲",
-                sets: [
-                    TrainingSet(id: 101, weight: 60, reps: 5),
-                    TrainingSet(id: 102, weight: 70, reps: 5)
-                ],
-                restTime: 60,
-                recordBilateral: false
-            )
-        ]
-    )
-    return EditPlanView(plan: samplePlan)
+    // 预览代码暂时注释，等待类型定义完成
+    Text("EditPlanView Preview")
 }
 
 // MARK: - 辅助函数
@@ -884,6 +1009,29 @@ private func extractImageFileName(from fullPath: String) -> String {
     // 从完整路径中提取文件名
     // 例如: "backend/static/images/actions/exercise_1.gif" -> "exercise_1.gif"
     return URL(fileURLWithPath: fullPath).lastPathComponent
+}
+
+/// 从本地bundle加载动作图片
+private func loadLocalActionImage(fileName: String) -> UIImage? {
+    // 构建图片路径（根据实际的Resources结构）
+    let imageName = fileName.replacingOccurrences(of: ".gif", with: "")
+    
+    // 尝试不同方式加载
+    if let url = Bundle.main.url(forResource: "Images/\(imageName)", withExtension: "gif"),
+       let data = try? Data(contentsOf: url),
+       let image = UIImage(data: data) {
+        return image
+    }
+    
+    // 备用方式：直接从bundle根目录查找
+    if let url = Bundle.main.url(forResource: imageName, withExtension: "gif"),
+       let data = try? Data(contentsOf: url),
+       let image = UIImage(data: data) {
+        return image
+    }
+    
+    print("⚠️ 无法加载图片: \(fileName)")
+    return nil
 }
 
  

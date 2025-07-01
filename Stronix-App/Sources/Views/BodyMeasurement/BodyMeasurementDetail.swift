@@ -202,7 +202,7 @@ struct BodyMeasurementDetail: View {
             userGender: "male" // TODO: 从用户信息获取
         )
         
-        selectedDate = current.measurementDate
+        selectedDate = current.measurementTimestamp
     }
     
     private func navigateToPrevious() {

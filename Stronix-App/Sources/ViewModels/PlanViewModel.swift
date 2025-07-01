@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
 
+// 确保模型类型可用
+// TrainingPlan等类型应该在同一模块中可见
+
 extension Date {
     func ISO8601String() -> String {
         let formatter = ISO8601DateFormatter()
@@ -19,7 +22,7 @@ class PlanViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError = false
     
-    private let planService = PlanService.shared
+    private let planService = LocalPlanService.shared
     
     init() {
         loadData()
@@ -136,10 +139,15 @@ class PlanViewModel: ObservableObject {
         isLoadingPlanDetail = false
     }
     
+    // MARK: - 辅助方法
+    private func getCurrentUserId() -> Int {
+        return LocalUserService.shared.currentUser?.id ?? 0
+    }
+    
     // MARK: - 计划操作
     func copyTemplatePlan(_ templatePlan: TrainingPlan) async {
         do {
-            let response = try await planService.copyTemplatePlan(templateId: templatePlan.id)
+            let response = try await planService.copyTemplatePlan(templateId: templatePlan.id, user_id: getCurrentUserId())
             print("复制计划成功，新计划ID: \(response.plan_id)")
             
             // 创建新的计划对象并添加到本地数组，避免API调用
@@ -173,7 +181,7 @@ class PlanViewModel: ObservableObject {
     // MARK: - 删除计划
     func deletePlan(_ plan: TrainingPlan) async {
         do {
-            try await planService.deletePlan(planId: plan.id)
+            try await planService.deletePlan(planId: plan.id, user_id: getCurrentUserId())
             
             // 直接从本地数组中移除，避免API调用
             personalPlans.removeAll { $0.id == plan.id }
@@ -198,7 +206,7 @@ class PlanViewModel: ObservableObject {
                 actions: actions
             )
             
-            try await planService.updatePlan(planId: planId, planData: request)
+            try await planService.updatePlan(planId: planId, planData: request, user_id: getCurrentUserId())
             
             // 使用轻量级刷新，减少API调用
             await refreshPersonalPlansOnly()
@@ -221,21 +229,15 @@ class PlanViewModel: ObservableObject {
             actions: actions
         )
         
-        try await planService.updatePlan(planId: planId, planData: request)
+        try await planService.updatePlan(planId: planId, planData: request, user_id: getCurrentUserId())
     }
     
     // MARK: - 错误处理
     private func handleError(_ error: Error, context: String) {
         print("[\(context)] 错误: \(error.localizedDescription)")
         
-        if let apiError = error as? APIError {
-            switch apiError {
-            case .unauthorized:
-                errorMessage = "登录已过期，请重新登录"
-                // 不自动登出，让用户选择
-            default:
-                errorMessage = "\(context)失败: \(apiError.localizedDescription)"
-            }
+        if let localError = error as? LocalPlanError {
+            errorMessage = "\(context)失败: \(localError.message)"
         } else {
             errorMessage = "\(context)失败: \(error.localizedDescription)"
         }
@@ -257,7 +259,16 @@ class PlanViewModel: ObservableObject {
         }
     }
     
-    // 轻量级刷新：只刷新个人计划列表，不获取详情
+    // 强制刷新：确保UI更新
+    @MainActor
+    func forceRefresh() {
+        print("🔄 PlanViewModel.forceRefresh() 被调用")
+        Task {
+            await refreshPersonalPlansOnly()
+        }
+    }
+    
+    // 轻量级刷新：重新加载个人计划列表，包含完整的动作数据以确保容量计算正确
     func refreshPersonalPlansOnly() async {
         print("🔄 PlanViewModel.refreshPersonalPlansOnly() 开始")
         isLoadingPersonal = true
@@ -266,27 +277,43 @@ class PlanViewModel: ObservableObject {
         do {
             let plans = try await planService.getPersonalPlans()
             
-            // 简化版本：不为每个计划加载详情，减少API调用
-            let simplifiedPlans = plans.map { plan in
-                TrainingPlan(
-                    id: plan.id,
-                    name: plan.name,
-                    creator: plan.creator,
-                    createdDate: plan.createdDate,
-                    lastTraining: plan.lastTraining,
-                    volume: plan.volume, // 使用原始容量
-                    description: plan.description,
-                    isTemplate: plan.isTemplate,
-                    templateId: plan.templateId,
-                    difficulty: plan.difficulty,
-                    duration: plan.duration,
-                    actions: plan.actions // 使用原始动作数据
-                )
+            // 为每个计划加载详情以获取最新的动作信息和正确的容量计算
+            var enrichedPlans: [TrainingPlan] = []
+            for plan in plans {
+                do {
+                    let detailedPlan = try await planService.getPlanDetail(planId: plan.id)
+                    
+                    // 创建包含最新动作数据的计划对象
+                    let enrichedPlan = TrainingPlan(
+                        id: plan.id,
+                        name: plan.name,
+                        creator: plan.creator,
+                        createdDate: plan.createdDate,
+                        lastTraining: plan.lastTraining,
+                        volume: detailedPlan.calculatedVolume, // 使用计算后的容量
+                        description: plan.description,
+                        isTemplate: plan.isTemplate,
+                        templateId: plan.templateId,
+                        difficulty: plan.difficulty,
+                        duration: plan.duration,
+                        actions: detailedPlan.actions // 保留所有动作数据用于容量计算
+                    )
+                    
+                    enrichedPlans.append(enrichedPlan)
+                    
+                    // 打印详细信息用于调试
+                    let actionsInfo = detailedPlan.actions?.prefix(2).map { "\($0.name) x \($0.totalSets)" }.joined(separator: ", ") ?? "无动作"
+                    print("🔍 刷新后计划: \(plan.name), 容量: \(enrichedPlan.calculatedVolume)kg, 动作: \(actionsInfo)")
+                } catch {
+                    // 如果获取详情失败，使用原始计划
+                    enrichedPlans.append(plan)
+                    print("⚠️ 获取计划详情失败，使用原始数据: \(plan.name)")
+                }
             }
             
-            personalPlans = simplifiedPlans
-            print("🔄 PlanViewModel.refreshPersonalPlansOnly() 完成，加载了 \(simplifiedPlans.count) 个个人计划。")
-            print("🔄 PlanViewModel.refreshPersonalPlansOnly() 实际个人计划数据: \(personalPlans.map { "\($0.name) (ID: \($0.id), isTemplate: \($0.isTemplate))" })")
+            personalPlans = enrichedPlans
+            print("🔄 PlanViewModel.refreshPersonalPlansOnly() 完成，加载了 \(enrichedPlans.count) 个个人计划")
+            
         } catch {
             handleError(error, context: "刷新个人计划")
         }

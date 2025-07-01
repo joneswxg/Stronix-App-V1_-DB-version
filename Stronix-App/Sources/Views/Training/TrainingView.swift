@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - 可变的训练数据模型已移动到 MutableTrainingModels.swift
 
@@ -31,25 +32,64 @@ struct TrainingView: View {
     // 计划是否有变动
     @State private var planHasChanges = false
     
+    // 自定义键盘状态
+    @StateObject private var keyboardManager = CustomKeyboardManager()
+    
     init(plan: TrainingPlan, viewModel: PlanViewModel) {
         self.plan = plan
         self.viewModel = viewModel
     }
     
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
     var body: some View {
-        VStack(spacing: 16) {
-            topInfoBar
-            planNameSection
-            totalTimerSection
-            actionListHeader
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 8) {
+                topInfoBar
+                planNameSection
 
-            if !trainingManager.editingActions.isEmpty {
-                actionListContent
-            } else {
-                emptyActionListContent
+                if !trainingManager.editingActions.isEmpty {
+                    actionListContent
+                } else {
+                    emptyActionListContent
+                }
+                
+                // 为键盘预留空间
+                if keyboardManager.isShowing {
+                    Spacer()
+                        .frame(height: 220)
+                }
             }
+            .padding(.top, 8)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // 点击空白区域隐藏键盘
+                if keyboardManager.isShowing {
+                    keyboardManager.cancelKeyboard()
+                    hideSystemKeyboard()
+                }
+            }
+            
+                // 自定义键盘
+                if keyboardManager.isShowing {
+                    CustomNumberKeyboard(
+                        value: $keyboardManager.currentValue,
+                        isShowing: $keyboardManager.isShowing,
+                        step: keyboardManager.step,
+                        maxValue: keyboardManager.maxValue,
+                        isInteger: keyboardManager.isInteger,
+                        keyboardManager: keyboardManager
+                    )
+                    .onChange(of: keyboardManager.isShowing) { _, isShowing in
+                        if !isShowing {
+                            hideSystemKeyboard()
+                        }
+                    }
+                }
         }
-        .padding(.top, 16)
         .navigationTitle("训练中")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -365,63 +405,39 @@ struct TrainingView: View {
     // MARK: - 视图拆分
     private var topInfoBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("训练容量：\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg")
-                    .font(.system(size: 14, weight: .medium))
-                Text("实时更新，随训练进度变化")
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
-            }
+            Text("\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg")
+                .font(.system(size: 14, weight: .medium))
+            
             Spacer()
+            
+            Text(trainingManager.formattedTrainingTime())
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.blue)
         }
-        .padding(16)
-        .background(Color.cyan.opacity(0.1))
-        .cornerRadius(12)
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(8)
         .padding(.horizontal, 16)
     }
 
     private var planNameSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("训练计划")
-                .font(.system(size: 14, weight: .medium))
-                .padding(.horizontal, 16)
-
-            Text(trainingManager.planName)
-                .font(.system(size: 18, weight: .medium))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                .padding(.horizontal, 16)
-        }
-    }
-
-    private var totalTimerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("训练时长")
-                .font(.system(size: 14, weight: .medium))
-                .padding(.horizontal, 16)
-
-            Text(trainingManager.formattedTrainingTime())
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.blue)
-                .padding(.horizontal, 16)
-        }
-    }
-
-    private var actionListHeader: some View {
         HStack {
-            Text("训练动作")
-                .font(.system(size: 16, weight: .medium))
+            Text(trainingManager.planName)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
+            
             Spacer()
         }
         .padding(.horizontal, 16)
     }
 
+
+
+
+
     private var actionListContent: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 ForEach(Array(trainingManager.editingActions.enumerated()), id: \.element.id) { index, action in
                     let canDeleteAction = trainingManager.editingActions.count > 1
 
@@ -446,7 +462,8 @@ struct TrainingView: View {
                         onRestTimerTapped: { setId, restTime in
                             handleRestTimerTapped(setId: setId, restTime: restTime)
                         },
-                        canDelete: canDeleteAction
+                        canDelete: canDeleteAction,
+                        keyboardManager: keyboardManager
                     )
                     .padding(.horizontal, 16)
                 }
@@ -466,7 +483,7 @@ struct TrainingView: View {
                 }
                 .padding(.horizontal, 16)
 
-                Spacer(minLength: 20)
+                Spacer(minLength: 10)
             }
         }
     }
@@ -566,6 +583,7 @@ struct TrainingActionCardWrapper: View {
     let onSetCompleted: (String, Int) -> Void
     let onRestTimerTapped: (String, Int) -> Void
     let canDelete: Bool
+    let keyboardManager: CustomKeyboardManager
     
     private var actionBinding: Binding<MutableTrainingAction> {
         Binding(
@@ -591,7 +609,8 @@ struct TrainingActionCardWrapper: View {
             onUpdate: onUpdate,
             onSetCompleted: onSetCompleted,
             onRestTimerTapped: onRestTimerTapped,
-            canDelete: canDelete
+            canDelete: canDelete,
+            keyboardManager: keyboardManager
         )
     }
 }
@@ -609,6 +628,7 @@ struct TrainingActionCard: View {
     let onSetCompleted: (String, Int) -> Void
     let onRestTimerTapped: (String, Int) -> Void
     let canDelete: Bool
+    let keyboardManager: CustomKeyboardManager
     
     @State private var showDeleteAlert = false
     @State private var showRestTimer = false
@@ -688,15 +708,20 @@ struct TrainingActionCard: View {
     private var actionHeader: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                // 动作图片
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(extractImageFilename(from: action.imageUrl))")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.system(size: 20))
-                        .foregroundColor(.gray)
+                // 动作图片 - 使用本地图片加载
+                Group {
+                    if let image = loadLocalActionImage(fileName: extractImageFilename(from: action.imageUrl)) {
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .overlay(
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
                 .frame(width: 50, height: 50)
                 .background(Color.gray.opacity(0.1))
@@ -908,77 +933,125 @@ struct TrainingActionCard: View {
                 
                 if action.recordBilateral {
                     // 左侧重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].leftWeight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "left_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].leftWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].leftWeight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(isCompleted ? .blue : .primary)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].leftWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].leftWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : (isCompleted ? .blue : .black))
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                     
                     // 右侧重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].rightWeight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "right_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].rightWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].rightWeight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(isCompleted ? .blue : .primary)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].rightWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].rightWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : (isCompleted ? .blue : .black))
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                 } else {
                     // 普通重量
-                    TextField("0", value: Binding(
-                        get: { 
-                            guard index < action.sets.count else { return 0.0 }
-                            return action.sets[index].weight 
-                        },
-                        set: { newValue in
-                            guard index < action.sets.count else { return }
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].weight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
                             action.sets[index].weight = newValue
                             onUpdate(action)
                         }
-                    ), format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(isCompleted ? .blue : .primary)
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].weight == 0 ? "0" : String(format: "%.1f", action.sets[index].weight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : (isCompleted ? .blue : .black))
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
                 }
                 
                 // 次数输入
-                TextField("0", value: Binding(
-                    get: { 
-                        guard index < action.sets.count else { return 0 }
-                        return action.sets[index].reps 
-                    },
-                    set: { newValue in
-                        guard index < action.sets.count else { return }
-                        action.sets[index].reps = newValue
+                Button(action: {
+                    hideSystemKeyboard()
+                    let inputId = "reps_\(action.id)_\(index)"
+                    keyboardManager.showKeyboard(
+                        inputId: inputId,
+                        initialValue: Double(action.sets[index].reps),
+                        isInteger: true,
+                        step: 1.0,
+                        maxValue: 999.0
+                    ) { newValue in
+                        action.sets[index].reps = Int(newValue)
                         onUpdate(action)
                     }
-                ), format: .number)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.numberPad)
-                .frame(width: 40)
-                .multilineTextAlignment(.center)
-                .foregroundColor(isCompleted ? .blue : .primary)
+                }) {
+                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(index)"
+                    let isSelected = isActive && keyboardManager.isValueSelected
+                    
+                    Text("\(action.sets[index].reps)")
+                        .font(.system(size: 14))
+                        .foregroundColor(isSelected ? .white : (isCompleted ? .blue : .black))
+                        .frame(width: 40, height: 32)
+                        .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
+                }
                 
                 // 打勾框
                 Button(action: {
@@ -1075,11 +1148,43 @@ struct TrainingActionCard: View {
         }
     }
     
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
     // 提取图片文件名的辅助函数
     private func extractImageFilename(from imageUrl: String) -> String {
         // 从完整路径中提取文件名
         // 例如：从 "backend/static/images/actions/exercise_1.gif" 提取 "exercise_1.gif"
         return URL(string: imageUrl)?.lastPathComponent ?? "exercise_1.gif"
+    }
+    
+    /// 从本地bundle加载动作图片
+    private func loadLocalActionImage(fileName: String) -> Image? {
+        // 尝试从不同的bundle路径加载图片
+        let possiblePaths = [
+            "Images/\(fileName)",
+            "Media/Actions/\(fileName)",
+            fileName
+        ]
+        
+        for path in possiblePaths {
+            if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
+               let data = try? Data(contentsOf: url),
+               let uiImage = UIImage(data: data) {
+                return Image(uiImage: uiImage)
+            }
+            
+            // 也尝试不去除扩展名的方式
+            if let url = Bundle.main.url(forResource: path, withExtension: nil),
+               let data = try? Data(contentsOf: url),
+               let uiImage = UIImage(data: data) {
+                return Image(uiImage: uiImage)
+            }
+        }
+        
+        return nil
     }
 }
 
@@ -1226,26 +1331,6 @@ struct RestTimerOverlay: View {
 }
 
 #Preview {
-    let samplePlan = TrainingPlan(
-        id: 1,
-        name: "测试训练计划",
-        creator: "我",
-        createdDate: "2024-01-01",
-        lastTraining: "未开始",
-        volume: 0,
-        actions: [
-            TrainingAction(
-                id: 1,
-                name: "深蹲",
-                sets: [
-                    TrainingSet(id: 101, weight: 60, reps: 5),
-                    TrainingSet(id: 102, weight: 70, reps: 5)
-                ],
-                restTime: 60,
-                recordBilateral: false
-            )
-        ]
-    )
-    let viewModel = PlanViewModel()
-    TrainingView(plan: samplePlan, viewModel: viewModel)
+    // 预览代码暂时注释，等待类型定义完成
+    Text("TrainingView Preview")
 } 

@@ -3,7 +3,7 @@ import SwiftUI
 struct EditMeasurementSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BodyMeasurementViewModel
-    let record: BodyMeasurementRecord
+    let record: BodyMeasurement
     
     @State private var selectedDate: Date
     @State private var weight: String
@@ -14,17 +14,17 @@ struct EditMeasurementSheet: View {
     @State private var isSaving = false
     @State private var showingDatePicker = false
     
-    init(viewModel: BodyMeasurementViewModel, record: BodyMeasurementRecord) {
+    init(viewModel: BodyMeasurementViewModel, record: BodyMeasurement) {
         self.viewModel = viewModel
         self.record = record
         
         // 初始化状态变量
-        self._selectedDate = State(initialValue: record.measurementDate)
-        self._weight = State(initialValue: String(format: "%.1f", record.weight_kg))
-        self._height = State(initialValue: String(format: "%.1f", record.height_cm))
-        self._bodyFatPercentage = State(initialValue: String(format: "%.1f", record.body_fat_percentage))
-        self._muscleMass = State(initialValue: String(format: "%.1f", record.skeletal_muscle_mass_kg))
-        self._visceralFatLevel = State(initialValue: String(record.visceral_fat_level))
+        self._selectedDate = State(initialValue: record.measurementTimestamp)
+        self._weight = State(initialValue: String(format: "%.1f", record.weightKg))
+        self._height = State(initialValue: String(format: "%.1f", record.heightCm))
+        self._bodyFatPercentage = State(initialValue: String(format: "%.1f", record.bodyFatPercentage))
+        self._muscleMass = State(initialValue: String(format: "%.1f", record.skeletalMuscleMassKg))
+        self._visceralFatLevel = State(initialValue: String(record.visceralFatLevel))
     }
     
     var body: some View {
@@ -214,19 +214,14 @@ struct EditMeasurementSheet: View {
         let deleteSuccess = await viewModel.deleteMeasurement(record.id)
         
         if deleteSuccess {
-            // 格式化日期为API需要的格式
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let timestampString = formatter.string(from: selectedDate)
-            
-            let request = CreateBodyMeasurementRequest(
-                user_id: AuthService.shared.currentUser?.id ?? 0,
-                measurement_timestamp: timestampString,
-                weight_kg: weightValue,
-                height_cm: heightValue,
-                body_fat_percentage: bodyFatValue,
-                skeletal_muscle_mass_kg: muscleMassValue,
-                visceral_fat_level: visceralFatValue
+                                    let request = CreateBodyMeasurementRequest(
+                userId: LocalUserService.shared.currentUser?.id ?? 0,
+                measurementTimestamp: selectedDate,
+                weightKg: weightValue,
+                heightCm: heightValue,
+                bodyFatPercentage: bodyFatValue,
+                skeletalMuscleMassKg: muscleMassValue,
+                visceralFatLevel: visceralFatValue
             )
             
             let addSuccess = await viewModel.addMeasurement(request)
@@ -281,17 +276,17 @@ struct EditInputField: View {
 #Preview {
     EditMeasurementSheet(
         viewModel: BodyMeasurementViewModel(),
-        record: BodyMeasurementRecord(
+        record: BodyMeasurement(
             id: 1,
-            user_id: 1,
-            measurement_timestamp: "2024-01-15 10:30:00",
-            weight_kg: 75.5,
-            height_cm: 175.0,
-            body_fat_percentage: 15.2,
-            skeletal_muscle_mass_kg: 35.8,
-            visceral_fat_level: 5,
-            created_at: "2024-01-15 10:30:00",
-            updated_at: "2024-01-15 10:30:00"
+            userId: 1,
+            measurementTimestamp: Date(),
+            weightKg: 75.5,
+            heightCm: 175.0,
+            bodyFatPercentage: 15.2,
+            skeletalMuscleMassKg: 35.8,
+            visceralFatLevel: 5,
+            createdAt: Date(),
+            updatedAt: Date()
         )
     )
 } 

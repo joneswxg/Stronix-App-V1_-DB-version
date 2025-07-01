@@ -1,447 +1,52 @@
 import Foundation
 
-/// 训练历史服务类
+/// 训练历史服务类（已迁移到本地数据库）
+/// 保持原有接口，内部调用LocalTrainingHistoryService
 class TrainingHistoryService: ObservableObject {
     static let shared = TrainingHistoryService()
     
-    private let baseURL = "http://127.0.0.1:6000/api"
+    private let localService = LocalTrainingHistoryService.shared
     
     private init() {}
     
-    /// 获取认证token
-    private func getAuthToken() -> String? {
-        return AuthService.shared.getAuthToken()
-    }
-    
-    /// 保存训练历史
+    /// 保存训练历史（本地化）
     func saveTrainingHistory(_ request: SaveTrainingHistoryRequest) async throws -> SaveTrainingHistoryResponse {
-        print("🔄 开始保存训练历史...")
-        print("📊 训练数据: 计划=\(request.plan_name), 容量=\(request.volume)kg, 时长=\(request.duration)秒")
-        print("📝 详情数量: \(request.details.count)组")
-        
-        let url = URL(string: "\(baseURL)/training/history")!
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "POST"
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let jsonData = try JSONEncoder().encode(request)
-        urlRequest.httpBody = jsonData
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(TrainingHistoryAPIResponse.self, from: data)
-            if let historyData = result.data {
-                print("✅ 训练历史保存成功，历史ID: \(historyData.history_id)")
-                return historyData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 保存训练历史失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.saveTrainingHistory(request)
     }
     
-    /// 从训练更新计划
+    /// 从训练更新计划（本地化）
     func updatePlanFromTraining(planId: Int, request: UpdatePlanFromTrainingRequest) async throws {
-        print("🔄 开始更新训练计划...")
-        print("📋 计划ID: \(planId)")
-        print("📝 计划名称: \(request.name)")
-        print("🏃‍♂️ 动作数量: \(request.actions.count)")
-        
-        let url = URL(string: "\(baseURL)/training/plans/\(planId)/update-from-training")!
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "PUT"
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let jsonData = try JSONEncoder().encode(request)
-        urlRequest.httpBody = jsonData
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            print("✅ 训练计划更新成功")
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 更新训练计划失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        try await localService.updatePlanFromTraining(planId: planId, request: request)
     }
     
-    /// 获取训练历史列表
+    /// 获取训练历史列表（本地化）
     func getTrainingHistory(page: Int = 1, limit: Int = 20, planId: Int? = nil, startDate: String? = nil, endDate: String? = nil) async throws -> TrainingHistoryListResponse {
-        print("🔄 获取训练历史列表...")
-        
-        var urlComponents = URLComponents(string: "\(baseURL)/training/history")!
-        var queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "limit", value: "\(limit)")
-        ]
-        
-        if let planId = planId {
-            queryItems.append(URLQueryItem(name: "plan_id", value: "\(planId)"))
-        }
-        
-        if let startDate = startDate {
-            queryItems.append(URLQueryItem(name: "start_date", value: startDate))
-        }
-        
-        if let endDate = endDate {
-            queryItems.append(URLQueryItem(name: "end_date", value: endDate))
-        }
-        
-        urlComponents.queryItems = queryItems
-        
-        guard let url = urlComponents.url else {
-            throw NetworkError.invalidResponse
-        }
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "GET"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(TrainingHistoryListAPIResponse.self, from: data)
-            if let historyData = result.data {
-                print("✅ 获取训练历史成功，共 \(historyData.histories.count) 条记录")
-                return historyData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 获取训练历史失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.getTrainingHistory(page: page, limit: limit, planId: planId, startDate: startDate, endDate: endDate)
     }
     
-    /// 获取指定日期范围内有训练记录的日期列表
+    /// 获取指定日期范围内有训练记录的日期列表（本地化）
     func getTrainingDates(startDate: String, endDate: String) async throws -> TrainingDatesResponse {
-        print("🗓️ 获取训练日期列表: \(startDate) 到 \(endDate)")
-        
-        var urlComponents = URLComponents(string: "\(baseURL)/training/training-dates")!
-        urlComponents.queryItems = [
-            URLQueryItem(name: "start_date", value: startDate),
-            URLQueryItem(name: "end_date", value: endDate)
-        ]
-        
-        guard let url = urlComponents.url else {
-            throw NetworkError.invalidResponse
-        }
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "GET"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(TrainingDatesAPIResponse.self, from: data)
-            if let datesData = result.data {
-                print("✅ 获取训练日期成功，共 \(datesData.total_days) 天有训练记录")
-                return datesData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 获取训练日期失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.getTrainingDates(startDate: startDate, endDate: endDate)
     }
     
-    /// 获取训练历史详情
+    /// 获取训练历史详情（本地化）
     func getTrainingHistoryDetail(historyId: Int) async throws -> TrainingHistoryDetailResponse {
-        print("🔄 获取训练历史详情，ID: \(historyId)")
-        
-        let url = URL(string: "\(baseURL)/training/history/\(historyId)")!
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "GET"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(TrainingHistoryDetailAPIResponse.self, from: data)
-            if let detailData = result.data {
-                print("✅ 获取训练历史详情成功")
-                return detailData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 获取训练历史详情失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.getTrainingHistoryDetail(historyId: historyId)
     }
     
-    /// 删除训练历史
+    /// 删除训练历史（本地化）
     func deleteTrainingHistory(historyId: Int) async throws {
-        print("🗑️ 开始删除训练历史，ID: \(historyId)")
-        
-        let url = URL(string: "\(baseURL)/training/history/\(historyId)")!
-        print("🔗 请求URL: \(url)")
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "DELETE"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            print("🔑 使用认证token: Bearer \(String(token.prefix(10)))...")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            print("❌ HTTP响应无效")
-            throw NetworkError.invalidResponse
-        }
-        
-        print("🔍 删除请求响应状态码: \(httpResponse.statusCode)")
-        
-        if httpResponse.statusCode == 200 {
-            // 尝试解析标准API响应格式
-            do {
-                let result = try JSONDecoder().decode(APIErrorResponse.self, from: data)
-                if result.code == 200 {
-                    print("✅ 训练历史删除成功: \(result.message)")
-                } else {
-                    print("❌ 删除失败，服务器返回错误: \(result.message)")
-                    throw NetworkError.serverError(result.message)
-                }
-            } catch {
-                // 如果解析失败，可能是空响应或其他格式，但状态码200表示成功
-                print("✅ 训练历史删除成功（响应解析失败但状态码正确）")
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 删除训练历史失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                print("❌ 删除失败，状态码: \(httpResponse.statusCode)")
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("❌ 响应内容: \(responseString)")
-                }
-                throw NetworkError.invalidResponse
-            }
-        }
+        try await localService.deleteTrainingHistory(historyId: historyId)
     }
     
-    /// 获取训练统计数据
+    /// 获取训练统计数据（本地化）
     func getTrainingStatistics(timeRange: String = "week") async throws -> TrainingStatisticsResponse {
-        print("📊 获取训练统计数据，时间范围: \(timeRange)")
-        
-        var urlComponents = URLComponents(string: "\(baseURL)/training/statistics")!
-        urlComponents.queryItems = [
-            URLQueryItem(name: "time_range", value: timeRange)
-        ]
-        
-        guard let url = urlComponents.url else {
-            throw NetworkError.invalidResponse
-        }
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "GET"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(TrainingStatisticsAPIResponse.self, from: data)
-            if let statisticsData = result.data {
-                print("✅ 获取训练统计成功")
-                return statisticsData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 获取训练统计失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.getTrainingStatistics(timeRange: timeRange)
     }
     
-    /// 获取动作进步数据
+    /// 获取动作进步数据（本地化）
     func getActionProgress(actionName: String) async throws -> ActionProgressResponse {
-        print("💪 获取动作进步数据: \(actionName)")
-        
-        var urlComponents = URLComponents(string: "\(baseURL)/training/action-progress")!
-        urlComponents.queryItems = [
-            URLQueryItem(name: "action_name", value: actionName)
-        ]
-        
-        guard let url = urlComponents.url else {
-            throw NetworkError.invalidResponse
-        }
-        
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "GET"
-        urlRequest.setValue("zh_CN", forHTTPHeaderField: "Accept-Language")
-        
-        // 添加认证头
-        if let token = getAuthToken() {
-            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else {
-            print("⚠️ 警告：没有找到认证token")
-            throw NetworkError.unauthorized
-        }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(ActionProgressAPIResponse.self, from: data)
-            if let progressData = result.data {
-                print("✅ 获取动作进步数据成功")
-                return progressData
-            } else {
-                throw NetworkError.decodingError
-            }
-        } else if httpResponse.statusCode == 401 {
-            print("❌ 认证失败，请重新登录")
-            throw NetworkError.unauthorized
-        } else {
-            // 处理错误响应
-            if let errorData = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                print("❌ 获取动作进步数据失败: \(errorData.message)")
-                throw NetworkError.serverError(errorData.message)
-            } else {
-                throw NetworkError.invalidResponse
-            }
-        }
+        return try await localService.getActionProgress(actionName: actionName)
     }
 }
 

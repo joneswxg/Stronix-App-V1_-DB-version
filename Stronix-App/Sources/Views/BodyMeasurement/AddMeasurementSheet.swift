@@ -216,13 +216,13 @@ struct AddMeasurementSheet: View {
         let timestampString = formatter.string(from: selectedDate)
         
         let request = CreateBodyMeasurementRequest(
-            user_id: AuthService.shared.currentUser?.id ?? 0,
-            measurement_timestamp: timestampString,
-            weight_kg: weightValue,
-            height_cm: heightValue,
-            body_fat_percentage: bodyFatValue,
-            skeletal_muscle_mass_kg: muscleMassValue,
-            visceral_fat_level: visceralFatValue
+            userId: LocalUserService.shared.currentUser?.id ?? 0,
+            measurementTimestamp: selectedDate,
+            weightKg: weightValue,
+            heightCm: heightValue,
+            bodyFatPercentage: bodyFatValue,
+            skeletalMuscleMassKg: muscleMassValue,
+            visceralFatLevel: visceralFatValue
         )
         
         let success = await viewModel.addMeasurement(request)

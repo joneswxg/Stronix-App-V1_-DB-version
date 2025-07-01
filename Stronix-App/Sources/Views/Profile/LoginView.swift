@@ -3,7 +3,7 @@ import Foundation
 
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var localUserService = LocalUserService.shared
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
@@ -90,7 +90,7 @@ struct LoginView: View {
                             loginWithEmail()
                         }) {
                             HStack {
-                                if authService.isLoading {
+                                if localUserService.isLoading {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                         .scaleEffect(0.8)
@@ -103,12 +103,12 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
-                                (email.isEmpty || password.isEmpty || authService.isLoading) ? 
+                                (email.isEmpty || password.isEmpty || localUserService.isLoading) ? 
                                     Color.gray.opacity(0.5) : Color.blue
                             )
                             .cornerRadius(25)
                         }
-                        .disabled(email.isEmpty || password.isEmpty || authService.isLoading)
+                        .disabled(email.isEmpty || password.isEmpty || localUserService.isLoading)
                         
                         // 分割线
                         HStack {
@@ -205,22 +205,25 @@ struct LoginView: View {
         } message: {
             Text(errorMessage)
         }
-        .onChange(of: authService.isLoggedIn) { isLoggedIn in
-            if isLoggedIn {
+        .onChange(of: localUserService.isLoggedIn) { oldValue, newValue in
+            if newValue {
                 dismiss()
             }
         }
     }
     
     private func loginWithEmail() {
-        print("🚀 开始登录流程")
+        print("🚀 开始本地登录流程")
         print("📧 邮箱: \(email)")
         print("🔒 密码长度: \(password.count)")
         
+        // 先调试检查数据库
+        localUserService.debugCheckDatabase()
+        
         Task {
             do {
-                print("📡 发送登录请求...")
-                let response = try await authService.login(email: email, password: password)
+                print("🗄️ 检查本地数据库...")
+                let response = try await localUserService.login(email: email, password: password)
                 print("📨 收到登录响应: success=\(response.success), message=\(response.message)")
                 
                 if !response.success {
@@ -230,7 +233,10 @@ struct LoginView: View {
                         print("❌ 登录失败: \(response.message)")
                     }
                 } else {
-                    print("✅ 登录成功")
+                    print("✅ 本地登录成功")
+                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
+                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
+                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
                 }
             } catch {
                 await MainActor.run {

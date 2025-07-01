@@ -4,20 +4,24 @@ struct PlanActionSelectView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ActionListViewModel()
     @State private var selectedActions: Set<Int> = []
-    @State private var selectedTargetMuscleId: Int = 1
+    @State private var selectedTargetMuscleId: Int = 0
     @State private var selectedEquipmentId: Int = 0
     @State private var searchText = ""
     
     // 添加回调闭包 - 支持单个动作选择
     let onActionSelected: ((ActionInfo) -> Void)?
-    let onActionsSelected: (([ActionListView.Action]) -> Void)?
+    let onActionsSelected: (([Action]) -> Void)?
     let allowMultipleSelection: Bool
     
+    // 已存在于计划中的动作ID列表
+    let existingActionIds: Set<Int>
+    
     // 修改初始化方法
-    init(onActionSelected: ((ActionInfo) -> Void)? = nil, onActionsSelected: (([ActionListView.Action]) -> Void)? = nil) {
+    init(onActionSelected: ((ActionInfo) -> Void)? = nil, onActionsSelected: (([Action]) -> Void)? = nil, existingActionIds: Set<Int> = []) {
         self.onActionSelected = onActionSelected
         self.onActionsSelected = onActionsSelected
         self.allowMultipleSelection = onActionsSelected != nil
+        self.existingActionIds = existingActionIds
     }
     
     var body: some View {
@@ -94,7 +98,13 @@ struct PlanActionSelectView: View {
                                             action: action,
                                             isSelected: selectedActions.contains(action.id),
                                             allowMultipleSelection: allowMultipleSelection,
+                                            isDisabled: existingActionIds.contains(action.id),
                                             onToggle: {
+                                                // 如果动作已存在于计划中，不允许选择
+                                                if existingActionIds.contains(action.id) {
+                                                    return
+                                                }
+                                                
                                                 if allowMultipleSelection {
                                                     // 多选模式
                                                     if selectedActions.contains(action.id) {
@@ -104,7 +114,7 @@ struct PlanActionSelectView: View {
                                                     }
                                                 } else {
                                                     // 单选模式 - 直接选择并关闭
-                                                    let actionInfo = ActionInfo(id: action.id, name: action.name, imageUrl: action.image_url)
+                                                    let actionInfo = ActionInfo(id: action.id, name: action.name, imageUrl: action.gifUrl ?? "")
                                                     onActionSelected?(actionInfo)
                                                     dismiss()
                                                 }
@@ -147,6 +157,14 @@ struct PlanActionSelectView: View {
         .onAppear {
             Task {
                 await viewModel.loadInitialData()
+                // 初始化完成后，自动选中第一个目标肌群并加载对应的动作
+                if !viewModel.targetMuscles.isEmpty {
+                    let firstMuscleId = viewModel.targetMuscles[0].id
+                    selectedTargetMuscleId = firstMuscleId
+                    print("🔄 PlanActionSelectView: 自动选中第一个目标肌群 ID=\(firstMuscleId), 名称=\(viewModel.targetMuscles[0].display_name)")
+                    await viewModel.loadActionsByTargetMuscle(targetMuscleId: firstMuscleId)
+                    print("🔄 PlanActionSelectView: 已加载 \(viewModel.actions.count) 个动作")
+                }
             }
         }
     }
@@ -195,9 +213,9 @@ struct PlanActionSelectView: View {
     }
     
     // 过滤后的动作列表
-    private var filteredActions: [ActionListView.Action] {
+    private var filteredActions: [Action] {
         viewModel.actions.filter { action in
-            let matchesEquipment = selectedEquipmentId == 0 || action.equipment_id == selectedEquipmentId
+            let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
             let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
             return matchesEquipment && matchesSearch
         }
@@ -206,30 +224,31 @@ struct PlanActionSelectView: View {
 
 // 可选择的动作卡片
 struct SelectableActionCard: View {
-    let action: ActionListView.Action
+    let action: Action
     let isSelected: Bool
     let allowMultipleSelection: Bool
+    let isDisabled: Bool
     let onToggle: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 动作图片
-            ZStack {
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(action.image_url)")) { image in
-                    image
+            Group {
+                if let uiImage = loadLocalActionImage(fileName: action.localImageName) {
+                    Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                } placeholder: {
+                } else {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                         .overlay(
-                            Image(systemName: "photo")
+                            Image(systemName: "figure.strengthtraining.traditional")
                                 .foregroundColor(.gray)
                         )
                 }
-                .frame(height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .frame(height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             // 动作信息
             VStack(alignment: .leading, spacing: 4) {
@@ -237,22 +256,67 @@ struct SelectableActionCard: View {
                     .font(.system(size: 14, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .foregroundColor(.black)
+                    .foregroundColor(isDisabled ? .gray : .black)
+                
+                // 如果动作已存在，显示提示文字
+                if isDisabled {
+                    Text("已添加")
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(4)
+                }
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 8)
         }
-        .background(Color.white)
+        .background(isDisabled ? Color.gray.opacity(0.1) : Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(
+                    isDisabled ? Color.gray.opacity(0.3) : 
+                    (isSelected ? Color.blue : Color.clear), 
+                    lineWidth: 2
+                )
         )
+        .opacity(isDisabled ? 0.6 : 1.0)
         .onTapGesture {
-            onToggle()
+            if !isDisabled {
+                onToggle()
+            }
         }
     }
+}
+
+/// 从本地bundle加载动作图片
+private func loadLocalActionImage(fileName: String) -> UIImage? {
+    // 尝试从不同的bundle路径加载图片
+    let possiblePaths = [
+        "Images/\(fileName)",
+        "Media/Actions/\(fileName)",
+        fileName
+    ]
+    
+    for path in possiblePaths {
+        if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
+        
+        // 也尝试不去除扩展名的方式
+        if let url = Bundle.main.url(forResource: path, withExtension: nil),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
+    }
+    
+    return nil
 }
 
 #Preview {

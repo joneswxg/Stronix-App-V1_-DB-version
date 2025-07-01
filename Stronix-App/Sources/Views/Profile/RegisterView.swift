@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var userService = LocalUserService.shared
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
@@ -228,7 +228,7 @@ struct RegisterView: View {
                         registerUser()
                     }) {
                         HStack {
-                            if authService.isLoading {
+                            if userService.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
@@ -245,7 +245,7 @@ struct RegisterView: View {
                         )
                         .cornerRadius(25)
                     }
-                    .disabled(!isFormValid || authService.isLoading)
+                    .disabled(!isFormValid || userService.isLoading)
                     .padding(.horizontal, 24)
                     
                     // 登录链接
@@ -279,7 +279,7 @@ struct RegisterView: View {
         } message: {
             Text(errorMessage)
         }
-        .onChange(of: authService.isLoggedIn) { isLoggedIn in
+        .onChange(of: userService.isLoggedIn) { isLoggedIn in
             if isLoggedIn {
                 dismiss()
             }
@@ -298,7 +298,7 @@ struct RegisterView: View {
     private func registerUser() {
         Task {
             do {
-                let response = try await authService.register(
+                let response = try await userService.register(
                     username: username,
                     email: email,
                     password: password,

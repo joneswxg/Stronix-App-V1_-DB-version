@@ -1,146 +1,82 @@
 import SwiftUI
 import UIKit
 
-// 简化的GIF显示组件
-struct GIFView: UIViewRepresentable {
-    let url: URL
-    @State private var hasLoaded = false
+// 简化的图片显示组件 - 使用SwiftUI原生方式
+struct ActionImageView: View {
+    let imageName: String
+    @State private var uiImage: UIImage?
+    @State private var isLoading = true
     
-    func makeUIView(context: Context) -> UIImageView {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
-        imageView.backgroundColor = UIColor.clear
-        imageView.clipsToBounds = true
-        return imageView
+    var body: some View {
+        Group {
+            if let uiImage = uiImage {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // 加载失败时显示占位图
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .overlay(
+                        Image(systemName: "figure.strengthtraining.traditional")
+                            .foregroundColor(.gray)
+                            .font(.system(size: 40))
+                    )
+            }
+        }
+        .onAppear {
+            loadImage()
+        }
     }
     
-    func updateUIView(_ imageView: UIImageView, context: Context) {
-        // 异步加载GIF数据
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil else {
-                print("GIF加载失败: \(error?.localizedDescription ?? "未知错误")")
+    private func loadImage() {
+        guard let url = Bundle.main.url(forResource: imageName, withExtension: "gif") else {
+            print("❌ 找不到GIF文件: \(imageName).gif")
+            isLoading = false
+            return
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let data = try? Data(contentsOf: url),
+                  let image = UIImage(data: data) else {
+                print("❌ 图片加载失败: \(imageName)")
+                DispatchQueue.main.async {
+                    isLoading = false
+                }
                 return
             }
             
             DispatchQueue.main.async {
-                // 尝试创建动画图片
-                if let animatedImage = UIImage.gif(data: data) {
-                    imageView.image = animatedImage
-                    print("GIF动画加载成功: \(url.absoluteString)")
-                } else if let staticImage = UIImage(data: data) {
-                    // 如果GIF动画失败，显示静态图片
-                    imageView.image = staticImage
-                    print("静态图片加载成功: \(url.absoluteString)")
-                } else {
-                    print("图片加载完全失败: \(url.absoluteString)")
-                }
-            }
-        }.resume()
-    }
-}
-
-// UIImage扩展，支持GIF
-extension UIImage {
-    static func gif(data: Data) -> UIImage? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
-            print("无法创建CGImageSource")
-            return nil
-        }
-        
-        let count = CGImageSourceGetCount(source)
-        guard count > 1 else {
-            print("不是动画GIF，帧数: \(count)")
-            return nil
-        }
-        
-        var images: [UIImage] = []
-        var duration: Double = 0
-        
-        for i in 0..<count {
-            if let cgImage = CGImageSourceCreateImageAtIndex(source, i, nil) {
-                let image = UIImage(cgImage: cgImage)
-                images.append(image)
-                
-                // 获取每帧的持续时间
-                if let properties = CGImageSourceCopyPropertiesAtIndex(source, i, nil) as? [String: Any],
-                   let gifProperties = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any],
-                   let frameDuration = gifProperties[kCGImagePropertyGIFDelayTime as String] as? Double {
-                    duration += frameDuration
-                } else {
-                    duration += 0.1 // 默认持续时间
-                }
+                self.uiImage = image
+                self.isLoading = false
+                print("✅ 图片加载成功: \(imageName)")
             }
         }
-        
-        guard !images.isEmpty else {
-            print("没有成功解析任何帧")
-            return nil
-        }
-        
-        print("成功解析GIF: \(images.count)帧, 总时长: \(duration)秒")
-        return UIImage.animatedImage(with: images, duration: duration)
     }
 }
 
 struct ActionDetailView: View {
-    let action: ActionListView.Action
+    let action: Action
     @Environment(\.dismiss) private var dismiss
-    @State private var showFallback = false
+    @StateObject private var viewModel = ActionDetailViewModel()
+
     
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 // 动作GIF区域
                 VStack {
-                    if showFallback {
-                        // 备用AsyncImage显示
-                        AsyncImage(url: URL(string: "http://localhost:6000/api/action/images/\(action.image_url)")) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        } placeholder: {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                                .overlay(
-                                    VStack(spacing: 12) {
-                                        ProgressView()
-                                        Text("加载中...")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gray)
-                                    }
-                                )
-                        }
+                    ActionImageView(imageName: action.localImageName)
                         .frame(height: 300)
-                    } else {
-                        // 主要的GIF显示
-                        if let url = URL(string: "http://localhost:6000/api/action/images/\(action.image_url)") {
-                            GIFView(url: url)
-                                .frame(height: 300)
-                        } else {
-                            Rectangle()
-                                .fill(Color.red.opacity(0.2))
-                                .frame(height: 300)
-                                .overlay(
-                                    Text("URL错误")
-                                        .foregroundColor(.red)
-                                )
-                        }
-                    }
                     
-                    // 调试信息和切换按钮
+                    // 调试信息
                     VStack(spacing: 8) {
-                       
-                        Button(action: {
-                            showFallback.toggle()
-                        }) {
-                            Text(showFallback ? "切换动态模式" : "切换静态模式")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(8)
-                        }
+                        Text("图片资源: \(action.localImageName)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
                     .padding(.top, 8)
                 }
@@ -150,7 +86,7 @@ struct ActionDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
                 
-                // 动作名称
+                // 动作名称和详细信息
                 VStack(alignment: .leading, spacing: 16) {
                     Text(action.name)
                         .font(.system(size: 24, weight: .bold))
@@ -158,86 +94,121 @@ struct ActionDetailView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    // 指导部分
+                    // 动作基本信息
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("指导")
+                        Text("动作信息")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.black)
                         
-                        VStack(alignment: .leading, spacing: 12) {
-                            InstructionStep(
-                                number: 1,
-                                text: "双手握住腹轮把手，跪在地板上。"
-                            )
-                            
-                            InstructionStep(
-                                number: 2,
-                                text: "将腹轮放在膝盖前方的地板上。这是您的起始位置。"
-                            )
-                            
-                            InstructionStep(
-                                number: 3,
-                                text: "缓慢地向前滚动轮子，以受控的方式伸展躯干，尽可能远地伸展，而不让身体接触地板。"
-                            )
-                            
-                            InstructionStep(
-                                number: 4,
-                                text: "完全伸展时停止并暂停片刻。"
-                            )
-                            
-                            InstructionStep(
-                                number: 5,
-                                text: "通过收缩腹肌将自己拉回到起始位置。"
-                            )
-                        }
-                    }
-                    .padding(.top, 8)
-                    
-                    // 视频链接部分
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("视频教程")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.black)
-                        
-                        Button(action: {
-                            // TODO: 打开视频链接
-                        }) {
-                            HStack {
-                                Image(systemName: "play.rectangle.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.blue)
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("观看详细视频教程")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.black)
-                                    
-                                    Text("专业教练指导，标准动作演示")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+                        if let actionDetail = viewModel.actionDetail {
+                            VStack(alignment: .leading, spacing: 8) {
+                                // 英文名称
+                                if let nameEn = actionDetail.name_en, !nameEn.isEmpty {
+                                    InfoRow(title: "英文名称", value: nameEn)
                                 }
                                 
-                                Spacer()
+                                // 难度等级
+                                if let difficulty = actionDetail.difficulty, !difficulty.isEmpty {
+                                    InfoRow(title: "难度等级", value: difficulty)
+                                }
                                 
-                                Image(systemName: "chevron.right")
+                                // 目标肌肉群
+                                if !actionDetail.target_muscles.isEmpty {
+                                    InfoRow(title: "目标肌肉", value: actionDetail.target_muscles.map { $0.display_name }.joined(separator: ", "))
+                                }
+                                
+                                // 使用设备
+                                if let equipment = actionDetail.equipment {
+                                    InfoRow(title: "使用设备", value: equipment.display_name)
+                                }
+                                
+                                // 身体部位
+                                if let bodypart = actionDetail.bodypart {
+                                    InfoRow(title: "身体部位", value: bodypart.display_name)
+                                }
+                                
+                                // 双侧训练
+                                InfoRow(title: "双侧训练", value: actionDetail.is_bilateral ? "是" : "否")
+                            }
+                        }
+                    }
+                    
+                    // 动作描述
+                    if let description = viewModel.actionDetail?.description, !description.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("动作描述")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.black)
+                            
+                            Text(description)
+                                .font(.system(size: 16))
+                                .foregroundColor(.black)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 8)
+                    } else {
+                        // 默认指导内容
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("训练指导")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.black)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                InstructionStep(
+                                    number: 1,
+                                    text: "准备动作：调整好设备和姿势，确保安全。"
+                                )
+                                
+                                InstructionStep(
+                                    number: 2,
+                                    text: "执行动作：按照标准动作要求，控制好节奏。"
+                                )
+                                
+                                InstructionStep(
+                                    number: 3,
+                                    text: "注意呼吸：动作过程中保持正常呼吸。"
+                                )
+                                
+                                InstructionStep(
+                                    number: 4,
+                                    text: "完成训练：按照计划完成所有组数和次数。"
+                                )
+                            }
+                        }
+                        .padding(.top, 8)
+                    }
+                    
+                    // 默认训练参数
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("建议训练参数")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.black)
+                        
+                        HStack(spacing: 20) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("建议组数")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.gray)
+                                Text("\(action.default_sets)组")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.blue)
                             }
-                            .padding(16)
-                            .background(Color.gray.opacity(0.05))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                            )
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("建议次数")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.gray)
+                                Text("\(action.default_reps)次")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.blue)
+                            }
+                            
+                            Spacer()
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        // 占位文字
-                        Text("视频链接将在后续版本中更新")
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray.opacity(0.8))
-                            .italic()
+                        .padding(16)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(12)
                     }
                     .padding(.top, 20)
                 }
@@ -264,6 +235,31 @@ struct ActionDetailView: View {
                 }
             }
         }
+        .onAppear {
+            Task {
+                await viewModel.loadActionDetail(actionId: action.id)
+            }
+        }
+    }
+}
+
+// 信息行组件
+struct InfoRow: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.gray)
+                .frame(width: 80, alignment: .leading)
+            
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -288,15 +284,51 @@ struct InstructionStep: View {
     }
 }
 
+// ViewModel
+class ActionDetailViewModel: ObservableObject {
+    @Published var actionDetail: ActionDetail?
+    @Published var isLoading = false
+    @Published var error: Error?
+    
+    private let localActionService = LocalActionService.shared
+    
+    func loadActionDetail(actionId: Int) async {
+        await MainActor.run {
+            self.isLoading = true
+            self.error = nil
+        }
+        
+        do {
+            let detail = try await localActionService.fetchActionDetail(actionId: actionId)
+            await MainActor.run {
+                self.actionDetail = detail
+                self.isLoading = false
+            }
+            print("✅ ActionDetailViewModel: 成功加载动作详情 \(actionId)")
+        } catch {
+            await MainActor.run {
+                self.error = error
+                self.isLoading = false
+            }
+            print("❌ ActionDetailViewModel: 加载动作详情失败: \(error)")
+        }
+    }
+}
+
 #Preview {
     NavigationView {
-        ActionDetailView(action: ActionListView.Action(
+        ActionDetailView(action: Action(
             id: 1,
+            external_id: "1",
             name: "腹轮滚动",
             name_en: "Ab Wheel Rollout",
-            image_url: "exercise_1.gif",
-            body_part_id: 1,
+            gifUrl: "exercise_1.gif",
+            description: "腹轮滚动是一个很好的核心训练动作",
+            description_en: "Ab wheel rollout is a great core exercise",
+            difficulty: "中等",
+            bodypart_id: 1,
             equipment_id: 2,
+            is_bilateral: false,
             target_muscle_ids: [1, 2, 3]
         ))
     }

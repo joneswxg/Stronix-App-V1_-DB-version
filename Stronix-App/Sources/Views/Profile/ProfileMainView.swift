@@ -7,7 +7,7 @@ struct ProfileMainView: View {
     @State private var showArticles = false
     @State private var showTools = false
     @State private var showGuide = false
-    @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var localUserService = LocalUserService.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -38,11 +38,11 @@ struct ProfileMainView: View {
                                 .foregroundColor(.blue)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(authService.currentUser?.username ?? "未登录")
+                                Text(localUserService.currentUser?.username ?? "未登录")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.black)
                                 
-                                if !authService.isLoggedIn {
+                                if !localUserService.isLoggedIn {
                                     Text("点击登录")
                                         .font(.system(size: 14))
                                         .foregroundColor(.blue)
@@ -51,7 +51,7 @@ struct ProfileMainView: View {
                             
                             Spacer()
                             
-                            if !authService.isLoggedIn {
+                            if !localUserService.isLoggedIn {
                                 Button(action: {
                                     showLogin = true
                                 }) {
@@ -130,7 +130,7 @@ struct ProfileMainView: View {
                         }
                         
                         // 退出登录按钮（仅在已登录时显示）
-                        if authService.isLoggedIn {
+                        if localUserService.isLoggedIn {
                             Button(action: {
                                 logout()
                             }) {
@@ -176,7 +176,9 @@ struct ProfileMainView: View {
     }
     
     private func logout() {
-        authService.logout()
+        Task {
+            await localUserService.logout()
+        }
     }
     
     private func shareApp() {

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PlanListView: View {
     @StateObject private var viewModel = PlanViewModel()
-    @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var authService = LocalUserService.shared
     @State private var showCreatePlan = false
     @State private var showLogin = false
     @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
@@ -27,7 +27,9 @@ struct PlanListView: View {
                 // 登录状态指示器
                 if authService.isLoggedIn {
                     Button(action: {
-                        authService.logout()
+                        Task {
+                            await authService.logout()
+                        }
                     }) {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 20))
@@ -277,7 +279,7 @@ struct PlanListView: View {
             if !hasInitiallyLoaded {
                 Task {
                     // 检查token有效性
-                    await authService.refreshTokenIfNeeded()
+                    let _ = await authService.refreshTokenIfNeeded()
                     
                     // 首次加载时检查登录状态并加载数据
                     if authService.isLoggedIn {
@@ -291,7 +293,7 @@ struct PlanListView: View {
                 }
             }
         }
-        .onChange(of: authService.isLoggedIn) { isLoggedIn in
+        .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
             if isLoggedIn {
                 // 登录成功后刷新数据
                 viewModel.refresh()
@@ -652,16 +654,54 @@ struct PersonalPlanCard: View {
         }
         .fullScreenCover(isPresented: $showEditPlan) {
             if let selectedPlan = viewModel.selectedPlan {
-                EditPlanView(plan: selectedPlan) { // onSaveSuccess 闭包
-                    print("🔄 EditPlanView onSaveSuccess 回调被触发")
+                EditPlanView(plan: selectedPlan, onSaveSuccess: { updatedPlan in
+                    print("🔄 EditPlanView onSaveSuccess 回调被触发，接收到更新后的计划")
+                    print("🔄 更新后的计划名称: \(updatedPlan?.name ?? "无")")
+                    
                     // 首先，关闭 fullScreenCover
                     self.showEditPlan = false
-                    // 延迟刷新，让视图层级稳定下来
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // 增加延迟到0.5秒
-                        print("🔄 EditPlanView onSaveSuccess - 延迟刷新数据")
-                        viewModel.refresh()
+                    
+                    // 如果有更新后的计划对象，直接更新列表中的对应项
+                    if let updatedPlan = updatedPlan {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            print("🔄 EditPlanView onSaveSuccess - 直接更新列表中的计划项")
+                            
+                            // 在personalPlans数组中找到对应的计划并更新
+                            if let index = viewModel.personalPlans.firstIndex(where: { $0.id == updatedPlan.id }) {
+                                // 使用更可靠的方式触发SwiftUI更新：创建新数组
+                                var updatedPlans = viewModel.personalPlans
+                                updatedPlans[index] = updatedPlan
+                                viewModel.personalPlans = updatedPlans
+                                print("✅ 已更新列表中的计划项: \(updatedPlan.name)")
+                                
+                                // 打印更新后的动作信息用于调试
+                                let actionsInfo = updatedPlan.actions?.prefix(2).map { "\($0.name) x \($0.totalSets)" }.joined(separator: ", ") ?? "无动作"
+                                print("🔍 更新后动作信息: \(actionsInfo), 容量: \(updatedPlan.calculatedVolume)kg")
+                            }
+                            
+                            // 同时更新 selectedPlan 以便详情页显示正确
+                            viewModel.selectedPlan = updatedPlan
+                            print("✅ 已更新 selectedPlan 数据")
+                        }
+                    } else {
+                        // 如果没有返回更新后的计划对象，则重新加载该计划的详情
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            print("🔄 EditPlanView onSaveSuccess - 重新加载计划详情")
+                            Task {
+                                await viewModel.loadPlanDetail(planId: selectedPlan.id)
+                                if let reloadedPlan = viewModel.selectedPlan {
+                                    // 更新列表中的对应项 - 使用新数组方式
+                                    if let index = viewModel.personalPlans.firstIndex(where: { $0.id == reloadedPlan.id }) {
+                                        var updatedPlans = viewModel.personalPlans
+                                        updatedPlans[index] = reloadedPlan
+                                        viewModel.personalPlans = updatedPlans
+                                        print("✅ 已更新列表中的计划项: \(reloadedPlan.name)")
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
+                })
                 .onDisappear {
                     print("🔍 EditPlanView onDisappear - 不触发刷新")
                     // 兜底：如果因为某种原因 onSaveSuccess 未触发，这里确保状态一致

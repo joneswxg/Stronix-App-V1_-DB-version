@@ -6,161 +6,100 @@
 //
 
 import Foundation
+import SQLite
 
 class DatabaseManager {
     // 单例模式，确保整个应用只有一个数据库管理实例
     static let shared = DatabaseManager()
-    private init() {}
+    private var db: Connection?
     
-    // 使用DBConfig中的配置
-    private let baseURL = DBConfig.baseURL
+    private init() {
+        setupDatabase()
+    }
+    
+    // MARK: - 数据库初始化
+    private func setupDatabase() {
+        let dbPath = getDatabasePath()
+        
+        do {
+            db = try Connection(dbPath)
+            print("✅ DatabaseManager: 数据库连接成功: \(dbPath)")
+        } catch {
+            print("❌ DatabaseManager: 数据库连接失败: \(error)")
+        }
+    }
+    
+    private func getDatabasePath() -> String {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        let dbPath = "\(documentsPath)/database_stronix.db"
+        
+        // 如果Documents目录中不存在数据库，则从Bundle复制
+        if !FileManager.default.fileExists(atPath: dbPath) {
+            guard let bundleDbPath = Bundle.main.path(forResource: "database_stronix", ofType: "db") else {
+                print("❌ DatabaseManager: 找不到Bundle中的数据库文件")
+                return dbPath
+            }
+            
+            do {
+                try FileManager.default.copyItem(atPath: bundleDbPath, toPath: dbPath)
+                print("✅ DatabaseManager: 数据库已复制到Documents目录")
+            } catch {
+                print("❌ DatabaseManager: 复制数据库失败: \(error)")
+            }
+        }
+        
+        return dbPath
+    }
+    
+    // MARK: - 公共数据库连接方法
+    /// 获取数据库连接 - 供所有Local服务使用
+    func getConnection() -> Connection? {
+        return db
+    }
+    
+    /// 执行SQL查询 - 统一的查询方法
+    func executeQuery<T>(_ sql: String, bindings: [Binding?] = []) throws -> [T] {
+        guard let db = db else {
+            throw DatabaseError.databaseNotInitialized
+        }
+        
+        let stmt = try db.prepare(sql)
+        return try stmt.map { row in
+            return row as! T
+        }
+    }
     
     // MARK: - 错误定义
     enum DatabaseError: Error {
-        case invalidURL
-        case invalidResponse
-        case decodingError
-        case networkError(Error)
-    }
-    
-    // MARK: - 响应数据结构
-    struct DatabaseResponse: Codable {
-        let result: [[String: AnyCodable]]
-        let metadata: Metadata
+        case databaseNotInitialized
+        case queryFailed(Error)
+        case dataNotFound
         
-        struct Metadata: Codable {
-            let rows_affected: Int
-            let columns: [String]?
-        }
-    }
-    
-    // MARK: - 动作相关查询方法
-    func fetchActions() async throws -> [ActionListView.Action] {
-        let query = """
-            SELECT 
-                a.id,
-                a.name,
-                a.name_en,
-                a.gifUrl as image_url,
-                a.bodypart_id as body_part_id,
-                a.equipment_id,
-                GROUP_CONCAT(atml.target_muscle_id) as target_muscle_ids
-            FROM action a
-            LEFT JOIN action_target_muscle_link atml ON a.id = atml.action_id
-            GROUP BY a.id
-        """
-        
-        return try await executeQuery(query, transform: { dict in
-            ActionListView.Action(
-                id: dict["id"] as! Int,
-                name: dict["name"] as! String,
-                name_en: dict["name_en"] as? String,
-                image_url: dict["image_url"] as! String,
-                body_part_id: dict["body_part_id"] as! Int,
-                equipment_id: dict["equipment_id"] as! Int,
-                target_muscle_ids: {
-                    if let targetMuscleIdsString = dict["target_muscle_ids"] as? String {
-                        return targetMuscleIdsString.split(separator: ",").map { Int($0)! }
-                    } else {
-                        return []
-                    }
-                }()
-            )
-        })
-    }
-    
-    // MARK: - 目标肌肉相关查询方法
-    func fetchTargetMuscles() async throws -> [ActionListView.TargetMuscle] {
-        let query = "SELECT id, name, display_name FROM target_muscle"
-        
-        return try await executeQuery(query, transform: { dict in
-            ActionListView.TargetMuscle(
-                id: dict["id"] as! Int,
-                name: dict["name"] as! String,
-                display_name: dict["display_name"] as! String
-            )
-        })
-    }
-    
-    // MARK: - 通用查询方法
-    private func executeQuery<T>(_ query: String, transform: @escaping ([String: Any]) -> T) async throws -> [T] {
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(baseURL)/query?sql=\(encodedQuery)") else {
-            throw DatabaseError.invalidURL
-        }
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
-                throw DatabaseError.invalidResponse
+        var localizedDescription: String {
+            switch self {
+            case .databaseNotInitialized:
+                return "数据库未初始化"
+            case .queryFailed(let error):
+                return "数据库查询失败: \(error.localizedDescription)"
+            case .dataNotFound:
+                return "数据未找到"
             }
-            
-            let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            guard let result = jsonResponse?["result"] as? [[String: Any]] else {
-                throw DatabaseError.decodingError
-            }
-            
-            return result.map(transform)
-        } catch {
-            throw DatabaseError.networkError(error)
         }
     }
+    
+    // MARK: - 数据库状态检查
+    func isDatabaseReady() -> Bool {
+        return db != nil
+    }
+    
+    // MARK: - 数据库路径获取（供其他服务使用）
+    func getDatabasePathForServices() -> String {
+        return getDatabasePath()
+    }
+    
+    // TODO: 其他功能待迁移到对应的Local服务类
+    // 动作相关功能已迁移到 LocalActionService.swift
+    
+    // MARK: - 辅助方法
+    // 注意：getDatabasePath()已在上面重新实现为支持Documents目录
 }
-
-// MARK: - AnyCodable 辅助结构
-struct AnyCodable: Codable {
-    let value: Any
-    
-    init<T>(_ value: T?) {
-        self.value = value ?? ()
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        
-        if container.decodeNil() {
-            self.value = ()
-        } else if let bool = try? container.decode(Bool.self) {
-            self.value = bool
-        } else if let int = try? container.decode(Int.self) {
-            self.value = int
-        } else if let double = try? container.decode(Double.self) {
-            self.value = double
-        } else if let string = try? container.decode(String.self) {
-            self.value = string
-        } else if let array = try? container.decode([AnyCodable].self) {
-            self.value = array.map { $0.value }
-        } else if let dictionary = try? container.decode([String: AnyCodable].self) {
-            self.value = dictionary.mapValues { $0.value }
-        } else {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "AnyCodable value cannot be decoded")
-        }
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        
-        switch value {
-        case is Void:
-            try container.encodeNil()
-        case let bool as Bool:
-            try container.encode(bool)
-        case let int as Int:
-            try container.encode(int)
-        case let double as Double:
-            try container.encode(double)
-        case let string as String:
-            try container.encode(string)
-        case let array as [Any]:
-            try container.encode(array.map { AnyCodable($0) })
-        case let dictionary as [String: Any]:
-            try container.encode(dictionary.mapValues { AnyCodable($0) })
-        default:
-            let context = EncodingError.Context(codingPath: container.codingPath, debugDescription: "AnyCodable value cannot be encoded")
-            throw EncodingError.invalidValue(value, context)
-        }
-    }
-}
-

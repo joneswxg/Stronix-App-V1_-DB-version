@@ -344,9 +344,9 @@ struct ExerciseCard: View {
                 Spacer()
                 
                 if set.isCompleted {
-                    Image(systemName: "checkmark")
-                        .font(.subheadline)
-                        .foregroundColor(.green)
+                Image(systemName: "checkmark")
+                    .font(.subheadline)
+                    .foregroundColor(.green)
                 }
             }
             .padding(.vertical, 2)

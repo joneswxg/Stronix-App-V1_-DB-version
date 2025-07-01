@@ -1,45 +1,6 @@
 import SwiftUI
 
 struct ActionListView: View {
-    // MARK: - 数据模型
-    struct BodyPart: Identifiable {
-        let id: Int
-        let name: String
-        let nameEn: String
-    }
-    
-    struct Action: Identifiable, Codable {
-        let id: Int
-        let name: String
-        let name_en: String?
-        let image_url: String
-        let body_part_id: Int
-        let equipment_id: Int
-        let target_muscle_ids: [Int]
-    }
-    
-    struct TargetMuscle: Identifiable, Codable, Equatable {
-        let id: Int
-        let name: String
-        let display_name: String
-        
-        // 实现Equatable协议
-        static func == (lhs: TargetMuscle, rhs: TargetMuscle) -> Bool {
-            return lhs.id == rhs.id
-        }
-    }
-    
-    struct Equipment: Identifiable, Codable, Equatable {
-        let id: Int
-        let name: String
-        let display_name: String
-        
-        // 实现Equatable协议
-        static func == (lhs: Equipment, rhs: Equipment) -> Bool {
-            return lhs.id == rhs.id
-        }
-    }
-    
     // MARK: - 状态属性
     @State private var selectedBodyPartId: Int = 1
     @State private var searchText = ""
@@ -234,17 +195,23 @@ struct ActionListView: View {
             .ignoresSafeArea(.keyboard)
             .onAppear {
                 Task {
-                    await viewModel.loadInitialData()
+                    viewModel.loadInitialData()
                     // 同步选中的目标肌肉ID
                     if let firstMuscle = viewModel.targetMuscles.first {
                         selectedTargetMuscleId = firstMuscle.id
+                        // 加载选中目标肌肉的动作
+                        await viewModel.loadActionsByTargetMuscle(targetMuscleId: firstMuscle.id)
                     }
                 }
             }
             .onChange(of: viewModel.targetMuscles) { oldValue, newValue in
-                // 当目标肌肉数据加载完成时，同步选中状态
-                if selectedTargetMuscleId == 1 && !newValue.isEmpty {
-                    selectedTargetMuscleId = newValue.first?.id ?? 1
+                // 当目标肌肉数据加载完成时，同步选中状态并加载对应动作
+                if !newValue.isEmpty {
+                    let targetId = newValue.first?.id ?? 1
+                    selectedTargetMuscleId = targetId
+                    Task {
+                        await viewModel.loadActionsByTargetMuscle(targetMuscleId: targetId)
+                    }
                 }
             }
         }
@@ -252,36 +219,39 @@ struct ActionListView: View {
     
     // MARK: - 过滤后的动作列表
     private var filteredActions: [Action] {
-        viewModel.actions.filter { action in
-            let matchesEquipment = selectedEquipmentId == 0 || action.equipment_id == selectedEquipmentId
+        let filtered = viewModel.actions.filter { action in
+            let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
             let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
             return matchesEquipment && matchesSearch
         }
+        
+        print("🔍 filteredActions - 原始动作数量: \(viewModel.actions.count)")
+        print("🔍 filteredActions - selectedEquipmentId: \(selectedEquipmentId)")
+        print("🔍 filteredActions - searchText: '\(searchText)'")
+        print("🔍 filteredActions - 过滤后动作数量: \(filtered.count)")
+        
+        if viewModel.actions.count > 0 && filtered.count != viewModel.actions.count {
+            print("🔍 filteredActions - 动作筛选详情:")
+            for action in viewModel.actions {
+                let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
+                let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
+                print("  - \(action.name): equipment_id=\(action.equipment_id ?? -1), matchesEquipment=\(matchesEquipment), matchesSearch=\(matchesSearch)")
+            }
+        }
+        
+        return filtered
     }
 }
 
 // MARK: - 动作卡片视图
 struct ActionCard: View {
-    let action: ActionListView.Action
+    let action: Action
     
     var body: some View {
         NavigationLink(destination: ActionDetailView(action: action)) {
             VStack(alignment: .leading, spacing: 8) {
-                // 动作图片 - 使用静态图片显示以提高性能
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(action.image_url)")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.gray)
-                        )
-                }
-                .frame(height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                // 动作图片 - 使用本地图片资源
+                AsyncImageView(imageName: action.localImageName)
                 
                 // 动作信息
                 VStack(alignment: .leading, spacing: 4) {
@@ -307,99 +277,21 @@ struct ActionCard: View {
     ActionListView()
 }
 
-class ActionListViewModel: ObservableObject {
-    @Published var actions: [ActionListView.Action] = []
-    @Published var targetMuscles: [ActionListView.TargetMuscle] = []
-    @Published var equipments: [ActionListView.Equipment] = []
-    @Published var isLoading = false
-    @Published var error: Error?
+// MARK: - 异步图片加载视图（与ActionDetailView的GIFView完全一致）
+struct AsyncImageView: View {
+    let imageName: String
     
-    func loadInitialData() async {
-        await MainActor.run {
-            self.isLoading = true
+    var body: some View {
+        // 使用与ActionDetailView中GIFView完全相同的代码
+        AsyncImage(url: Bundle.main.url(forResource: imageName, withExtension: "gif")) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        } placeholder: {
+            Image(systemName: "photo")
+                .foregroundColor(.gray)
         }
-        
-        do {
-            // 并行加载目标肌肉和设备数据
-            async let targetMusclesTask: Void = loadTargetMusclesFromAPI()
-            async let equipmentsTask: Void = loadEquipmentsFromAPI()
-            
-            let (_, _) = try await (targetMusclesTask, equipmentsTask)
-            
-            // 等待目标肌肉数据加载完成后，加载第一个目标肌肉的动作
-            await MainActor.run {
-                if let firstMuscle = self.targetMuscles.first {
-                    Task {
-                        await self.loadActionsByTargetMuscle(targetMuscleId: firstMuscle.id)
-                    }
-                } else {
-                    self.isLoading = false
-                }
-            }
-            
-        } catch {
-            await MainActor.run {
-                self.error = error
-                self.isLoading = false
-            }
-        }
+        .frame(height: 120)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-    
-    func loadTargetMusclesFromAPI() async throws {
-        guard let url = URL(string: "http://127.0.0.1:6000/api/action/target_muscle") else { return }
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let response = try JSONDecoder().decode(TargetMuscleResponse.self, from: data)
-        await MainActor.run {
-            self.targetMuscles = response.result
-        }
-    }
-    
-    func loadEquipmentsFromAPI() async throws {
-        guard let url = URL(string: "http://127.0.0.1:6000/api/action/equipment") else { return }
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let response = try JSONDecoder().decode(EquipmentResponse.self, from: data)
-        await MainActor.run {
-            self.equipments = response.result
-        }
-    }
-    
-    func loadActionsByTargetMuscle(targetMuscleId: Int) async {
-        await MainActor.run {
-            self.isLoading = true
-            self.error = nil // 清除之前的错误状态
-        }
-        
-        do {
-            guard let url = URL(string: "http://127.0.0.1:6000/api/action/actions?target_muscle_id=\(targetMuscleId)") else { 
-                await MainActor.run {
-                    self.isLoading = false
-                }
-                return 
-            }
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let response = try JSONDecoder().decode(ActionResponse.self, from: data)
-            await MainActor.run {
-                self.actions = response.result
-                self.isLoading = false
-            }
-        } catch {
-            await MainActor.run {
-                self.error = error
-                self.isLoading = false
-            }
-        }
-    }
-}
-
-// MARK: - 响应结构体
-struct TargetMuscleResponse: Codable {
-    let result: [ActionListView.TargetMuscle]
-}
-
-struct EquipmentResponse: Codable {
-    let result: [ActionListView.Equipment]
-}
-
-struct ActionResponse: Codable {
-    let result: [ActionListView.Action]
 } 

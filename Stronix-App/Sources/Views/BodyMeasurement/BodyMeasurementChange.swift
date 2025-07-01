@@ -21,15 +21,15 @@ struct BodyMeasurementChange: View {
         return viewModel.measurements
             .filter { record in
                 // 过滤在选定日期范围内的数据
-                record.measurementDate >= selectedStartDate && record.measurementDate <= selectedEndDate
+                record.measurementTimestamp >= selectedStartDate && record.measurementTimestamp <= selectedEndDate
             }
-            .sorted { $0.measurementDate < $1.measurementDate } // 按日期从早到晚排序
+            .sorted { $0.measurementTimestamp < $1.measurementTimestamp } // 按日期从早到晚排序
             .map { record in
                 MeasurementData(
-                    date: record.measurementDate,
-                    weight: record.weight_kg,
-                    muscleMass: record.skeletal_muscle_mass_kg,
-                    bodyFatPercentage: record.body_fat_percentage
+                    date: record.measurementTimestamp,
+                    weight: record.weightKg,
+                    muscleMass: record.skeletalMuscleMassKg,
+                    bodyFatPercentage: record.bodyFatPercentage
                 )
             }
     }
@@ -351,21 +351,21 @@ struct BodyMeasurementChange: View {
     
     // MARK: - 计算函数
     private func getLatestHeight() -> Double {
-        return getLatestMeasurement()?.height_cm ?? 175.0
+        return getLatestMeasurement()?.heightCm ?? 175.0
     }
     
     private func getLatestVisceralFatLevel() -> Int {
-        return getLatestMeasurement()?.visceral_fat_level ?? 3
+        return getLatestMeasurement()?.visceralFatLevel ?? 3
     }
     
     private func getVisceralFatLevelData() -> [Double] {
         // 创建一个映射，将过滤和排序后的数据与原始数据匹配
         let filteredAndSortedMeasurements = viewModel.measurements
             .filter { record in
-                record.measurementDate >= selectedStartDate && record.measurementDate <= selectedEndDate
+                record.measurementTimestamp >= selectedStartDate && record.measurementTimestamp <= selectedEndDate
             }
-            .sorted { $0.measurementDate < $1.measurementDate }
-        return filteredAndSortedMeasurements.map { Double($0.visceral_fat_level) }
+            .sorted { $0.measurementTimestamp < $1.measurementTimestamp }
+        return filteredAndSortedMeasurements.map { Double($0.visceralFatLevel) }
     }
     
     private func calculateCurrentBMR() -> Double {
@@ -383,12 +383,12 @@ struct BodyMeasurementChange: View {
         return latest.bodyFatKg
     }
     
-    private func getLatestMeasurement() -> BodyMeasurementRecord? {
+    private func getLatestMeasurement() -> BodyMeasurement? {
         return viewModel.measurements
             .filter { record in
-                record.measurementDate >= selectedStartDate && record.measurementDate <= selectedEndDate
+                record.measurementTimestamp >= selectedStartDate && record.measurementTimestamp <= selectedEndDate
             }
-            .sorted { $0.measurementDate < $1.measurementDate }
+            .sorted { $0.measurementTimestamp < $1.measurementTimestamp }
             .last
     }
     

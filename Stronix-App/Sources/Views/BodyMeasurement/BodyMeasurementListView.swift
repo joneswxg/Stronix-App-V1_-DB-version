@@ -4,9 +4,9 @@ struct BodyMeasurementListView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BodyMeasurementViewModel
     @State private var showingEditSheet = false
-    @State private var selectedRecord: BodyMeasurementRecord?
+    @State private var selectedRecord: BodyMeasurement?
     @State private var showingDeleteAlert = false
-    @State private var recordToDelete: BodyMeasurementRecord?
+    @State private var recordToDelete: BodyMeasurement?
     
     var body: some View {
         NavigationView {
@@ -101,7 +101,7 @@ struct BodyMeasurementListView: View {
         .listStyle(.plain)
     }
     
-    private func deleteMeasurement(_ record: BodyMeasurementRecord) async {
+    private func deleteMeasurement(_ record: BodyMeasurement) async {
         let success = await viewModel.deleteMeasurement(record.id)
         if success {
             // 删除成功，数据已在ViewModel中更新
@@ -112,7 +112,7 @@ struct BodyMeasurementListView: View {
 
 // 体测记录行视图
 struct MeasurementRowView: View {
-    let record: BodyMeasurementRecord
+    let record: BodyMeasurement
     let onEdit: () -> Void
     let onDelete: () -> Void
     
@@ -120,7 +120,7 @@ struct MeasurementRowView: View {
         VStack(spacing: 12) {
             // 日期和操作按钮
             HStack {
-                Text(formatDate(record.measurementDate))
+                Text(formatDate(record.measurementTimestamp))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.black)
                 
@@ -153,11 +153,11 @@ struct MeasurementRowView: View {
             
             // 体测数据网格
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                DataItem(title: "体重", value: record.weight_kg, unit: "kg")
-                DataItem(title: "身高", value: record.height_cm, unit: "cm")
-                DataItem(title: "体脂率", value: record.body_fat_percentage, unit: "%")
-                DataItem(title: "骨骼肌量", value: record.skeletal_muscle_mass_kg, unit: "kg")
-                DataItem(title: "内脏脂肪", value: Double(record.visceral_fat_level), unit: "Lv")
+                DataItem(title: "体重", value: record.weightKg, unit: "kg")
+                DataItem(title: "身高", value: record.heightCm, unit: "cm")
+                DataItem(title: "体脂率", value: record.bodyFatPercentage, unit: "%")
+                DataItem(title: "骨骼肌量", value: record.skeletalMuscleMassKg, unit: "kg")
+                DataItem(title: "内脏脂肪", value: Double(record.visceralFatLevel), unit: "Lv")
                 DataItem(title: "BMI", value: record.bmi, unit: "")
             }
         }

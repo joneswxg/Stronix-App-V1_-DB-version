@@ -138,8 +138,19 @@ struct TrainingPlanDetailView: View {
             }
         }
         .sheet(isPresented: $showEditPlan) {
-            // 不再传递viewModel，避免状态冲突
-            EditPlanView(plan: plan)
+            // 传递回调，保存成功后直接关闭详情页
+            EditPlanView(plan: plan, onSaveSuccess: { updatedPlan in
+                print("🔄 TrainingPlanDetailView EditPlanView onSaveSuccess 回调被触发")
+                
+                // 关闭编辑页面
+                showEditPlan = false
+                
+                // 延迟关闭详情页，直接返回到 PlanListView
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    print("🔄 TrainingPlanDetailView 关闭详情页，返回到 PlanListView")
+                    dismiss()
+                }
+            })
         }
         .alert("训练冲突", isPresented: $showTrainingConflictAlert) {
             Button("取消", role: .cancel) { }
@@ -174,18 +185,20 @@ struct DetailActionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
-                // 动作缩略图 - 从服务器加载静态图片
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(extractImageFileName(from: action.imageUrl))")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .foregroundColor(.gray)
-                        )
+                // 动作缩略图 - 使用本地图片加载
+                Group {
+                    if let uiImage = loadLocalActionImage(fileName: extractImageFileName(from: action.imageUrl)) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .overlay(
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
                 .frame(width: 60, height: 60)
                 .background(Color.gray.opacity(0.1))
@@ -308,16 +321,34 @@ private func extractImageFileName(from fullPath: String) -> String {
     return URL(fileURLWithPath: fullPath).lastPathComponent
 }
 
+/// 从本地bundle加载动作图片
+private func loadLocalActionImage(fileName: String) -> UIImage? {
+    // 尝试从不同的bundle路径加载图片
+    let possiblePaths = [
+        "Images/\(fileName)",
+        "Media/Actions/\(fileName)",
+        fileName
+    ]
+    
+    for path in possiblePaths {
+        if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
+        
+        // 也尝试不去除扩展名的方式
+        if let url = Bundle.main.url(forResource: path, withExtension: nil),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
+    }
+    
+    return nil
+}
+
 #Preview {
-    let samplePlan = TrainingPlan(
-        id: 1,
-        name: "测试计划",
-        creator: "我",
-        createdDate: "2024-01-01",
-        lastTraining: "未开始",
-        volume: 0,
-        description: "这是一个测试计划",
-        difficulty: "中级"
-    )
-    return TrainingPlanDetailView(plan: samplePlan)
+    // 预览代码暂时注释，等待类型定义完成
+    Text("TrainingPlanDetailView Preview")
 } 

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ForgotPasswordView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var localUserService = LocalUserService.shared
     @State private var email = ""
     @State private var showSuccess = false
     @State private var errorMessage = ""
@@ -55,7 +55,7 @@ struct ForgotPasswordView: View {
                     sendResetEmail()
                 }) {
                     HStack {
-                        if authService.isLoading {
+                        if localUserService.isLoading {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
@@ -68,12 +68,12 @@ struct ForgotPasswordView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
-                        (email.isEmpty || authService.isLoading) ? 
+                        (email.isEmpty || localUserService.isLoading) ? 
                             Color.gray.opacity(0.5) : Color.blue
                     )
                     .cornerRadius(25)
                 }
-                .disabled(email.isEmpty || authService.isLoading)
+                .disabled(email.isEmpty || localUserService.isLoading)
                 .padding(.horizontal, 24)
                 
                 Spacer()
@@ -115,7 +115,7 @@ struct ForgotPasswordView: View {
     private func sendResetEmail() {
         Task {
             do {
-                let response = try await authService.forgotPassword(email: email)
+                let response = try await localUserService.forgotPassword(email: email)
                 await MainActor.run {
                     if response.success {
                         successMessage = response.message

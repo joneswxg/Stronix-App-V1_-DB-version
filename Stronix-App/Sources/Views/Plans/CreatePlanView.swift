@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - 数据模型
 struct PlanAction: Identifiable {
@@ -42,7 +43,15 @@ struct CreatePlanView: View {
     @State private var showSuccess = false
     @State private var successMessage = ""
     
-    private let planService = PlanService.shared
+    // 自定义键盘状态
+    @StateObject private var keyboardManager = CustomKeyboardManager()
+    
+    private let localPlanService = LocalPlanService.shared
+    
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
     
     enum WeightUnit: String, CaseIterable {
         case kg = "kg"
@@ -55,31 +64,64 @@ struct CreatePlanView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 16) {
-                // 计划名称和菜单
-                planNameSection
-                
-                // 计划描述（条件显示）
-                if showPlanNote {
-                    planNoteSection
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 16) {
+                    // 计划名称和菜单
+                    planNameSection
+                    
+                    // 计划描述（条件显示）
+                    if showPlanNote {
+                        planNoteSection
+                    }
+                    
+                    // 添加动作按钮
+                    if selectedActions.isEmpty {
+                        addActionButton
+                    }
+                    
+                    // 动作列表
+                    if !selectedActions.isEmpty {
+                        actionListSection
+                    }
+                    
+                    Spacer()
+                    
+                    // 为键盘预留空间
+                    if keyboardManager.isShowing {
+                        Spacer()
+                            .frame(height: 280)
+                    }
+                }
+                .padding(.top, 16)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // 点击空白区域隐藏键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
+                        hideSystemKeyboard()
+                    }
                 }
                 
-                // 添加动作按钮
-                if selectedActions.isEmpty {
-                    addActionButton
+                // 自定义键盘
+                if keyboardManager.isShowing {
+                    CustomNumberKeyboard(
+                        value: $keyboardManager.currentValue,
+                        isShowing: $keyboardManager.isShowing,
+                        step: keyboardManager.step,
+                        maxValue: keyboardManager.maxValue,
+                        isInteger: keyboardManager.isInteger,
+                        keyboardManager: keyboardManager
+                    )
+                    .onChange(of: keyboardManager.isShowing) { _, isShowing in
+                        if !isShowing {
+                            hideSystemKeyboard()
+                        }
+                    }
                 }
-                
-                // 动作列表
-                if !selectedActions.isEmpty {
-                    actionListSection
-                }
-                
-                Spacer()
             }
-            .padding(.top, 16)
             .navigationTitle("创建计划")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
                         dismiss()
@@ -103,7 +145,7 @@ struct CreatePlanView: View {
                     }
                     .disabled(planName.isEmpty || selectedActions.isEmpty || isSaving)
                 }
-            }
+            })
             .alert("错误", isPresented: $showError) {
                 Button("确定") {
                     showError = false
@@ -121,9 +163,12 @@ struct CreatePlanView: View {
             }
         }
         .sheet(isPresented: $showActionSelect) {
-            PlanActionSelectView { actions in
-                addSelectedActions(actions)
-            }
+            PlanActionSelectView(
+                onActionsSelected: { actions in
+                    addSelectedActions(actions)
+                },
+                existingActionIds: Set(selectedActions.map { $0.id })
+            )
         }
     }
     
@@ -133,6 +178,12 @@ struct CreatePlanView: View {
             TextField("输入计划名称", text: $planName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .disabled(isSaving)
+                .onTapGesture {
+                    // 当点击计划名称输入框时，隐藏自定义键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
+                    }
+                }
             
             Menu {
                 if !showPlanNote {
@@ -174,6 +225,12 @@ struct CreatePlanView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .lineLimit(3...6)
                 .disabled(isSaving)
+                .onTapGesture {
+                    // 当点击计划描述输入框时，隐藏自定义键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
+                    }
+                }
         }
         .padding(.horizontal, 16)
     }
@@ -210,7 +267,8 @@ struct CreatePlanView: View {
                     onToggleUnit: {
                         toggleWeightUnit()
                     },
-                    isDisabled: isSaving
+                    isDisabled: isSaving,
+                    keyboardManager: keyboardManager
                 )
             }
             
@@ -234,15 +292,15 @@ struct CreatePlanView: View {
     }
     
     // MARK: - 方法
-    private func addSelectedActions(_ actions: [ActionListView.Action]) {
+    private func addSelectedActions(_ actions: [Action]) {
         let newActions = actions.map { action in
             PlanAction(
                 id: action.id,
                 name: action.name,
-                imageUrl: action.image_url,
+                imageUrl: action.gifUrl ?? "",
                 nameEn: action.name_en ?? "",
-                bodyPartId: action.body_part_id,
-                equipmentId: action.equipment_id,
+                bodyPartId: action.bodypart_id,
+                equipmentId: action.equipment_id ?? 0,
                 targetMuscleIds: action.target_muscle_ids,
                 sets: [PlanSet()] // 默认添加一组
             )
@@ -266,14 +324,16 @@ struct CreatePlanView: View {
                 description: planNote.isEmpty ? nil : planNote,
                 difficulty: nil, // 可以后续添加难度选择
                 duration: nil,   // 可以后续添加时长估算
-                actions: selectedActions.map { action in
+                actions: selectedActions.enumerated().map { (index, action) in
                     CreatePlanAction(
                         action_id: action.id,
+                        order: index + 1,
                         rest: action.restTime,
-                        note: action.notes,
+                        note: action.notes ?? "",
                         record_bilateral: action.isLeftRightMode,
-                        sets: action.sets.map { set in
+                        sets: action.sets.enumerated().map { (setIndex, set) in
                             CreatePlanSet(
+                                set_number: setIndex + 1,
                                 weight: action.isLeftRightMode ? nil : set.weight,
                                 reps: set.reps,
                                 left_weight: action.isLeftRightMode ? set.leftWeight : nil,
@@ -284,8 +344,37 @@ struct CreatePlanView: View {
                 }
             )
             
-            // 调用API保存计划
-            let response = try await planService.createPlan(planData)
+            // 调用本地服务保存计划
+            let planDict: [String: Any] = [
+                "name": planData.name,
+                "description": planData.description,
+                "difficulty": planData.difficulty ?? "",
+                "duration": planData.duration ?? 0,
+                "actions": planData.actions.map { action in
+                    [
+                        "action_id": action.action_id,
+                        "rest": action.rest,
+                        "note": action.note,
+                        "record_bilateral": action.record_bilateral,
+                        "sets": action.sets.map { set in
+                            [
+                                "set_number": set.set_number,
+                                "weight": set.weight ?? 0.0,
+                                "reps": set.reps,
+                                "left_weight": set.left_weight ?? 0.0,
+                                "right_weight": set.right_weight ?? 0.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+            
+            // 获取当前用户ID
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalPlanError.unauthorized("用户未登录")
+            }
+            
+            let response = try await localPlanService.createPlan(planDict, user_id: currentUser.id)
             
             print("创建计划成功，计划ID: \(response.plan_id)")
             
@@ -303,8 +392,8 @@ struct CreatePlanView: View {
             
         } catch {
             await MainActor.run {
-                if let apiError = error as? APIError {
-                    errorMessage = apiError.localizedDescription
+                if let localError = error as? LocalPlanError {
+                    errorMessage = localError.message
                 } else {
                     errorMessage = "保存失败: \(error.localizedDescription)"
                 }
@@ -323,6 +412,7 @@ struct PlanActionCard: View {
     let onDelete: () -> Void
     let onToggleUnit: () -> Void
     let isDisabled: Bool
+    let keyboardManager: CustomKeyboardManager
     
     @State private var showActionMenu = false
     @State private var showSetMenu = false
@@ -341,6 +431,11 @@ struct PlanActionCard: View {
                 return total + Int(set.weight * Double(set.reps))
             }
         }
+    }
+    
+    // 隐藏系统键盘的方法
+    private func hideSystemKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     var body: some View {
@@ -362,13 +457,18 @@ struct PlanActionCard: View {
         }
         .background(
             NavigationLink(
-                destination: ActionDetailView(action: ActionListView.Action(
+                destination: ActionDetailView(action: Action(
                     id: action.id,
+                    external_id: String(action.id),
                     name: action.name,
                     name_en: action.nameEn,
-                    image_url: action.imageUrl,
-                    body_part_id: action.bodyPartId,
+                    gifUrl: action.imageUrl,
+                    description: nil,
+                    description_en: nil,
+                    difficulty: nil,
+                    bodypart_id: action.bodyPartId,
                     equipment_id: action.equipmentId,
+                    is_bilateral: false,
                     target_muscle_ids: action.targetMuscleIds
                 )),
                 isActive: $showActionDetail
@@ -410,18 +510,20 @@ struct PlanActionCard: View {
     private var actionHeader: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                // 动作图片
-                AsyncImage(url: URL(string: "http://127.0.0.1:6000/api/action/images/\(action.imageUrl.components(separatedBy: "/").last ?? "")")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .foregroundColor(.gray)
-                        )
+                // 动作图片 - 使用本地图片加载
+                Group {
+                    if let uiImage = loadLocalActionImage(fileName: action.imageUrl.components(separatedBy: "/").last ?? "") {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .overlay(
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
@@ -456,7 +558,7 @@ struct PlanActionCard: View {
                         }
                         .scaleEffect(0.8)
                         .disabled(isDisabled)
-                        .onChange(of: action.isLeftRightMode) { newValue in
+                        .onChange(of: action.isLeftRightMode) { _, newValue in
                             // 切换模式时清空重量数据
                             for index in action.sets.indices {
                                 if newValue {
@@ -606,37 +708,125 @@ struct PlanActionCard: View {
                 
                 if action.isLeftRightMode {
                     // 左侧重量
-                    TextField("0", value: $action.sets[index].leftWeight, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
-                        .frame(width: 40)
-                        .multilineTextAlignment(.center)
-                        .disabled(isDisabled)
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "left_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].leftWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
+                            action.sets[index].leftWeight = newValue
+                        }
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].leftWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].leftWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
+                    .disabled(isDisabled)
                     
                     // 右侧重量
-                    TextField("0", value: $action.sets[index].rightWeight, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
-                        .frame(width: 40)
-                        .multilineTextAlignment(.center)
-                        .disabled(isDisabled)
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "right_weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].rightWeight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
+                            action.sets[index].rightWeight = newValue
+                        }
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].rightWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].rightWeight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
+                    .disabled(isDisabled)
                 } else {
                     // 普通重量
-                    TextField("0", value: $action.sets[index].weight, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
-                        .frame(width: 40)
-                        .multilineTextAlignment(.center)
-                        .disabled(isDisabled)
+                    Button(action: {
+                        hideSystemKeyboard()
+                        let inputId = "weight_\(action.id)_\(index)"
+                        keyboardManager.showKeyboard(
+                            inputId: inputId,
+                            initialValue: action.sets[index].weight,
+                            isInteger: false,
+                            step: 1.0,
+                            maxValue: 999.0
+                        ) { newValue in
+                            action.sets[index].weight = newValue
+                        }
+                    }) {
+                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(index)"
+                        let isSelected = isActive && keyboardManager.isValueSelected
+                        
+                        Text(action.sets[index].weight == 0 ? "0" : String(format: "%.1f", action.sets[index].weight))
+                            .font(.system(size: 14))
+                            .foregroundColor(isSelected ? .white : .black)
+                            .frame(width: 40, height: 32)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            )
+                    }
+                    .disabled(isDisabled)
                 }
                 
                 // 次数输入
-                TextField("0", value: $action.sets[index].reps, format: .number)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.numberPad)
-                    .frame(width: 40)
-                    .multilineTextAlignment(.center)
-                    .disabled(isDisabled)
+                Button(action: {
+                    hideSystemKeyboard()
+                    let inputId = "reps_\(action.id)_\(index)"
+                    keyboardManager.showKeyboard(
+                        inputId: inputId,
+                        initialValue: Double(action.sets[index].reps),
+                        isInteger: true,
+                        step: 1.0,
+                        maxValue: 999.0
+                    ) { newValue in
+                        action.sets[index].reps = Int(newValue)
+                    }
+                }) {
+                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(index)"
+                    let isSelected = isActive && keyboardManager.isValueSelected
+                    
+                    Text("\(action.sets[index].reps)")
+                        .font(.system(size: 14))
+                        .foregroundColor(isSelected ? .white : .black)
+                        .frame(width: 40, height: 32)
+                        .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
+                }
+                .disabled(isDisabled)
                 
                 Spacer()
                 
@@ -690,6 +880,33 @@ struct PlanActionCard: View {
         }
         .padding(.leading, 16)
         .padding(.trailing, 16)
+    }
+    
+    /// 从本地bundle加载动作图片
+    private func loadLocalActionImage(fileName: String) -> UIImage? {
+        // 尝试从不同的bundle路径加载图片
+        let possiblePaths = [
+            "Images/\(fileName)",
+            "Media/Actions/\(fileName)",
+            fileName
+        ]
+        
+        for path in possiblePaths {
+            if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
+                return image
+            }
+            
+            // 也尝试不去除扩展名的方式
+            if let url = Bundle.main.url(forResource: path, withExtension: nil),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
+                return image
+            }
+        }
+        
+        return nil
     }
 }
 

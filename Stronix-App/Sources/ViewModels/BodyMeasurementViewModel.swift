@@ -3,34 +3,34 @@ import SwiftUI
 
 @MainActor
 class BodyMeasurementViewModel: ObservableObject {
-    @Published var measurements: [BodyMeasurementRecord] = []
+    @Published var measurements: [BodyMeasurement] = []
     @Published var selectedMetric: MetricType = .weight
-    @Published var selectedDataPoint: BodyMeasurementRecord?
+    @Published var selectedDataPoint: BodyMeasurement?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showingAddSheet = false
     
-    private let bodyMeasurementService = BodyMeasurementService()
+    private let bodyMeasurementService = LocalBodyMeasurementService.shared
     
     // 获取当前用户ID
     private var currentUserId: Int {
-        return AuthService.shared.currentUser?.id ?? 0
+        return LocalUserService.shared.currentUser?.id ?? 0
     }
     
     // MARK: - 计算属性
     
     /// 最新的体测记录
-    var latestMeasurement: BodyMeasurementRecord? {
+    var latestMeasurement: BodyMeasurement? {
         measurements.first
     }
     
     /// 当前显示的数据点（选中的或最新的）
-    var displayDataPoint: BodyMeasurementRecord? {
+    var displayDataPoint: BodyMeasurement? {
         selectedDataPoint ?? latestMeasurement
     }
     
     /// 获取图表数据
-    var chartData: [BodyMeasurementRecord] {
+    var chartData: [BodyMeasurement] {
         return measurements.reversed() // 图表需要按时间正序显示
     }
     
@@ -54,17 +54,22 @@ class BodyMeasurementViewModel: ObservableObject {
     func loadMeasurements() async {
         // 检查用户是否已登录
         guard currentUserId > 0 else {
-            print("用户未登录，无法加载体测数据")
+            print("❌ 用户未登录，无法加载体测数据，currentUserId: \(currentUserId)")
             measurements = []
+            errorMessage = "用户未登录"
             return
         }
         
+        print("🔍 开始加载用户 \(currentUserId) 的体测数据")
         isLoading = true
         errorMessage = nil
         
         do {
-            let fetchedMeasurements = try await bodyMeasurementService.getUserBodyMeasurements(userId: currentUserId)
-            measurements = fetchedMeasurements
+            let query = BodyMeasurementQuery(userId: currentUserId, limit: 100)
+            let response = try await bodyMeasurementService.getUserMeasurements(query)
+            measurements = response.measurements
+            
+            print("✅ 成功加载 \(measurements.count) 条体测记录")
             
             // 设置默认选中最新的数据点
             if selectedDataPoint == nil {
@@ -72,8 +77,9 @@ class BodyMeasurementViewModel: ObservableObject {
             }
             
         } catch {
-            errorMessage = error.localizedDescription
-            print("加载体测数据失败: \(error)")
+            let errorDesc = error.localizedDescription
+            errorMessage = "查询失败: \(errorDesc)"
+            print("❌ 加载体测数据失败: \(error)")
         }
         
         isLoading = false
@@ -89,8 +95,8 @@ class BodyMeasurementViewModel: ObservableObject {
     /// 添加新的体测记录
     func addMeasurement(_ request: CreateBodyMeasurementRequest) async -> Bool {
         do {
-            let measurementId = try await bodyMeasurementService.createBodyMeasurement(request)
-            print("成功创建体测记录，ID: \(measurementId)")
+            let response = try await bodyMeasurementService.createMeasurement(request)
+            print("成功创建体测记录，ID: \(response.measurementId ?? 0)")
             
             // 重新加载数据
             await loadMeasurements()
@@ -106,8 +112,8 @@ class BodyMeasurementViewModel: ObservableObject {
     /// 删除体测记录
     func deleteMeasurement(_ measurementId: Int) async -> Bool {
         do {
-            let success = try await bodyMeasurementService.deleteBodyMeasurement(measurementId: measurementId)
-            if success {
+            let response = try await bodyMeasurementService.deleteMeasurement(measurementId)
+            if response.success {
                 // 从本地数组中移除
                 measurements.removeAll { $0.id == measurementId }
                 
@@ -116,7 +122,7 @@ class BodyMeasurementViewModel: ObservableObject {
                     selectedDataPoint = latestMeasurement
                 }
             }
-            return success
+            return response.success
             
         } catch {
             errorMessage = error.localizedDescription
@@ -133,7 +139,7 @@ class BodyMeasurementViewModel: ObservableObject {
     }
     
     /// 选择数据点
-    func selectDataPoint(_ measurement: BodyMeasurementRecord) {
+    func selectDataPoint(_ measurement: BodyMeasurement) {
         selectedDataPoint = measurement
     }
     
@@ -170,15 +176,13 @@ class BodyMeasurementViewModel: ObservableObject {
     }
     
     /// 获取指标值
-    func getValueForMetric(_ measurement: BodyMeasurementRecord) -> Double {
+    func getValueForMetric(_ measurement: BodyMeasurement) -> Double {
         return selectedMetric.getValue(from: measurement)
     }
     
     // MARK: - 初始化
     
     init() {
-        Task {
-            await loadMeasurements()
-        }
+        // 移除自动加载，让视图控制何时加载数据
     }
 } 

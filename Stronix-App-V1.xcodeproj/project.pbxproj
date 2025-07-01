@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix-App-V1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Stronix-App-V1.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -17,6 +21,20 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				Database/database_stronix.db,
+				Images/exercise_1.gif,
+				Images/exercise_2.gif,
+				Images/exercise_3.gif,
+				Images/exercise_4.gif,
+				Images/exercise_5.gif,
+				Images/exercise_11.gif,
+				Images/exercise_12.gif,
+				Images/exercise_13.gif,
+				Images/exercise_14.gif,
+				Images/exercise_15.gif,
+				Images/exercise_17.gif,
+				Images/exercise_107.gif,
+				Images/exercise_115.gif,
+				Images/exercise_466.gif,
 			);
 			target = 9D70A7C52DDD84580085BAAF /* Stronix-App-V1 */;
 		};
@@ -24,20 +42,23 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Stronix_App_V1App.swift,
-				Models/ActionInfo.swift,
-				Models/BodyMeasurementModels.swift,
 				Models/Database/UpdateData.swift,
 				Models/Database/VersionControl.swift,
-				Models/MutableTrainingModels.swift,
-				Models/TrainingHistoryModels.swift,
-				Models/TrainingModels.swift,
-				Services/AuthService.swift,
+				Models/Local/LocalActionModels.swift,
+				Models/Local/LocalBodyMeasurementModels.swift,
+				Models/Local/LocalMutableTrainingModels.swift,
+				Models/Local/LocalPlanModels.swift,
+				Models/Local/LocalTrainingHistoryModels.swift,
+				Models/Local/LocalTrainingModels.swift,
+				Models/Local/LocalUserModels.swift,
 				Services/Database/DatabaseManager.swift,
-				Services/Network/APIService.swift,
-				Services/Network/BodyMeasurementService.swift,
-				Services/Network/PlanService.swift,
+				Services/Local/LocalActionService.swift,
+				Services/Local/LocalBodyMeasurementService.swift,
+				Services/Local/LocalPlanService.swift,
+				Services/Local/LocalTrainingHistoryService.swift,
+				Services/Local/LocalUserService.swift,
+				Services/Local/TrainingSessionManager.swift,
 				Services/TrainingHistoryService.swift,
-				Services/TrainingSessionManager.swift,
 				Services/Update/UpdateService.swift,
 				Services/Update/VersionService.swift,
 				Utilities/Constants/APIConfig.swift,
@@ -77,6 +98,7 @@
 				Views/Profile/SettingsView.swift,
 				Views/Profile/ToolsView.swift,
 				Views/Profile/UserInfoView.swift,
+				Views/Shared/CustomNumberKeyboard.swift,
 				Views/Training/TrainingFloatingIndicator.swift,
 				Views/Training/TrainingPlanDetailView.swift,
 				Views/Training/TrainingView.swift,
@@ -114,6 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -164,6 +187,7 @@
 			);
 			name = "Stronix-App-V1";
 			packageProductDependencies = (
+				9D42BE9C2E029EC9008121CD /* SQLite */,
 			);
 			productName = "Stronix-App-V1";
 			productReference = 9D70A7C62DDD84590085BAAF /* Stronix-App-V1.app */;
@@ -193,6 +217,9 @@
 			);
 			mainGroup = 9D70A7BD2DDD84580085BAAF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9D42BE9B2E029EC9008121CD /* XCRemoteSwiftPackageReference "SQLite" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9D70A7C72DDD84590085BAAF /* Products */;
 			projectDirPath = "";
@@ -357,22 +384,18 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "JonesW.Stronix-App-V1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.4;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -395,22 +418,18 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "JonesW.Stronix-App-V1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.4;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -436,6 +455,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9D42BE9B2E029EC9008121CD /* XCRemoteSwiftPackageReference "SQLite" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9D42BE9C2E029EC9008121CD /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D42BE9B2E029EC9008121CD /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9D70A7BE2DDD84580085BAAF /* Project object */;
 }

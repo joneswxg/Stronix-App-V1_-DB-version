@@ -20,6 +20,11 @@ struct BodyMeasurementOverview: View {
         .refreshable {
             await viewModel.refreshData()
         }
+        .onAppear {
+            Task {
+                await viewModel.loadMeasurements()
+            }
+        }
         .alert("错误", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("确定") {
                 viewModel.errorMessage = nil
@@ -93,7 +98,7 @@ struct BodyMeasurementOverview: View {
         return HStack(spacing: 15) {
             MetricCard(
                 title: "体重",
-                value: displayData?.weight_kg ?? 0,
+                value: displayData?.weightKg ?? 0,
                 unit: "kg",
                 isSelected: viewModel.selectedMetric == .weight
             ) {
@@ -102,7 +107,7 @@ struct BodyMeasurementOverview: View {
             
             MetricCard(
                 title: "骨骼肌量",
-                value: displayData?.skeletal_muscle_mass_kg ?? 0,
+                value: displayData?.skeletalMuscleMassKg ?? 0,
                 unit: "kg",
                 isSelected: viewModel.selectedMetric == .muscleMass
             ) {
@@ -111,7 +116,7 @@ struct BodyMeasurementOverview: View {
             
             MetricCard(
                 title: "体脂百分比",
-                value: displayData?.body_fat_percentage ?? 0,
+                value: displayData?.bodyFatPercentage ?? 0,
                 unit: "%",
                 isSelected: viewModel.selectedMetric == .bodyFat
             ) {
@@ -137,7 +142,7 @@ struct BodyMeasurementOverview: View {
     private var selectedDataPointView: some View {
         if let selectedData = viewModel.selectedDataPoint {
             HStack {
-                Text(formatDateForDisplay(selectedData.measurementDate))
+                Text(formatDateForDisplay(selectedData.measurementTimestamp))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.gray)
                 Spacer()
@@ -150,7 +155,7 @@ struct BodyMeasurementOverview: View {
     
     private var chartView: some View {
         // 按时间排序数据（从最早到最新）
-        let sortedChartData = viewModel.chartData.sorted { $0.measurementDate < $1.measurementDate }
+        let sortedChartData = viewModel.chartData.sorted { $0.measurementTimestamp < $1.measurementTimestamp }
         
         let chart = Chart(Array(sortedChartData.enumerated()), id: \.offset) { index, data in
             LineMark(
@@ -184,7 +189,7 @@ struct BodyMeasurementOverview: View {
                 AxisMarks(values: .automatic(desiredCount: min(5, sortedChartData.count))) { value in
                     AxisValueLabel {
                         if let index = value.as(Int.self), index < sortedChartData.count {
-                            Text(formatDateForChart(sortedChartData[index].measurementDate))
+                            Text(formatDateForChart(sortedChartData[index].measurementTimestamp))
                                 .font(.system(size: 10))
                                 .foregroundColor(.gray)
                         }
@@ -202,7 +207,7 @@ struct BodyMeasurementOverview: View {
             }
     }
     
-    private func handleChartTap(location: CGPoint, chartData: [BodyMeasurementRecord]) {
+    private func handleChartTap(location: CGPoint, chartData: [BodyMeasurement]) {
         guard !chartData.isEmpty else { return }
         
         // 计算点击位置对应的数据点
