@@ -174,13 +174,12 @@ struct HistoryListView: View {
         }
     }
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                logoSection
-                navigationSection
+        VStack(spacing: 0) {
+            logoSection
+            navigationSection
                 
                 if isLoading {
                     Spacer()
@@ -192,7 +191,7 @@ struct HistoryListView: View {
                             .padding(.top, 8)
                     }
                     Spacer()
-                } else if let errorMessage = errorMessage {
+                } else if errorMessage != nil {
                     Spacer()
                     VStack(spacing: 16) {
                         Image(systemName: "calendar.badge.exclamationmark")
@@ -219,7 +218,6 @@ struct HistoryListView: View {
                 }
             }
             .navigationBarHidden(true)
-        }
         .onAppear {
             print("🎬 HistoryListView 出现，选中日期: \(selectedDate)")
             print("🎬 HistoryListView 出现，日期字符串: \(selectedDateString ?? "nil")")
@@ -267,11 +265,11 @@ struct HistoryListView: View {
     private var navigationSection: some View {
         HStack {
             Button(action: {
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             }) {
-                Image(systemName: "xmark.circle.fill")
+                Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.blue)
             }
             Spacer()
             Text("训练记录")

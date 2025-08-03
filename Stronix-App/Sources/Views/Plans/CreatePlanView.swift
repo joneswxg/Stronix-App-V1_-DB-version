@@ -65,34 +65,38 @@ struct CreatePlanView: View {
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
-                VStack(spacing: 16) {
-                    // 计划名称和菜单
-                    planNameSection
-                    
-                    // 计划描述（条件显示）
-                    if showPlanNote {
-                        planNoteSection
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // 计划名称和菜单
+                        planNameSection
+                        
+                        // 计划描述（条件显示）
+                        if showPlanNote {
+                            planNoteSection
+                        }
+                        
+                        // 添加动作按钮
+                        if selectedActions.isEmpty {
+                            addActionButton
+                        }
+                        
+                        // 动作列表
+                        if !selectedActions.isEmpty {
+                            actionListSection
+                        }
+                        
+                        // 底部间距
+                        Spacer(minLength: 50)
+                        
+                        // 为键盘预留空间
+                        if keyboardManager.isShowing {
+                            Spacer()
+                                .frame(height: 280)
+                        }
                     }
-                    
-                    // 添加动作按钮
-                    if selectedActions.isEmpty {
-                        addActionButton
-                    }
-                    
-                    // 动作列表
-                    if !selectedActions.isEmpty {
-                        actionListSection
-                    }
-                    
-                    Spacer()
-                    
-                    // 为键盘预留空间
-                    if keyboardManager.isShowing {
-                        Spacer()
-                            .frame(height: 280)
-                    }
+                    .padding(.top, 20)
                 }
-                .padding(.top, 16)
+                .background(Color(UIColor.systemGroupedBackground))
                 .contentShape(Rectangle())
                 .onTapGesture {
                     // 点击空白区域隐藏键盘
@@ -329,7 +333,7 @@ struct CreatePlanView: View {
                         action_id: action.id,
                         order: index + 1,
                         rest: action.restTime,
-                        note: action.notes ?? "",
+                        note: action.notes,
                         record_bilateral: action.isLeftRightMode,
                         sets: action.sets.enumerated().map { (setIndex, set) in
                             CreatePlanSet(
@@ -347,14 +351,14 @@ struct CreatePlanView: View {
             // 调用本地服务保存计划
             let planDict: [String: Any] = [
                 "name": planData.name,
-                "description": planData.description,
+                "description": planData.description ?? "",
                 "difficulty": planData.difficulty ?? "",
                 "duration": planData.duration ?? 0,
                 "actions": planData.actions.map { action in
                     [
                         "action_id": action.action_id,
                         "rest": action.rest,
-                        "note": action.note,
+                        "note": action.note ?? "",
                         "record_bilateral": action.record_bilateral,
                         "sets": action.sets.map { set in
                             [
@@ -455,28 +459,22 @@ struct PlanActionCard: View {
         .sheet(isPresented: $showRestTimer) {
             restTimerSettingSheet
         }
-        .background(
-            NavigationLink(
-                destination: ActionDetailView(action: Action(
-                    id: action.id,
-                    external_id: String(action.id),
-                    name: action.name,
-                    name_en: action.nameEn,
-                    gifUrl: action.imageUrl,
-                    description: nil,
-                    description_en: nil,
-                    difficulty: nil,
-                    bodypart_id: action.bodyPartId,
-                    equipment_id: action.equipmentId,
-                    is_bilateral: false,
-                    target_muscle_ids: action.targetMuscleIds
-                )),
-                isActive: $showActionDetail
-            ) {
-                EmptyView()
-            }
-            .hidden()
-        )
+        .navigationDestination(isPresented: $showActionDetail) {
+            ActionDetailView(action: Action(
+                id: action.id,
+                external_id: String(action.id),
+                name: action.name,
+                name_en: action.nameEn,
+                gifUrl: action.imageUrl,
+                description: nil,
+                description_en: nil,
+                difficulty: nil,
+                bodypart_id: action.bodyPartId,
+                equipment_id: action.equipmentId,
+                is_bilateral: false,
+                target_muscle_ids: action.targetMuscleIds
+            ))
+        }
     }
     
     // 休息计时器设置表单
@@ -512,7 +510,7 @@ struct PlanActionCard: View {
             HStack(spacing: 12) {
                 // 动作图片 - 使用本地图片加载
                 Group {
-                    if let uiImage = loadLocalActionImage(fileName: action.imageUrl.components(separatedBy: "/").last ?? "") {
+                    if let uiImage = loadLocalActionImage(fileName: action.imageUrl) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -884,22 +882,45 @@ struct PlanActionCard: View {
     
     /// 从本地bundle加载动作图片
     private func loadLocalActionImage(fileName: String) -> UIImage? {
+        // 处理完整路径格式，例如：Images/abs/exercise_1.gif
+        let cleanPath = fileName.replacingOccurrences(of: ".gif", with: "")
+        
+        // 尝试直接使用完整路径
+        if let url = Bundle.main.url(forResource: cleanPath, withExtension: "gif"),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
+        
+        // 备用方案：提取文件名
+        let justFileName = URL(fileURLWithPath: fileName).lastPathComponent.replacingOccurrences(of: ".gif", with: "")
+        
         // 尝试从不同的bundle路径加载图片
         let possiblePaths = [
-            "Images/\(fileName)",
-            "Media/Actions/\(fileName)",
-            fileName
+            "Images/abs/\(justFileName)",
+            "Images/pectorals/\(justFileName)",
+            "Images/biceps/\(justFileName)",
+            "Images/triceps/\(justFileName)",
+            "Images/delts/\(justFileName)",
+            "Images/lats/\(justFileName)",
+            "Images/quads/\(justFileName)",
+            "Images/hamstrings/\(justFileName)",
+            "Images/glutes/\(justFileName)",
+            "Images/calves/\(justFileName)",
+            "Images/forearms/\(justFileName)",
+            "Images/traps/\(justFileName)",
+            "Images/cardiovascular system/\(justFileName)",
+            "Images/spine/\(justFileName)",
+            "Images/upper back/\(justFileName)",
+            "Images/serratus anterior/\(justFileName)",
+            "Images/levator scapulae/\(justFileName)",
+            "Images/adductors/\(justFileName)",
+            "Images/abductors/\(justFileName)",
+            justFileName
         ]
         
         for path in possiblePaths {
-            if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
-               let data = try? Data(contentsOf: url),
-               let image = UIImage(data: data) {
-                return image
-            }
-            
-            // 也尝试不去除扩展名的方式
-            if let url = Bundle.main.url(forResource: path, withExtension: nil),
+            if let url = Bundle.main.url(forResource: path, withExtension: "gif"),
                let data = try? Data(contentsOf: url),
                let image = UIImage(data: data) {
                 return image

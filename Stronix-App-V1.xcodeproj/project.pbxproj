@@ -8,11 +8,27 @@
 
 /* Begin PBXBuildFile section */
 		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
+		9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */ = {isa = PBXBuildFile; fileRef = 9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9D70A7F62DDD84590085BAAF /* Copy Images */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */,
+			);
+			name = "Copy Images";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix-App-V1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Stronix-App-V1.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Stronix-App/Resources/Images"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -21,20 +37,6 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				Database/database_stronix.db,
-				Images/exercise_1.gif,
-				Images/exercise_2.gif,
-				Images/exercise_3.gif,
-				Images/exercise_4.gif,
-				Images/exercise_5.gif,
-				Images/exercise_11.gif,
-				Images/exercise_12.gif,
-				Images/exercise_13.gif,
-				Images/exercise_14.gif,
-				Images/exercise_15.gif,
-				Images/exercise_17.gif,
-				Images/exercise_107.gif,
-				Images/exercise_115.gif,
-				Images/exercise_466.gif,
 			);
 			target = 9D70A7C52DDD84580085BAAF /* Stronix-App-V1 */;
 		};
@@ -70,10 +72,10 @@
 				Views/BodyMeasurement/AddMeasurementSheet.swift,
 				Views/BodyMeasurement/BodyMeasurementChange.swift,
 				Views/BodyMeasurement/BodyMeasurementDetail.swift,
+				Views/BodyMeasurement/BodyMeasurementEditView.swift,
 				Views/BodyMeasurement/BodyMeasurementListView.swift,
 				Views/BodyMeasurement/BodyMeasurementOverview.swift,
 				Views/BodyMeasurement/BodyMeasurementTabView.swift,
-				Views/BodyMeasurement/EditMeasurementSheet.swift,
 				Views/BodyMeasurement/NutritionView.swift,
 				Views/History/CalendarView.swift,
 				Views/History/EditHistoryDetailView.swift,
@@ -143,12 +145,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9D3101A02E3B939B0088DB8C /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		9D70A7BD2DDD84580085BAAF = {
 			isa = PBXGroup;
 			children = (
 				9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */,
 				9D70A7D52DDD86840085BAAF /* Stronix-App */,
 				9D70A7C72DDD84590085BAAF /* Products */,
+				9D3101A02E3B939B0088DB8C /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -180,6 +191,7 @@
 				9D70A7C22DDD84580085BAAF /* Sources */,
 				9D70A7C32DDD84580085BAAF /* Frameworks */,
 				9D70A7C42DDD84580085BAAF /* Resources */,
+				9D70A7F62DDD84590085BAAF /* Copy Images */,
 			);
 			buildRules = (
 			);
@@ -373,6 +385,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Stronix-App/Sources/App/Stronix_App_V1.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M3985G54RA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Stronix-App-V1-Info.plist";
@@ -407,6 +420,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Stronix-App/Sources/App/Stronix_App_V1.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M3985G54RA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Stronix-App-V1-Info.plist";

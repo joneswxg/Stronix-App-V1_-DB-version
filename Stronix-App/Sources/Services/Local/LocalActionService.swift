@@ -272,7 +272,7 @@ class LocalActionService: ObservableObject {
             print("🔍 开始处理查询结果")
             
             for row in statement {
-                print("🔍 处理行数据，第一个字段值: \(row[0]), 类型: \(type(of: row[0]))")
+                print("🔍 处理行数据，第一个字段值: \(String(describing: row[0])), 类型: \(type(of: row[0]))")
                 
                 // 尝试不同的类型转换
                 let actionId: Int
@@ -315,7 +315,7 @@ class LocalActionService: ObservableObject {
             if actions.count > 0 {
                 print("📋 动作列表:")
                 for action in actions {
-                    print("  - \(action.id): \(action.name) (external_id: \(action.external_id), localImageName: \(String(describing: action.localImageName)))")
+                    print("  - \(action.id): \(action.name) (external_id: \(action.external_id), localImageName: \(action.localImageName))")
                 }
             } else {
                 print("⚠️ LocalActionService: 目标肌肉 \(targetMuscleId) 没有关联的动作")
@@ -433,20 +433,53 @@ class LocalActionService: ObservableObject {
             let targetMuscleRows = try db.prepare(targetMuscleQuery, [actionRow[self.actionId]])
             var targetMuscles: [TargetMuscle] = []
             
+            print("🔍 LocalActionService: 查询动作 \(actionRow[self.actionId]) 的目标肌肉")
+            
             for row in targetMuscleRows {
-                guard let id = row[0] as? Int,
-                      let name = row[1] as? String else {
-                    print("⚠️ LocalActionService: 跳过无效的目标肌肉数据")
+                print("🔍 LocalActionService: 目标肌肉行数据: \(row)")
+                
+                // 处理Optional值
+                let idValue = row[0]
+                let nameValue = row[1] 
+                let displayNameValue = row[2]
+                
+                print("🔍 LocalActionService: 解析前 - id: \(idValue), name: \(nameValue), display_name: \(displayNameValue)")
+                
+                // 尝试多种类型转换
+                var id: Int?
+                var name: String?
+                var displayName: String?
+                
+                // 处理ID - 可能是Int或Int64
+                if let intValue = idValue as? Int {
+                    id = intValue
+                } else if let int64Value = idValue as? Int64 {
+                    id = Int(int64Value)
+                }
+                
+                // 处理name
+                name = nameValue as? String
+                
+                // 处理display_name
+                displayName = (displayNameValue as? String) ?? name
+                
+                guard let finalId = id, let finalName = name else {
+                    print("⚠️ LocalActionService: 跳过无效的目标肌肉数据: \(row)")
+                    print("  - ID转换结果: \(String(describing: id))")
+                    print("  - Name转换结果: \(String(describing: name))")
                     continue
                 }
                 
                 let targetMuscle = TargetMuscle(
-                    id: id,
-                    name: name,
-                    display_name: row[2] as? String ?? name
+                    id: finalId,
+                    name: finalName,
+                    display_name: displayName ?? finalName
                 )
                 targetMuscles.append(targetMuscle)
+                print("✅ LocalActionService: 添加目标肌肉: \(targetMuscle.display_name)")
             }
+            
+            print("🔍 LocalActionService: 总共找到 \(targetMuscles.count) 个目标肌肉")
             
             // 获取设备信息（如果有）
             var equipment: Equipment?
@@ -456,10 +489,11 @@ class LocalActionService: ObservableObject {
                     .limit(1)
                 
                 if let equipmentRow = try db.pluck(equipmentQuery) {
+                    let displayName = equipmentRow[equipmentDisplayName] ?? equipmentRow[equipmentName]
                     equipment = Equipment(
                         id: equipmentRow[equipmentId],
                         name: equipmentRow[equipmentName],
-                        display_name: equipmentRow[equipmentDisplayName] ?? equipmentRow[equipmentName]
+                        display_name: displayName
                     )
                 }
             }
@@ -471,10 +505,11 @@ class LocalActionService: ObservableObject {
                 .limit(1)
             
             if let bodypartRow = try db.pluck(bodypartQuery) {
+                let displayName = bodypartRow[bodyPartDisplayName] ?? bodypartRow[bodyPartName]
                 bodypart = BodyPart(
                     id: bodypartRow[bodyPartId],
                     name: bodypartRow[bodyPartName],
-                    display_name: bodypartRow[bodyPartDisplayName] ?? bodypartRow[bodyPartName]
+                    display_name: displayName
                 )
             }
             

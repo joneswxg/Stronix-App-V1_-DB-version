@@ -11,7 +11,7 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // 自定义顶部Logo和标题
                 VStack(spacing: 8) {

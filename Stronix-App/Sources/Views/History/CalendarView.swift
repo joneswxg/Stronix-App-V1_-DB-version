@@ -43,11 +43,9 @@ struct TrainingDayData: Identifiable {
 
 struct CalendarView: View {
     @State private var currentDate = Date()
-    @State private var showingDetailView = false
     @State private var selectedDateString: String?
     @State private var trainingDatesInMonth: Set<String> = []
     @State private var isLoadingMonth = false
-    @State private var sheetId = UUID() // 添加唯一标识符，确保Sheet能正确重新加载
     
     @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
     
@@ -109,12 +107,6 @@ struct CalendarView: View {
         .onAppear {
             loadTrainingDatesForCurrentMonth()
         }
-        .sheet(isPresented: $showingDetailView) {
-            if let dateString = selectedDateString {
-                HistoryListView(selectedDateString: dateString)
-                    .id(sheetId) // 使用唯一ID确保每次都重新创建视图
-            }
-        }
     }
     
     // 月份导航头部
@@ -156,25 +148,14 @@ struct CalendarView: View {
     private var calendarGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
             ForEach(getDaysInMonth(date: currentDate), id: \.self) { calendarDate in
-                CalendarDayCell(
-                    calendarDate: calendarDate,
-                    currentDate: currentDate,
-                    hasTraining: trainingDatesInMonth.contains(calendarDate.dateString)
-                ) {
-                    print("📅 点击日期: \(calendarDate.dateString)")
-                    
-                    // 确保先重置状态，然后设置新值
-                    showingDetailView = false
-                    selectedDateString = nil
-                    
-                    // 使用异步延迟确保状态重置完成
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        selectedDateString = calendarDate.dateString
-                        sheetId = UUID() // 生成新的ID，确保Sheet重新加载
-                        showingDetailView = true
-                        print("📱 导航到日期详情: \(calendarDate.dateString)")
-                    }
+                NavigationLink(destination: HistoryListView(selectedDateString: calendarDate.dateString)) {
+                    CalendarDayView(
+                        calendarDate: calendarDate,
+                        currentDate: currentDate,
+                        hasTraining: trainingDatesInMonth.contains(calendarDate.dateString)
+                    )
                 }
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.horizontal)
@@ -264,11 +245,10 @@ struct CalendarView: View {
 }
 
 // 日历单元格组件
-struct CalendarDayCell: View {
+struct CalendarDayView: View {
     let calendarDate: CalendarDate
     let currentDate: Date
     let hasTraining: Bool
-    let onTap: () -> Void
     
     var body: some View {
         GeometryReader { geometry in
@@ -280,7 +260,6 @@ struct CalendarDayCell: View {
             .frame(width: geometry.size.width, height: geometry.size.width)
             .background(Color.white)
             .border(Color.gray.opacity(0.2), width: 0.5)
-            .onTapGesture(perform: onTap)
         }
         .aspectRatio(1, contentMode: .fit)
     }

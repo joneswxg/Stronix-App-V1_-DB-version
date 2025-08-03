@@ -1,9 +1,6 @@
 D1 技术框架选型
-1.前端开发:（Swift）
-2.网络请求：使用  Alamofire 等库向后端发送 HTTP 请求，获取或提交数据。
-3.后端服务: Python+Flask
-4.后端数据库: SQLite
-5.数据库已经设计好了,在 project-stronix/Database/stronix.db文件
+1.iOS App ←→ 本地Swift服务层 ←→ 本地SQLite数据库
+2.后端数据库: SQLite
 
 D2 APP功能描述: 一款健身训练记录的软件,针对健身房的workout训练, 提供各种训练的动作, 训练计划制定, 训练过程记录, 训练历史查看等功能,主要分以下几个模块:
 
@@ -54,89 +51,78 @@ D2 APP功能描述: 一款健身训练记录的软件,针对健身房的workout�
 
 具体的项目结构：
 Stronix-App-V1/
-├── Stronix-App/                  # iOS 前端
-│   ├── Sources/
-│   │   ├── App/                 # 应用程序入口
+├── 📁 Stronix-App-V1.xcodeproj/           # Xcode项目文件
+├── 📁 Stronix-App/                        # 主应用目录
+│   ├── 📁 Sources/                        # 源代码目录
+│   │   ├── 📁 App/                        # 应用入口
+│   │   │   └── Stronix_App_V1App.swift   # SwiftUI App入口
 │   │   │
-│   │   ├── Views/              # 视图组件
-│   │   │   ├── Actions/        # 动作相关视图
-│   │   │   │   └── ActionListView.swift
-│   │   │   ├── Plans/          # 计划相关视图
-│   │   │   ├── Training/       # 训练相关视图
-│   │   │   ├── History/        # 历史记录视图
-│   │   │   └── Profile/        # 个人资料视图
-│   │   │   └── BodyTest/       # 体测数据
-│   │   ├── Models/             # 数据模型
-│   │   │   ├── Database/       # 【新增】数据库模型
-│   │   │   │   ├── VersionControl.swift
-│   │   │   │   └── UpdateData.swift
-│   │   │   └── [原有模型]
+│   │   ├── 📁 Extensions/                 # 扩展
+│   │   │   └── Array+SafeAccess.swift
 │   │   │
-│   │   ├── ViewModels/         # 视图模型
-│   │   │   └── [原有视图模型]
+│   │   ├── 📁 Models/                     # 数据模型层
+│   │   │   ├── 📁 Database/               # 数据库模型
+│   │   │   │   ├── UpdateData.swift      # 更新数据
+│   │   │   │   └── VersionControl.swift  # 版本控制
+│   │   │   │
+│   │   │   └── 📁 Local/                  # ✅ 本地模型（已合并和统一）
+│   │   │       ├── LocalActionModels.swift           # 动作模型 (已合并ActionInfo)
+│   │   │       ├── LocalBodyMeasurementModels.swift  # 体测模型
+│   │   │       ├── LocalMutableTrainingModels.swift  # 可变训练模型 (已合并MutableTrainingModels)
+│   │   │       ├── LocalPlanModels.swift             # 计划模型
+│   │   │       ├── LocalTrainingHistoryModels.swift  # 训练历史模型 (已合并TrainingHistoryModels)
+│   │   │       └── LocalTrainingModels.swift         # 训练模型 (已合并TrainingModels)
 │   │   │
-│   │   ├── Services/           # 服务层
-│   │   │   ├── Database/       # 【新增】数据库服务
-│   │   │   │   └── DatabaseManager.swift
-│   │   │   ├── Update/         # 【新增】更新服务
-│   │   │   │   ├── UpdateService.swift
-│   │   │   │   └── VersionService.swift
-│   │   │   └── Network/        # 【新增】网络服务
-│   │   │       └── APIService.swift
+│   │   ├── 📁 Services/                   # 服务层（数据获取与业务逻辑）
+│   │   │   ├── 📁 Database/               # 数据库服务
+│   │   │   │   └── DatabaseManager.swift # 数据库管理
+│   │   │   │
+│   │   │   ├── 📁 Local/                  # ✅ 本地服务（已替代旧API服务）
+│   │   │   │   ├── LocalActionService.swift
+│   │   │   │   ├── LocalBodyMeasurementService.swift
+│   │   │   │   ├── LocalPlanService.swift
+│   │   │   │   ├── LocalTrainingHistoryService.swift
+│   │   │   │   ├── LocalUserService.swift
+│   │   │   │   └── TrainingSessionManager.swift
+│   │   │   │
+│   │   │   └── 📁 Update/                 # 更新服务
+│   │   │       ├── UpdateService.swift
+│   │   │       └── VersionService.swift
 │   │   │
-│   │   └── Utilities/          # 工具类
-│   │       ├── Constants/      # 【新增】常量配置
-│   │       │   ├── APIConfig.swift
-│   │       │   └── DBConfig.swift
-│   │       └── [原有工具类]
+│   │   ├── 📁 Utilities/                  # 工具类
+│   │   │   └── 📁 Constants/              # 常量定义
+│   │   │       ├── APIConfig.swift       # API配置（虽然已迁移，但文件可能保留用于其他常量）
+│   │   │       └── DBConfig.swift        # 数据库配置
+│   │   │
+│   │   ├── 📁 ViewModels/                 # 视图模型层
+│   │   │   ├── BodyMeasurementViewModel.swift
+│   │   │   └── PlanViewModel.swift
+│   │   │
+│   │   └── 📁 Views/                      # 视图层（UI界面）
+│   │       ├── 📁 Actions/
+│   │       ├── 📁 BodyMeasurement/
+│   │       ├── 📁 History/
+│   │       ├── 📁 Plans/
+│   │       ├── 📁 Profile/
+│   │       ├── 📁 Shared/
+│   │       └── 📁 Training/
+│   │       └── MainTabView.swift
 │   │
-│   ├── Resources/
-│   │   ├── Assets.xcassets/    # 资源文件
-│   │   ├── Localization/       # 本地化文件
-│   │   ├── Fonts/             # 字体文件
-│   │   └── Database/          # 【新增】数据库文件
-│   │       └── database_stronix.db
-│   │
-│   └── Tests/
-│       ├── UnitTests/          # 单元测试
-│       └── UITests/            # UI测试
+│   └── 📁 Resources/                      # 资源目录
+│       ├── 📁 Assets.xcassets/            # 应用程序资产（图片、颜色等）
+│       ├── 📁 Database/                   # 数据库目录 (现在只包含 PreloadData/)
+│       │   └── 📁 PreloadData/
+│       ├── 📁 Images/                     # ✅ 统一的图片资源 (已删除Media/Actions/的重复内容)
+│       └── database_stronix.db           # ✅ 主数据库文件
 │
-├── backend/                     # 后端服务
-│   ├── app.py                  # 主服务入口
-│   │
-│   ├── src/
-│   │   └── stronix/
-│   │       ├── routes/         # API路由
-│   │       │   ├── version.py  # 【新增】版本控制接口
-│   │       │   └── [原有路由]
-│   │       │
-│   │       ├── models/         # 数据模型
-│   │       │   ├── version.py  # 【新增】版本模型
-│   │       │   └── [原有模型]
-│   │       │
-│   │       ├── services/       # 业务逻辑
-│   │       │   ├── database/   # 【新增】数据库服务
-│   │       │   │   └── db_service.py
-│   │       │   ├── version_service.py  # 【新增】版本服务
-│   │       │   └── [原有服务]
-│   │       │
-│   │       └── utils/          # 工具函数
-│   │
-│   ├── tests/
-│   │   ├── unit/              # 单元测试
-│   │   └── integration/       # 集成测试
-│   │
-│   ├── config/                # 配置文件
-│   │   └── database.py        # 数据库配置
-│   │
-│   ├── static/                # 静态文件
-│   │   ├── images/           # 图片资源
-│   │   │   └── actions/      # 训练动作图片
-│   │   └── videos/           # 视频资源
-│   │
-│   └── templates/             # 模板文件
+├── 📁 Tests/                              # 测试目录
+│   ├── 📁 UITests/
+│   └── 📁 UnitTests/
 │
-└── README.md                  # 项目说明文档
+├── 📁 Stronix-App-V1-Info.plist           # 项目信息文件
+├── 迁移方案.md                             # 迁移方案文档
+└── database-bak/                         # 数据库备份目录
+    └── database_stronix.db.bak           # 数据库备份文件
 
 数据库表格说明
 1.记录训练动作 (对应训练动作模块) : app提供的训练动作所需要的信息.
@@ -170,44 +156,6 @@ last_training_records 这个表格没用,可以去掉
 6. 其他
 user 记录用户信息表格
 
-7. 可能无作用的表格
-alembic_version 和 site_config    看看是否保存留? 好像么用
-
- D3 开发步骤：
-环境准备：
-确保安装了Xcode（用于iOS开发）
-使用conda创建Python环境（用于后端开发）
-安装必要的依赖包
-项目初始化：
-运行create_project_structure.py脚本创建项目结构
-确保Xcode没有运行（脚本会检查）
-开发流程：
-iOS前端开发：
-在stronix/Sources目录下开发各个模块
-使用SwiftUI构建用户界面
-遵循MVVM架构模式
-后端开发：
-在backend/src/stronix目录下开发API
-使用Flask框架
-实现RESTful API接口
-测试：
-iOS端：编写单元测试和UI测试
-后端：编写单元测试和集成测试
-数据库：
-在Database目录下管理数据库相关文件
-包括数据库迁移脚本和种子数据
-这个项目是一个健身应用，主要功能包括：
-训练计划管理
-动作库
-训练记录
-历史数据
-用户资料管理
-需要注意的是：
-开发时要注意前后端接口的一致性
-遵循项目的目录结构规范
-保持良好的代码组织和文档记录
-定期进行代码提交和版本控制
-如果您需要查看某个具体部分的详细信息，我可以帮您深入查看相关文件。
 
 
-
+ 

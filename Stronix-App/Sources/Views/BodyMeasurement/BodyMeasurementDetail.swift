@@ -152,10 +152,10 @@ struct BodyMeasurementDetail: View {
                 updateCurrentData()
             }
         }
-        .onChange(of: viewModel.measurements) { _ in
+        .onChange(of: viewModel.measurements) {
             updateCurrentData()
         }
-        .onChange(of: currentIndex) { _ in
+        .onChange(of: currentIndex) {
             updateCurrentData()
         }
         .alert("删除确认", isPresented: $showingDeleteAlert) {

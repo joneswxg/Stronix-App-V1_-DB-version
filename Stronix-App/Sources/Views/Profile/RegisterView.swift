@@ -279,8 +279,8 @@ struct RegisterView: View {
         } message: {
             Text(errorMessage)
         }
-        .onChange(of: userService.isLoggedIn) { isLoggedIn in
-            if isLoggedIn {
+        .onChange(of: userService.isLoggedIn) { _, newValue in
+            if newValue {
                 dismiss()
             }
         }

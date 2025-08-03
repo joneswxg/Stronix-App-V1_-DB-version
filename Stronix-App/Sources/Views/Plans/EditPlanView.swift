@@ -16,7 +16,6 @@ struct EditPlanView: View {
     @State private var showToast = false
     @State private var toastMessage = ""
     @State private var preventDismiss = false
-    @State private var showPlanDetail = false
     @State private var savedPlan: TrainingPlan?
     
     // 编辑中的动作数据
@@ -81,21 +80,15 @@ struct EditPlanView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(spacing: 16) {
-                        // 顶部信息栏
+                        // 顶部信息栏 - 简化显示
                         HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("训练计划总容量：\(Int(totalVolume)) kg")
-                                    .font(.system(size: 14, weight: .medium))
-                                Text("实时计算，随输入更新")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.gray)
-                            }
+                            Text("容量: \(Int(totalVolume)) kg")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.blue)
                             Spacer()
                         }
-                        .padding(16)
-                        .background(Color.cyan.opacity(0.1))
-                        .cornerRadius(12)
                         .padding(.horizontal, 16)
+                        .padding(.top, 8)
                         
                         // 计划名称
                         VStack(alignment: .leading, spacing: 8) {
@@ -295,11 +288,7 @@ struct EditPlanView: View {
                 .padding(.bottom, 50)
                 .animation(.easeInOut(duration: 0.3), value: showToast)
             )
-            .sheet(isPresented: $showPlanDetail) {
-                if let savedPlan = savedPlan {
-                    TrainingPlanDetailView(plan: savedPlan)
-                }
-            }
+
         }
     }
     
@@ -1013,21 +1002,49 @@ private func extractImageFileName(from fullPath: String) -> String {
 
 /// 从本地bundle加载动作图片
 private func loadLocalActionImage(fileName: String) -> UIImage? {
-    // 构建图片路径（根据实际的Resources结构）
-    let imageName = fileName.replacingOccurrences(of: ".gif", with: "")
+    // 处理完整路径格式，例如：Images/abs/exercise_1.gif
+    let cleanPath = fileName.replacingOccurrences(of: ".gif", with: "")
     
-    // 尝试不同方式加载
-    if let url = Bundle.main.url(forResource: "Images/\(imageName)", withExtension: "gif"),
+    // 尝试直接使用完整路径
+    if let url = Bundle.main.url(forResource: cleanPath, withExtension: "gif"),
        let data = try? Data(contentsOf: url),
        let image = UIImage(data: data) {
         return image
     }
     
-    // 备用方式：直接从bundle根目录查找
-    if let url = Bundle.main.url(forResource: imageName, withExtension: "gif"),
-       let data = try? Data(contentsOf: url),
-       let image = UIImage(data: data) {
-        return image
+    // 备用方案：提取文件名
+    let justFileName = URL(fileURLWithPath: fileName).lastPathComponent.replacingOccurrences(of: ".gif", with: "")
+    
+    // 尝试从不同的bundle路径加载图片
+    let possiblePaths = [
+        "Images/abs/\(justFileName)",
+        "Images/pectorals/\(justFileName)",
+        "Images/biceps/\(justFileName)",
+        "Images/triceps/\(justFileName)",
+        "Images/delts/\(justFileName)",
+        "Images/lats/\(justFileName)",
+        "Images/quads/\(justFileName)",
+        "Images/hamstrings/\(justFileName)",
+        "Images/glutes/\(justFileName)",
+        "Images/calves/\(justFileName)",
+        "Images/forearms/\(justFileName)",
+        "Images/traps/\(justFileName)",
+        "Images/cardiovascular system/\(justFileName)",
+        "Images/spine/\(justFileName)",
+        "Images/upper back/\(justFileName)",
+        "Images/serratus anterior/\(justFileName)",
+        "Images/levator scapulae/\(justFileName)",
+        "Images/adductors/\(justFileName)",
+        "Images/abductors/\(justFileName)",
+        justFileName
+    ]
+    
+    for path in possiblePaths {
+        if let url = Bundle.main.url(forResource: path, withExtension: "gif"),
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            return image
+        }
     }
     
     print("⚠️ 无法加载图片: \(fileName)")

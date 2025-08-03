@@ -161,7 +161,7 @@ struct TrainingHistoryDetailView: View {
                 }
                 .padding()
                 Spacer()
-            } else if let selectedHistory = selectedHistory, let detailData = detailData {
+            } else if let detailData = detailData {
                 contentScrollView(detailData)
             } else {
                 Spacer()
@@ -332,7 +332,7 @@ struct ExerciseCard: View {
     }
     
     private var exerciseSets: some View {
-        ForEach(exercise.sets, id: \.number) { set in
+        ForEach(Array(exercise.sets.enumerated()), id: \.offset) { index, set in
             HStack {
                 Text("第\(set.number)组")
                     .frame(width: 60, alignment: .leading)

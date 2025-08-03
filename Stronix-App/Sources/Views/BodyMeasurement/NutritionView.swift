@@ -6,6 +6,7 @@ struct NutritionView: View {
     @State private var showingMifflinInfo = false
     @State private var showingKatchInfo = false
     @State private var showingCaloriesInfo = false
+    @FocusState private var isInputFocused: Bool
     
     var body: some View {
         NavigationView {
@@ -158,6 +159,7 @@ struct NutritionView: View {
                                     .keyboardType(.numberPad)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                                     .frame(width: 80)
+                                    .focused($isInputFocused)
                                 Text("岁")
                             }
                             
@@ -168,6 +170,7 @@ struct NutritionView: View {
                                     .keyboardType(.decimalPad)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                                     .frame(width: 80)
+                                    .focused($isInputFocused)
                                 Text("cm")
                             }
                             
@@ -178,6 +181,7 @@ struct NutritionView: View {
                                     .keyboardType(.decimalPad)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                                     .frame(width: 80)
+                                    .focused($isInputFocused)
                                 Text("kg")
                             }
                             
@@ -190,6 +194,7 @@ struct NutritionView: View {
                                         .keyboardType(.decimalPad)
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
                                         .frame(width: 80)
+                                        .focused($isInputFocused)
                                     Text("%")
                                 }
                             }
@@ -210,6 +215,7 @@ struct NutritionView: View {
                             ForEach(ActivityLevel.allCases, id: \.self) { level in
                                 Button(action: {
                                     calculator.activityLevel = level
+                                    isInputFocused = false // 点击选项时隐藏键盘
                                 }) {
                                     HStack {
                                         VStack(alignment: .leading) {
@@ -250,6 +256,9 @@ struct NutritionView: View {
                         }
                         .pickerStyle(SegmentedPickerStyle())
                         .padding(.horizontal)
+                        .onChange(of: calculator.goal) { _ in
+                            isInputFocused = false // 切换目标时隐藏键盘
+                        }
                     }
                     
                     // 计算结果
@@ -266,6 +275,7 @@ struct NutritionView: View {
                                 
                                 Button(action: {
                                     showingCaloriesInfo = true
+                                    isInputFocused = false // 打开弹窗时隐藏键盘
                                 }) {
                                     Image(systemName: "info.circle")
                                         .foregroundColor(.blue)
@@ -359,45 +369,54 @@ struct NutritionView: View {
                                 // 蛋白质
                                 MacroSlider(
                                     name: "蛋白质",
-                                    value: $calculator.proteinPercentage,
-                                    range: calculator.proteinRange,
-                                    color: .red,
-                                    grams: calculator.proteinGrams,
+                                    gramsPerKgValue: $calculator.proteinGramsPerKg,
+                                    gramRange: calculator.proteinGramRange,
+                                    recommendedRange: calculator.proteinRecommendedRange,
+                                    percentageRange: calculator.proteinPercentageRangeString,
+                                    color: .blue,
+                                    totalGrams: calculator.proteinGrams,
                                     calories: calculator.proteinCalories,
                                     weight: calculator.weight,
-                                    goal: calculator.goal,
+                                    currentPercentage: calculator.proteinPercentage,
                                     onValueChanged: { newValue in
-                                        calculator.proteinPercentage = newValue
+                                        calculator.proteinGramsPerKg = newValue
+                                        isInputFocused = false
                                     }
                                 )
                                 
                                 // 碳水化合物
                                 MacroSlider(
                                     name: "碳水化合物",
-                                    value: $calculator.carbPercentage,
-                                    range: calculator.carbRange,
+                                    gramsPerKgValue: $calculator.carbGramsPerKg,
+                                    gramRange: calculator.carbGramRange,
+                                    recommendedRange: calculator.carbRecommendedRange,
+                                    percentageRange: calculator.carbPercentageRangeString,
                                     color: .green,
-                                    grams: calculator.carbGrams,
+                                    totalGrams: calculator.carbGrams,
                                     calories: calculator.carbCalories,
                                     weight: calculator.weight,
-                                    goal: calculator.goal,
+                                    currentPercentage: calculator.carbPercentage,
                                     onValueChanged: { newValue in
-                                        calculator.carbPercentage = newValue
+                                        calculator.carbGramsPerKg = newValue
+                                        isInputFocused = false
                                     }
                                 )
                                 
                                 // 脂肪
                                 MacroSlider(
                                     name: "脂肪",
-                                    value: $calculator.fatPercentage,
-                                    range: calculator.fatRange,
+                                    gramsPerKgValue: $calculator.fatGramsPerKg,
+                                    gramRange: calculator.fatGramRange,
+                                    recommendedRange: calculator.fatRecommendedRange,
+                                    percentageRange: calculator.fatPercentageRangeString,
                                     color: .orange,
-                                    grams: calculator.fatGrams,
+                                    totalGrams: calculator.fatGrams,
                                     calories: calculator.fatCalories,
                                     weight: calculator.weight,
-                                    goal: calculator.goal,
+                                    currentPercentage: calculator.fatPercentage,
                                     onValueChanged: { newValue in
-                                        calculator.fatPercentage = newValue
+                                        calculator.fatGramsPerKg = newValue
+                                        isInputFocused = false
                                     }
                                 )
                             }
@@ -442,6 +461,18 @@ struct NutritionView: View {
                 }
             }
             .navigationBarHidden(true)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") {
+                        isInputFocused = false
+                    }
+                }
+            }
+            .onTapGesture {
+                // 点击空白区域隐藏键盘
+                isInputFocused = false
+            }
         }
     }
 }
@@ -449,81 +480,91 @@ struct NutritionView: View {
 // 宏量营养素滑块组件
 struct MacroSlider: View {
     let name: String
-    @Binding var value: Double
-    let range: ClosedRange<Double>
+    @Binding var gramsPerKgValue: Double
+    let gramRange: ClosedRange<Double>
+    let recommendedRange: ClosedRange<Double>
+    let percentageRange: String
     let color: Color
-    let grams: Double
+    let totalGrams: Double
     let calories: Double
     let weight: Double
-    let goal: Goal
+    let currentPercentage: Double
     let onValueChanged: (Double) -> Void
     
     var recommendedIntake: String {
-        let gramsPerKg = grams / weight
-        switch name {
-        case "蛋白质":
-            switch goal {
-            case .weightLoss: return "建议: 2.0-2.5g/kg"
-            case .maintenance: return "建议: 1.6-2.0g/kg"
-            case .muscleGain: return "建议: 1.6-2.2g/kg"
-            }
-        case "碳水化合物":
-            switch goal {
-            case .weightLoss: return "建议: 3.0-4.5g/kg"
-            case .maintenance: return "建议: 3.5-5.0g/kg"
-            case .muscleGain: return "建议: 4.5-6.5g/kg"
-            }
-        case "脂肪":
-            switch goal {
-            case .weightLoss: return "建议: 0.8-1.2g/kg"
-            case .maintenance: return "建议: 0.8-1.2g/kg"
-            case .muscleGain: return "建议: 0.8-1.0g/kg"
-            }
-        default:
-            return ""
+        return String(format: "%.1f-%.1f g/kg", recommendedRange.lowerBound, recommendedRange.upperBound)
+    }
+    
+    // 判断当前值是否在建议范围内 - 根据g/kg值
+    var isInRecommendedGramRange: Bool {
+        return recommendedRange.contains(gramsPerKgValue)
+    }
+    
+    // 判断百分比是否在建议范围内 - 根据占总热量百分比
+    func isPercentageInRange(currentPercentage: Double, percentageRangeString: String) -> Bool {
+        // 解析百分比范围字符串，例如 "20%-30%"
+        let components = percentageRangeString.replacingOccurrences(of: "%", with: "").components(separatedBy: "-")
+        guard components.count == 2,
+              let lowerBound = Double(components[0]),
+              let upperBound = Double(components[1]) else {
+            return true // 如果无法解析，默认为正确
         }
+        
+        let range = lowerBound...upperBound
+        return range.contains(currentPercentage)
+    }
+    
+    // 百分比显示颜色 - 根据百分比范围而不是g/kg范围
+    var percentageColor: Color {
+        return isPercentageInRange(currentPercentage: currentPercentage, percentageRangeString: percentageRange) ? color : .red
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // 静态信息行
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    Text(recommendedIntake)
+                    Text("建议: \(recommendedIntake)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("\(Int(value))%")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(color)
+                Text("占总热量范围: \(percentageRange)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
             
+            // 滑块
             HStack {
-                Text("\(range.lowerBound, specifier: "%.0f")%")
+                Text(String(format: "%.1fg", gramRange.lowerBound))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 
                 Slider(value: Binding(
-                    get: { value },
+                    get: { gramsPerKgValue },
                     set: { newValue in
                         onValueChanged(newValue)
                     }
-                ), in: range, step: 1)
+                ), in: gramRange, step: 0.1)
                     .accentColor(color)
                 
-                Text("\(range.upperBound, specifier: "%.0f")%")
+                Text(String(format: "%.1fg", gramRange.upperBound))
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
             
+            // 动态数值行
             HStack {
-                Text("\(grams, specifier: "%.1f")g (\(grams/weight, specifier: "%.1f")g/kg)")
+                Text(String(format: "%.0fg(%.1fg/kg)", totalGrams, gramsPerKgValue))
                     .font(.caption)
                     .foregroundColor(color)
+                Spacer()
+                Text(String(format: "%.0f%%", currentPercentage))
+                    .font(.caption)
+                    .foregroundColor(percentageColor)
                 Spacer()
                 Text("\(Int(calories)) 卡路里")
                     .font(.caption)
@@ -545,9 +586,10 @@ class NutritionCalculator: ObservableObject {
     @Published var activityLevel: ActivityLevel = .moderate
     @Published var goal: Goal = .maintenance
     
-    @Published var proteinPercentage: Double = 20
-    @Published var carbPercentage: Double = 50
-    @Published var fatPercentage: Double = 30
+    // 改为g/kg单位
+    @Published var proteinGramsPerKg: Double = 1.8
+    @Published var carbGramsPerKg: Double = 4.2
+    @Published var fatGramsPerKg: Double = 1.0
     
     // 监听目标变化
     private var goalObserver: AnyCancellable?
@@ -592,34 +634,72 @@ class NutritionCalculator: ObservableObject {
         return (range.lowerBound + range.upperBound) / 2
     }
     
-    // 营养素范围根据目标调整
-    var proteinRange: ClosedRange<Double> {
+    // g/kg范围 - 扩大范围以适应更多需求
+    var proteinGramRange: ClosedRange<Double> {
+        return 0.8...3.5  // 适合所有健身人群的蛋白质需求
+    }
+    
+    var carbGramRange: ClosedRange<Double> {
+        return 1.0...8.0  // 适合健身房力量训练人群的碳水需求
+    }
+    
+    var fatGramRange: ClosedRange<Double> {
+        return 0.3...2.5  // 适合各种饮食方案的脂肪需求
+    }
+    
+    // 建议范围（用于颜色判断）
+    var proteinRecommendedRange: ClosedRange<Double> {
         switch goal {
-        case .weightLoss: return 25...35
-        case .maintenance: return 20...30
-        case .muscleGain: return 20...30
+        case .weightLoss: return 2.0...2.5
+        case .maintenance: return 1.6...2.0
+        case .muscleGain: return 1.6...2.2
         }
     }
     
-    var carbRange: ClosedRange<Double> {
+    var carbRecommendedRange: ClosedRange<Double> {
         switch goal {
-        case .weightLoss: return 35...45
-        case .maintenance: return 40...45
-        case .muscleGain: return 55...65
+        case .weightLoss: return 3.0...4.5
+        case .maintenance: return 3.5...5.0
+        case .muscleGain: return 4.5...6.5
         }
     }
     
-    var fatRange: ClosedRange<Double> {
+    var fatRecommendedRange: ClosedRange<Double> {
         switch goal {
-        case .weightLoss: return 20...30
-        case .maintenance: return 25...35
-        case .muscleGain: return 15...20
+        case .weightLoss: return 0.8...1.2
+        case .maintenance: return 0.8...1.2
+        case .muscleGain: return 0.8...1.0
+        }
+    }
+    
+    // 百分比范围字符串
+    var proteinPercentageRangeString: String {
+        switch goal {
+        case .weightLoss: return "25%-35%"
+        case .maintenance: return "20%-30%"
+        case .muscleGain: return "20%-30%"
+        }
+    }
+    
+    var carbPercentageRangeString: String {
+        switch goal {
+        case .weightLoss: return "35%-45%"
+        case .maintenance: return "40%-45%"
+        case .muscleGain: return "55%-65%"
+        }
+    }
+    
+    var fatPercentageRangeString: String {
+        switch goal {
+        case .weightLoss: return "20%-30%"
+        case .maintenance: return "25%-35%"
+        case .muscleGain: return "15%-20%"
         }
     }
     
     // 计算各营养素的克数和热量
     var proteinGrams: Double {
-        return (totalCalories * proteinPercentage / 100) / 4
+        return proteinGramsPerKg * weight
     }
     
     var proteinCalories: Double {
@@ -627,7 +707,7 @@ class NutritionCalculator: ObservableObject {
     }
     
     var carbGrams: Double {
-        return (totalCalories * carbPercentage / 100) / 4
+        return carbGramsPerKg * weight
     }
     
     var carbCalories: Double {
@@ -635,7 +715,7 @@ class NutritionCalculator: ObservableObject {
     }
     
     var fatGrams: Double {
-        return (totalCalories * fatPercentage / 100) / 9
+        return fatGramsPerKg * weight
     }
     
     var fatCalories: Double {
@@ -644,6 +724,22 @@ class NutritionCalculator: ObservableObject {
     
     var currentTotalCalories: Double {
         return proteinCalories + carbCalories + fatCalories
+    }
+    
+    // 计算当前百分比
+    var proteinPercentage: Double {
+        guard currentTotalCalories > 0 else { return 0 }
+        return (proteinCalories / currentTotalCalories) * 100
+    }
+    
+    var carbPercentage: Double {
+        guard currentTotalCalories > 0 else { return 0 }
+        return (carbCalories / currentTotalCalories) * 100
+    }
+    
+    var fatPercentage: Double {
+        guard currentTotalCalories > 0 else { return 0 }
+        return (fatCalories / currentTotalCalories) * 100
     }
     
     private func calculateMifflinStJeorBMR() -> Double {
@@ -667,24 +763,22 @@ class NutritionCalculator: ObservableObject {
     }
     
     private func updateMacroPercentages() {
-        // 自动调整营养素比例以符合目标
+        // 根据目标自动调整g/kg值
         switch goal {
         case .weightLoss:
-            proteinPercentage = 30
-            carbPercentage = 40
-            fatPercentage = 25
+            proteinGramsPerKg = 2.2
+            carbGramsPerKg = 3.8
+            fatGramsPerKg = 1.0
         case .maintenance:
-            proteinPercentage = 25
-            carbPercentage = 42
-            fatPercentage = 30
+            proteinGramsPerKg = 1.8
+            carbGramsPerKg = 4.2
+            fatGramsPerKg = 1.0
         case .muscleGain:
-            proteinPercentage = 25
-            carbPercentage = 60
-            fatPercentage = 15
+            proteinGramsPerKg = 1.9
+            carbGramsPerKg = 5.5
+            fatGramsPerKg = 0.9
         }
     }
-    
-
 }
 
 // 枚举定义

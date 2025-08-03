@@ -3,10 +3,10 @@ import SwiftUI
 struct PlanListView: View {
     @StateObject private var viewModel = PlanViewModel()
     @ObservedObject private var authService = LocalUserService.shared
-    @State private var showCreatePlan = false
     @State private var showLogin = false
     @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
     @State private var isEditPlanPresented = false // 添加标记，跟踪EditPlan是否打开
+    @State private var navigateToCreatePlan = false // 添加导航状态
     
     // 使用@AppStorage来持久化加载状态
     @AppStorage("PlanListView_hasInitiallyLoaded") private var hasInitiallyLoaded = false
@@ -92,7 +92,7 @@ struct PlanListView: View {
                         .foregroundColor(.gray)
                     
                     Button(action: {
-                        showCreatePlan = true
+                        navigateToCreatePlan = true
                     }) {
                         Text("创建计划")
                             .font(.system(size: 16, weight: .medium))
@@ -184,7 +184,7 @@ struct PlanListView: View {
                                     
                                     if selectedTab == 1 {
                                         Button(action: {
-                                            showCreatePlan = true
+                                            navigateToCreatePlan = true
                                         }) {
                                             Image(systemName: "plus.circle.fill")
                                                 .foregroundColor(.blue)
@@ -220,15 +220,13 @@ struct PlanListView: View {
                 }
             }
         }
-        .sheet(isPresented: $showCreatePlan) {
+        .navigationDestination(isPresented: $navigateToCreatePlan) {
             CreatePlanView()
                 .onDisappear {
                     // 创建计划后刷新数据
                     if authService.isLoggedIn {
-                        // 确保模态视图状态已关闭
-                        self.showCreatePlan = false
                         // 延迟刷新，让视图层级稳定下来
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // 增加延迟到0.5秒
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             print("🔄 CreatePlanView onDisappear - 延迟刷新数据")
                             viewModel.refresh()
                             hasInitiallyLoaded = true
@@ -396,7 +394,6 @@ struct PersonalPlansView: View {
 struct PlanTemplateCard: View {
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
-    @State private var showDetail = false
     @State private var isUsing = false
     @State private var showCopyConfirmation = false
     
@@ -444,28 +441,15 @@ struct PlanTemplateCard: View {
             Spacer()
             
             HStack(spacing: 8) {
-                Button(action: {
-                    Task {
-                        await viewModel.loadPlanDetail(planId: plan.id)
-                        showDetail = true
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        if viewModel.isLoadingPlanDetail {
-                            ProgressView()
-                                .scaleEffect(0.6)
-                        } else {
-                            Text("查看")
-                        }
-                    }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(10)
+                NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+                    Text("查看")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(10)
                 }
-                .disabled(viewModel.isLoadingPlanDetail)
                 
                 Button(action: {
                     showCopyConfirmation = true
@@ -493,17 +477,6 @@ struct PlanTemplateCard: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
-        .onTapGesture {
-            Task {
-                await viewModel.loadPlanDetail(planId: plan.id)
-                showDetail = true
-            }
-        }
-        .sheet(isPresented: $showDetail) {
-            if let selectedPlan = viewModel.selectedPlan {
-                TrainingPlanDetailView(plan: selectedPlan)
-            }
-        }
         .alert("复制模板计划", isPresented: $showCopyConfirmation) {
             Button("取消", role: .cancel) { }
             Button("是") {
@@ -524,7 +497,6 @@ struct PersonalPlanCard: View {
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
     @State private var showEditPlan = false
-    @State private var showPlanDetail = false
     @State private var showDeleteAlert = false
     @State private var isDeleting = false
     
@@ -599,34 +571,21 @@ struct PersonalPlanCard: View {
             Spacer()
             
             HStack(spacing: 6) {
-                Button(action: {
-                    Task {
-                        await viewModel.loadPlanDetail(planId: plan.id)
-                        showPlanDetail = true
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        if viewModel.isLoadingPlanDetail {
-                            ProgressView()
-                                .scaleEffect(0.6)
-                        } else {
-                            Text("查看")
-                        }
-                    }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(10)
+                NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+                    Text("查看")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(10)
                 }
-                .disabled(viewModel.isLoadingPlanDetail)
                 
                 Button(action: {
                     Task {
                         await viewModel.loadPlanDetail(planId: plan.id)
                         
-                        if let selected = viewModel.selectedPlan {
+                        if viewModel.selectedPlan != nil {
                             showEditPlan = true
                         }
                     }
@@ -646,12 +605,6 @@ struct PersonalPlanCard: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
-        .onTapGesture {
-            Task {
-                await viewModel.loadPlanDetail(planId: plan.id)
-                showPlanDetail = true
-            }
-        }
         .fullScreenCover(isPresented: $showEditPlan) {
             if let selectedPlan = viewModel.selectedPlan {
                 EditPlanView(plan: selectedPlan, onSaveSuccess: { updatedPlan in
@@ -711,11 +664,7 @@ struct PersonalPlanCard: View {
                 }
             }
         }
-        .sheet(isPresented: $showPlanDetail) {
-            if let selectedPlan = viewModel.selectedPlan {
-                TrainingPlanDetailView(plan: selectedPlan)
-            }
-        }
+
         .alert("删除计划", isPresented: $showDeleteAlert) {
             Button("取消", role: .cancel) { }
             Button("删除", role: .destructive) {

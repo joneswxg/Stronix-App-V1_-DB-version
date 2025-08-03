@@ -54,7 +54,7 @@ class LocalPlanService {
     private let a_name = Expression<String>("name")
     private let a_name_en = Expression<String?>("name_en")
     private let a_gifUrl = Expression<String>("gifUrl")
-    private let a_description = Expression<String>("description")
+    private let a_description = Expression<String?>("description")
     private let a_bodypart_id = Expression<Int>("bodypart_id")
     private let a_equipment_id = Expression<Int>("equipment_id")
     private let a_is_bilateral = Expression<Bool>("is_bilateral")
@@ -277,7 +277,7 @@ class LocalPlanService {
                         "name": actionRow[a_name],
                         "name_en": actionRow[a_name_en] ?? "",
                         "gifUrl": actionRow[a_gifUrl],
-                        "description": actionRow[a_description],
+                        "description": actionRow[a_description] ?? "",
                         "bodypart_id": actionRow[a_bodypart_id],
                         "equipment_id": actionRow[a_equipment_id],
                         "is_bilateral": actionRow[a_is_bilateral]

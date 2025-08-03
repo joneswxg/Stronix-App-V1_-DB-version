@@ -36,6 +36,7 @@ struct AddMeasurementSheet: View {
                             Spacer()
                             Button("修改") {
                                 showingDatePicker = true
+                                hideKeyboard() // 打开日期选择器时隐藏键盘
                             }
                             .foregroundColor(.blue)
                         }
@@ -113,6 +114,7 @@ struct AddMeasurementSheet: View {
                 
                 // 确认按钮
                 Button(action: {
+                    hideKeyboard() // 保存前先隐藏键盘
                     Task {
                         await saveData()
                     }
@@ -148,11 +150,27 @@ struct AddMeasurementSheet: View {
                             .foregroundColor(.gray)
                     }
                 }
+                
+                // 键盘工具栏
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") {
+                        hideKeyboard()
+                    }
+                }
             }
             .sheet(isPresented: $showingDatePicker) {
                 DatePickerSheet(selectedDate: $selectedDate)
             }
+            .onTapGesture {
+                // 点击空白区域隐藏键盘
+                hideKeyboard()
+            }
         }
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private var isFormValid: Bool {
@@ -209,11 +227,6 @@ struct AddMeasurementSheet: View {
         }
         
         isSaving = true
-        
-        // 格式化日期为API需要的格式
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let timestampString = formatter.string(from: selectedDate)
         
         let request = CreateBodyMeasurementRequest(
             userId: LocalUserService.shared.currentUser?.id ?? 0,
@@ -288,6 +301,7 @@ struct InputField: View {
     @Binding var value: String
     let unit: String
     let placeholder: String
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         VStack(spacing: 8) {
@@ -301,11 +315,13 @@ struct InputField: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .font(.system(size: 16))
+                        .focused($isFocused)
                     Text(unit)
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                     Button(action: {
                         value = ""
+                        isFocused = false // 清空输入时隐藏键盘
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray.opacity(0.6))

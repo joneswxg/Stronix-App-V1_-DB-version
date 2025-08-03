@@ -64,12 +64,19 @@ struct Action: Identifiable, Codable {
     let is_bilateral: Bool
     let target_muscle_ids: [Int]
     
-    // 计算属性：基于external_id生成本地资源名
+    // 计算属性：基于gifUrl或external_id生成本地资源名
     var localImageName: String {
-        // 基于external_id生成图片名称：external_id = "1" -> "exercise_1"
+        // 优先使用数据库中的gifUrl路径
+        if let gifUrl = gifUrl, !gifUrl.isEmpty {
+            // 移除.gif扩展名，因为Bundle.main.url会自动添加
+            return gifUrl.replacingOccurrences(of: ".gif", with: "")
+        }
+        
+        // 备用方案：基于external_id生成图片名称
         if !external_id.isEmpty {
             return "exercise_\(external_id)"
         }
+        
         return "exercise_default"
     }
     
@@ -100,12 +107,19 @@ struct ActionDetail: Identifiable, Codable {
     let equipment: Equipment?
     let bodypart: BodyPart?
     
-    // 计算属性：基于external_id生成本地资源名
+    // 计算属性：基于gifUrl或external_id生成本地资源名
     var localImageName: String {
-        // 基于external_id生成图片名称：external_id = "1" -> "exercise_1"
+        // 优先使用数据库中的gifUrl路径
+        if let gifUrl = gifUrl, !gifUrl.isEmpty {
+            // 移除.gif扩展名，因为Bundle.main.url会自动添加
+            return gifUrl.replacingOccurrences(of: ".gif", with: "")
+        }
+        
+        // 备用方案：基于external_id生成图片名称
         if !external_id.isEmpty {
             return "exercise_\(external_id)"
         }
+        
         return "exercise_default"
     }
     
@@ -248,6 +262,10 @@ class ActionListViewModel: ObservableObject {
     
     func loadActionsByTargetMuscle(targetMuscleId: Int) async {
         await loadActions(targetMuscleId: targetMuscleId)
+    }
+    
+    func loadActionsByFilters(targetMuscleId: Int? = nil, equipmentId: Int? = nil, bodyPartId: Int? = nil, searchText: String = "") async {
+        await loadActions(targetMuscleId: targetMuscleId, equipmentId: equipmentId, bodyPartId: bodyPartId, searchText: searchText)
     }
     
     private func handleError(_ error: Error, context: String) {

@@ -12,6 +12,7 @@ class DatabaseManager {
     // 单例模式，确保整个应用只有一个数据库管理实例
     static let shared = DatabaseManager()
     private var db: Connection?
+    private let updateService = UpdateService()
     
     private init() {
         setupDatabase()
@@ -19,6 +20,10 @@ class DatabaseManager {
     
     // MARK: - 数据库初始化
     private func setupDatabase() {
+        // 1. 首先检查并执行数据库更新
+        checkAndUpdateDatabase()
+        
+        // 2. 然后建立数据库连接
         let dbPath = getDatabasePath()
         
         do {
@@ -27,6 +32,13 @@ class DatabaseManager {
         } catch {
             print("❌ DatabaseManager: 数据库连接失败: \(error)")
         }
+    }
+    
+    // MARK: - 数据库更新检查
+    private func checkAndUpdateDatabase() {
+        // 避免循环依赖，直接创建UpdateService实例
+        let updateService = UpdateService()
+        updateService.checkAndUpdateDatabase()
     }
     
     private func getDatabasePath() -> String {
@@ -64,7 +76,8 @@ class DatabaseManager {
         }
         
         let stmt = try db.prepare(sql)
-        return try stmt.map { row in
+        return stmt.map { row in
+        
             return row as! T
         }
     }
@@ -99,6 +112,61 @@ class DatabaseManager {
     
     // TODO: 其他功能待迁移到对应的Local服务类
     // 动作相关功能已迁移到 LocalActionService.swift
+    
+    // MARK: - 数据库连接重新初始化
+    /// 重新初始化数据库连接（用于数据库更新后）
+    func reinitializeConnection() {
+        let dbPath = getDatabasePath()
+        
+        do {
+            db = try Connection(dbPath)
+            print("✅ DatabaseManager: 数据库连接重新初始化成功")
+        } catch {
+            print("❌ DatabaseManager: 数据库连接重新初始化失败: \(error)")
+        }
+    }
+    
+    // MARK: - 手动触发数据库更新
+    /// 手动触发数据库更新（用于开发和调试）
+    func forceDatabaseUpdate() {
+        let updateService = UpdateService()
+        updateService.forceDatabaseUpdate()
+        // 更新后重新初始化连接
+        reinitializeConnection()
+    }
+    
+    // MARK: - 版本检查工具
+    /// 执行完整的数据库版本检查
+    func performVersionCheck() -> String {
+        let versionService = VersionService()
+        let updateService = UpdateService()
+        
+        let versionInfo = versionService.getVersionDescription()
+        let updateStatus = updateService.getUpdateStatus()
+        
+        return """
+        === 数据库版本检查结果 ===
+        
+        📱 当前版本信息:
+        \(versionInfo)
+        
+        🔄 更新状态: \(updateStatus)
+        
+        📍 数据库路径:
+        Bundle: \(Bundle.main.path(forResource: "database_stronix", ofType: "db") ?? "未找到")
+        Documents: \(getDatabasePath())
+        """
+    }
+    
+    /// 打印数据库路径信息
+    func printDatabasePaths() {
+        let bundlePath = Bundle.main.path(forResource: "database_stronix", ofType: "db") ?? "未找到"
+        let documentsPath = getDatabasePath()
+        
+        print("📍 数据库文件路径信息:")
+        print("📦 Bundle数据库: \(bundlePath)")
+        print("📱 Documents数据库: \(documentsPath)")
+    }
     
     // MARK: - 辅助方法
     // 注意：getDatabasePath()已在上面重新实现为支持Documents目录

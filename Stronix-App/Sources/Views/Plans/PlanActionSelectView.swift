@@ -156,7 +156,7 @@ struct PlanActionSelectView: View {
         }
         .onAppear {
             Task {
-                await viewModel.loadInitialData()
+                viewModel.loadInitialData()
                 // 初始化完成后，自动选中第一个目标肌群并加载对应的动作
                 if !viewModel.targetMuscles.isEmpty {
                     let firstMuscleId = viewModel.targetMuscles[0].id
@@ -294,22 +294,46 @@ struct SelectableActionCard: View {
 
 /// 从本地bundle加载动作图片
 private func loadLocalActionImage(fileName: String) -> UIImage? {
-    // 尝试从不同的bundle路径加载图片
-    let possiblePaths = [
-        "Images/\(fileName)",
-        "Media/Actions/\(fileName)",
-        fileName
+    // 清理路径，移除 .gif 扩展名
+    let cleanPath = fileName.replacingOccurrences(of: ".gif", with: "")
+    
+    // 首先尝试直接使用完整路径加载
+    if let url = Bundle.main.url(forResource: cleanPath, withExtension: "gif"),
+       let data = try? Data(contentsOf: url),
+       let image = UIImage(data: data) {
+        return image
+    }
+    
+    // 备用方案：提取文件名并从所有可能的目录加载
+    let fileName = URL(string: cleanPath)?.lastPathComponent ?? cleanPath
+    
+    // 所有可能的目标肌肉目录
+    let muscleDirectories = [
+        "abs", "pectorals", "biceps", "triceps", "delts", "lats", "upper back",
+        "quads", "hamstrings", "glutes", "calves", "forearms", "traps",
+        "cardiovascular system", "spine", "adductors", "abductors",
+        "serratus anterior", "levator scapulae"
     ]
     
-    for path in possiblePaths {
-        if let url = Bundle.main.url(forResource: path.replacingOccurrences(of: ".gif", with: ""), withExtension: "gif"),
+    // 尝试从各个肌肉目录加载
+    for muscleDir in muscleDirectories {
+        let path = "Images/\(muscleDir)/\(fileName)"
+        if let url = Bundle.main.url(forResource: path, withExtension: "gif"),
            let data = try? Data(contentsOf: url),
            let image = UIImage(data: data) {
             return image
         }
-        
-        // 也尝试不去除扩展名的方式
-        if let url = Bundle.main.url(forResource: path, withExtension: nil),
+    }
+    
+    // 最后尝试旧的路径格式（兼容性）
+    let legacyPaths = [
+        "Media/Actions/\(fileName)",
+        "Images/\(fileName)",
+        fileName
+    ]
+    
+    for path in legacyPaths {
+        if let url = Bundle.main.url(forResource: path, withExtension: "gif"),
            let data = try? Data(contentsOf: url),
            let image = UIImage(data: data) {
             return image

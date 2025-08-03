@@ -3,19 +3,18 @@ import Charts
 
 struct BodyMeasurementOverview: View {
     @StateObject private var viewModel = BodyMeasurementViewModel()
-    @State private var showingRecordsList = false
     
     var body: some View {
-        ZStack {
-            mainContent
-            bottomButtons
+        NavigationView {
+            ZStack {
+                mainContent
+                bottomButtons
+            }
+            .background(Color(UIColor.systemGroupedBackground))
+            .navigationBarHidden(true)
         }
-        .background(Color(UIColor.systemGroupedBackground))
         .sheet(isPresented: $viewModel.showingAddSheet) {
             AddMeasurementSheet(viewModel: viewModel)
-        }
-        .sheet(isPresented: $showingRecordsList) {
-            BodyMeasurementListView(viewModel: viewModel)
         }
         .refreshable {
             await viewModel.refreshData()
@@ -239,11 +238,9 @@ struct BodyMeasurementOverview: View {
         VStack {
             Spacer()
             HStack(spacing: 15) {
-                // 查看记录按钮
+                // 查看记录按钮 - 改为NavigationLink
                 if !viewModel.measurements.isEmpty {
-                    Button(action: {
-                        showingRecordsList = true
-                    }) {
+                    NavigationLink(destination: BodyMeasurementListView(viewModel: viewModel)) {
                         HStack {
                             Image(systemName: "list.bullet")
                             Text("查看记录")

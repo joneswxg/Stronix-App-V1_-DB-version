@@ -92,9 +92,11 @@ class LocalTrainingHistoryService {
             currentUserId = providedUserId
         } else {
             guard let currentUser = LocalUserService.shared.currentUser else {
+                print("❌ LocalTrainingHistoryService.saveTrainingHistory: 用户未登录，无法获取当前用户ID。")
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
+            print("✅ LocalTrainingHistoryService.saveTrainingHistory: 获取到当前用户ID: \(currentUserId)")
         }
         
         // 转换为本地请求模型
@@ -102,6 +104,7 @@ class LocalTrainingHistoryService {
         
         // 验证必要字段
         if localRequest.plan_name.isEmpty || localRequest.training_date.isEmpty {
+            print("❌ LocalTrainingHistoryService.saveTrainingHistory: 计划名称或训练日期为空。")
             throw LocalTrainingHistoryError.invalidTrainingData("计划名称和训练日期不能为空")
         }
         
@@ -112,11 +115,13 @@ class LocalTrainingHistoryService {
                 if let planId = localRequest.plan_id {
                     let planExists = try db.scalar(training_plans.filter(tp_id == planId && tp_user_id == currentUserId).count) > 0
                     if !planExists {
+                        print("❌ LocalTrainingHistoryService.saveTrainingHistory: 训练计划(ID: \(planId))不存在或不属于当前用户。")
                         throw LocalTrainingHistoryError.planNotFound("训练计划不存在或不属于当前用户")
                     }
                 }
                 
                 // 插入训练历史主记录
+                print("➡️ 准备插入训练历史主记录：\(localRequest)")
                 let historyRowId = try db.run(training_history.insert(
                     th_user_id <- currentUserId,
                     th_plan_id <- localRequest.plan_id,
@@ -277,49 +282,131 @@ class LocalTrainingHistoryService {
         let currentUserId: Int
         if let providedUserId = user_id {
             currentUserId = providedUserId
+            print("🎯 使用提供的用户ID: \(currentUserId)")
         } else {
             guard let currentUser = LocalUserService.shared.currentUser else {
+                print("❌ 用户未登录，无法获取训练历史")
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
+            print("🎯 使用当前登录用户ID: \(currentUserId)")
+            print("🔍 当前用户信息: username=\(currentUser.username), email=\(currentUser.email)")
+        }
+        
+        // 添加调试：查看数据库中实际的用户记录
+        do {
+            let debugQuery = "SELECT user_id, COUNT(*) as count FROM training_history GROUP BY user_id"
+            let debugStatement = try db.prepare(debugQuery)
+            print("📊 数据库中训练历史记录的用户分布:")
+            for row in debugStatement {
+                let userId = Int(row[0] as? Int64 ?? 0)
+                let count = Int(row[1] as? Int64 ?? 0)
+                print("  用户ID \(userId): \(count) 条记录")
+            }
+        } catch {
+            print("⚠️ 调试查询失败: \(error)")
         }
         
         do {
-            // 构建查询条件
+            // 使用SQLite.swift的类型安全查询方式
             var query = training_history.filter(th_user_id == currentUserId)
             
             if let planId = planId {
                 query = query.filter(th_plan_id == planId)
+                print("🔍 添加计划ID过滤: \(planId)")
             }
             
+            // 对于日期过滤，我们需要使用原生SQL来使用DATE()函数
+            var additionalConditions: [String] = []
+            var additionalParams: [Binding?] = []
+            
             if let startDate = startDate {
-                query = query.filter(th_training_date >= startDate)
+                additionalConditions.append("DATE(training_date) >= DATE(?)")
+                additionalParams.append(startDate)
+                print("🔍 添加开始日期过滤: DATE(training_date) >= DATE('\(startDate)')")
             }
             
             if let endDate = endDate {
-                query = query.filter(th_training_date <= endDate)
+                additionalConditions.append("DATE(training_date) <= DATE(?)")
+                additionalParams.append(endDate)
+                print("🔍 添加结束日期过滤: DATE(training_date) <= DATE('\(endDate)')")
             }
             
-            // 获取总数
-            let total = try db.scalar(query.count)
-            
-            // 获取分页数据
-            let offset = (page - 1) * limit
-            let histories = try db.prepare(query.order(th_training_date.desc, th_created_at.desc).limit(limit, offset: offset))
-            
             var historyList: [TrainingHistoryItem] = []
-            for row in histories {
-                let historyItem = TrainingHistoryItem(
-                    id: row[th_id],
-                    plan_id: row[th_plan_id],
-                    plan_name: row[th_plan_name],
-                    training_date: row[th_training_date],
-                    volume: row[th_volume],
-                    duration: row[th_duration],
-                    note: row[th_note],
-                    created_at: row[th_created_at]
-                )
-                historyList.append(historyItem)
+            var total = 0
+            
+            if additionalConditions.isEmpty {
+                // 如果没有日期条件，使用类型安全的SQLite.swift查询
+                total = try db.scalar(query.count)
+                let offset = (page - 1) * limit
+                let histories = try db.prepare(query.order(th_training_date.desc, th_created_at.desc).limit(limit, offset: offset))
+                
+                for row in histories {
+                    let historyItem = TrainingHistoryItem(
+                        id: row[th_id],
+                        plan_id: row[th_plan_id],
+                        plan_name: row[th_plan_name],
+                        training_date: row[th_training_date],
+                        volume: row[th_volume],
+                        duration: row[th_duration],
+                        note: row[th_note],
+                        created_at: row[th_created_at]
+                    )
+                    historyList.append(historyItem)
+                    print("📝 找到记录: ID=\(historyItem.id), 计划=\(historyItem.plan_name), 日期=\(historyItem.training_date)")
+                }
+            } else {
+                // 如果有日期条件，使用原生SQL
+                var baseConditions = ["user_id = ?"]
+                var allParams: [Binding?] = [currentUserId]
+                
+                if let planId = planId {
+                    baseConditions.append("plan_id = ?")
+                    allParams.append(planId)
+                }
+                
+                baseConditions.append(contentsOf: additionalConditions)
+                allParams.append(contentsOf: additionalParams)
+                
+                let whereClause = baseConditions.joined(separator: " AND ")
+                print("🔍 查询条件: \(whereClause)")
+                print("🔍 查询参数: \(allParams)")
+                
+                // 获取总数
+                let countQuery = "SELECT COUNT(*) FROM training_history WHERE \(whereClause)"
+                let countRows = try db.prepare(countQuery, allParams)
+                for row in countRows {
+                    total = Int(row[0] as? Int64 ?? 0)
+                    break
+                }
+                print("🔍 查询到总记录数: \(total)")
+                
+                // 获取分页数据
+                let offset = (page - 1) * limit
+                let dataQuery = """
+                    SELECT id, user_id, plan_id, session_id, plan_name, plan_description, 
+                           training_date, volume, duration, note, created_at
+                    FROM training_history 
+                    WHERE \(whereClause)
+                    ORDER BY training_date DESC, created_at DESC 
+                    LIMIT \(limit) OFFSET \(offset)
+                """
+                
+                let dataRows = try db.prepare(dataQuery, allParams)
+                for row in dataRows {
+                    let historyItem = TrainingHistoryItem(
+                        id: Int(row[0] as? Int64 ?? 0),
+                        plan_id: row[2] as? Int64 != nil ? Int(row[2] as! Int64) : nil,
+                        plan_name: row[4] as? String ?? "",
+                        training_date: row[6] as? String ?? "",
+                        volume: row[7] as? Double ?? 0.0,
+                        duration: Int(row[8] as? Int64 ?? 0),
+                        note: row[9] as? String,
+                        created_at: row[10] as? String
+                    )
+                    historyList.append(historyItem)
+                    print("📝 找到记录: ID=\(historyItem.id), 计划=\(historyItem.plan_name), 日期=\(historyItem.training_date)")
+                }
             }
             
             let pagination = PaginationInfo(
@@ -368,10 +455,10 @@ class LocalTrainingHistoryService {
                 ORDER BY training_date
             """
             
-            let statement = try db.prepare(query)
             var trainingDates: [String] = []
             
-            for row in try statement.run([currentUserId, startDate, endDate]) {
+            let rows = try db.prepare(query, [currentUserId, startDate, endDate])
+            for row in rows {
                 if let dateString = row[0] as? String {
                     trainingDates.append(dateString)
                 }
@@ -442,23 +529,24 @@ class LocalTrainingHistoryService {
                 ORDER BY thd.action_id, thd.set_number
             """
             
-            let statement = try db.prepare(detailQuery)
             var details: [TrainingHistoryDetailItem] = []
             
-            for row in try statement.run([historyId]) {
+            let detailRows = try db.prepare(detailQuery, [historyId])
+            for row in detailRows {
                 let detail = TrainingHistoryDetailItem(
-                    action_id: row[0] as? Int ?? 0,
-                    set_number: row[1] as? Int ?? 0,
+                    action_id: Int(row[0] as? Int64 ?? 0),
+                    set_number: Int(row[1] as? Int64 ?? 0),
                     weight: row[2] as? Double,
                     weight_unit: row[3] as? String ?? "kg",
-                    reps: row[4] as? Int,
+                    reps: row[4] as? Int64 != nil ? Int(row[4] as! Int64) : nil,
                     difficulty: row[5] as? String,
                     left_weight: row[6] as? Double,
                     right_weight: row[7] as? Double,
-                    is_completed: (row[8] as? Int ?? 0) == 1,
+                    is_completed: (row[8] as? Int64 ?? 0) == 1,
                     action_name: row[9] as? String
                 )
                 details.append(detail)
+                print("📝 详情记录: 动作ID=\(detail.action_id), 组数=\(detail.set_number), 重量=\(detail.weight ?? 0), 次数=\(detail.reps ?? 0)")
             }
             
             print("✅ 获取训练历史详情成功")

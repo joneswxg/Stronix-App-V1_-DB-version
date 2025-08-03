@@ -2,53 +2,176 @@ import SwiftUI
 
 struct ActionListView: View {
     // MARK: - 状态属性
-    @State private var selectedBodyPartId: Int = 1
+    @State private var selectedBodyPartId: Int = 0 // 0表示"全部"
     @State private var searchText = ""
     @State private var selectedEquipmentId: Int = 0 // 0表示"全部"
-    @State private var selectedTargetMuscleId: Int = 1
+    @State private var selectedTargetMuscleId: Int = 0 // 修改：0表示"所有动作"
     @StateObject private var viewModel = ActionListViewModel()
     
     // MARK: - 设备过滤视图
     private var equipmentFilterView: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 12) {
-                // "全部"选项
-                Button(action: { selectedEquipmentId = 0 }) {
-                    Text("全部")
-                        .font(.system(size: 14))
-                        .foregroundColor(selectedEquipmentId == 0 ? .white : .gray)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            selectedEquipmentId == 0 ?
-                                Color.blue :
-                                Color.gray.opacity(0.1)
-                        )
-                        .cornerRadius(12)
-                }
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                // 左侧空白区域，对应左侧导航栏的宽度（25%）
+                Spacer()
+                    .frame(width: geometry.size.width * 0.25)
                 
-                // 动态设备选项
-                ForEach(viewModel.equipments) { equipment in
-                    Button(action: { selectedEquipmentId = equipment.id }) {
-                        Text(equipment.display_name)
-                            .font(.system(size: 14))
-                            .foregroundColor(selectedEquipmentId == equipment.id ? .white : .gray)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                selectedEquipmentId == equipment.id ?
-                                    Color.blue :
-                                    Color.gray.opacity(0.1)
-                            )
-                            .cornerRadius(12)
+                // 下拉框容器，对应右侧动作列表区域（75%）
+                HStack(spacing: 16) {
+                    // 器材类型下拉框
+                    Menu {
+                        // "全部器材"选项
+                        Button(action: { 
+                            selectedEquipmentId = 0
+                            Task {
+                                await viewModel.loadActionsByFilters(
+                                    targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
+                                    equipmentId: 0,
+                                    bodyPartId: selectedBodyPartId,
+                                    searchText: searchText
+                                )
+                            }
+                        }) {
+                            HStack {
+                                Text("全部器材")
+                                if selectedEquipmentId == 0 {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // 动态设备选项
+                        ForEach(viewModel.equipments) { equipment in
+                            Button(action: { 
+                                selectedEquipmentId = equipment.id
+                                Task {
+                                    await viewModel.loadActionsByFilters(
+                                        targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
+                                        equipmentId: equipment.id,
+                                        bodyPartId: selectedBodyPartId,
+                                        searchText: searchText
+                                    )
+                                }
+                            }) {
+                                HStack {
+                                    Text(equipment.display_name)
+                                    if selectedEquipmentId == equipment.id {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(selectedEquipmentName)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.blue)
+                        .cornerRadius(8)
                     }
+                    .frame(width: 120) // 与动作图片宽度对齐
+                    
+                    // 身体部位下拉框
+                    Menu {
+                        // "全部部位"选项
+                        Button(action: { 
+                            selectedBodyPartId = 0
+                            Task {
+                                await viewModel.loadActionsByFilters(
+                                    targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
+                                    equipmentId: selectedEquipmentId,
+                                    bodyPartId: 0,
+                                    searchText: searchText
+                                )
+                            }
+                        }) {
+                            HStack {
+                                Text("全部部位")
+                                if selectedBodyPartId == 0 {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // 动态身体部位选项
+                        ForEach(viewModel.bodyParts) { bodyPart in
+                            Button(action: { 
+                                selectedBodyPartId = bodyPart.id
+                                Task {
+                                    await viewModel.loadActionsByFilters(
+                                        targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
+                                        equipmentId: selectedEquipmentId,
+                                        bodyPartId: bodyPart.id,
+                                        searchText: searchText
+                                    )
+                                }
+                            }) {
+                                HStack {
+                                    Text(bodyPart.display_name)
+                                    if selectedBodyPartId == bodyPart.id {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(selectedBodyPartName)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                    }
+                    .frame(width: 120) // 身体部位下拉框宽度
+                    
+                    Spacer() // 填充剩余空间
                 }
+                .padding(.horizontal, 16) // 与右侧动作列表的padding保持一致
+                .frame(width: geometry.size.width * 0.75, alignment: .leading)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
         }
-        .frame(height: 50)
+        .frame(height: 50) // 固定高度
         .background(Color.white)
+        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+    }
+    
+    // MARK: - 计算属性：当前选中的设备名称
+    private var selectedEquipmentName: String {
+        if selectedEquipmentId == 0 {
+            return "全部器材"
+        }
+        return viewModel.equipments.first { $0.id == selectedEquipmentId }?.display_name ?? "全部器材"
+    }
+    
+    // MARK: - 计算属性：当前选中的身体部位名称
+    private var selectedBodyPartName: String {
+        if selectedBodyPartId == 0 {
+            return "全部部位"
+        }
+        return viewModel.bodyParts.first { $0.id == selectedBodyPartId }?.display_name ?? "全部部位"
     }
     
     // MARK: - 视图主体
@@ -84,10 +207,12 @@ struct ActionListView: View {
                     .padding(.horizontal)
                     .padding(.top)
                     
+                    // 添加搜索框和下拉框之间的间距
+                    Spacer()
+                        .frame(height: 16)
+                    
                     // 训练设备过滤栏
                     equipmentFilterView
-                        .background(Color.white)
-                        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
                         .frame(maxWidth: .infinity)
                     
                     // 主要内容区域
@@ -96,11 +221,44 @@ struct ActionListView: View {
                         VStack {
                             ScrollView(.vertical, showsIndicators: false) {
                                 LazyVStack(alignment: .leading, spacing: 8) {
+                                    // 添加"所有动作"按钮
+                                    Button(action: { 
+                                        selectedTargetMuscleId = 0
+                                        Task {
+                                            await viewModel.loadActionsByFilters(
+                                                targetMuscleId: nil,
+                                                equipmentId: selectedEquipmentId,
+                                                bodyPartId: selectedBodyPartId,
+                                                searchText: searchText
+                                            )
+                                        }
+                                    }) {
+                                        Text("所有动作")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(selectedTargetMuscleId == 0 ? .white : .black)
+                                            .fontWeight(selectedTargetMuscleId == 0 ? .medium : .regular)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 10)
+                                            .background(
+                                                selectedTargetMuscleId == 0 ?
+                                                    Color.blue :
+                                                    Color.clear
+                                            )
+                                            .cornerRadius(8)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
                                     ForEach(viewModel.targetMuscles) { muscle in
                                         Button(action: { 
                                             selectedTargetMuscleId = muscle.id
                                             Task {
-                                                await viewModel.loadActionsByTargetMuscle(targetMuscleId: muscle.id)
+                                                await viewModel.loadActionsByFilters(
+                                                    targetMuscleId: muscle.id,
+                                                    equipmentId: selectedEquipmentId,
+                                                    bodyPartId: selectedBodyPartId,
+                                                    searchText: searchText
+                                                )
                                             }
                                         }) {
                                             Text(muscle.display_name)
@@ -149,7 +307,12 @@ struct ActionListView: View {
                                     
                                     Button("重试") {
                                         Task {
-                                            await viewModel.loadActionsByTargetMuscle(targetMuscleId: selectedTargetMuscleId)
+                                            await viewModel.loadActionsByFilters(
+                                                targetMuscleId: selectedTargetMuscleId,
+                                                equipmentId: selectedEquipmentId,
+                                                bodyPartId: selectedBodyPartId,
+                                                searchText: searchText
+                                            )
                                         }
                                     }
                                     .padding(.horizontal, 20)
@@ -195,23 +358,39 @@ struct ActionListView: View {
             .ignoresSafeArea(.keyboard)
             .onAppear {
                 Task {
-                    viewModel.loadInitialData()
-                    // 同步选中的目标肌肉ID
-                    if let firstMuscle = viewModel.targetMuscles.first {
-                        selectedTargetMuscleId = firstMuscle.id
-                        // 加载选中目标肌肉的动作
-                        await viewModel.loadActionsByTargetMuscle(targetMuscleId: firstMuscle.id)
-                    }
+                    await viewModel.loadFilters()
+                    // 默认选中"所有动作"并加载所有动作
+                    selectedTargetMuscleId = 0
+                    await viewModel.loadActionsByFilters(
+                        targetMuscleId: nil,
+                        equipmentId: selectedEquipmentId,
+                        bodyPartId: selectedBodyPartId,
+                        searchText: searchText
+                    )
                 }
             }
             .onChange(of: viewModel.targetMuscles) { oldValue, newValue in
-                // 当目标肌肉数据加载完成时，同步选中状态并加载对应动作
-                if !newValue.isEmpty {
-                    let targetId = newValue.first?.id ?? 1
-                    selectedTargetMuscleId = targetId
+                // 当目标肌肉数据加载完成时，如果当前没有选中任何肌肉，保持"所有动作"状态
+                if !newValue.isEmpty && selectedTargetMuscleId == 0 {
                     Task {
-                        await viewModel.loadActionsByTargetMuscle(targetMuscleId: targetId)
+                        await viewModel.loadActionsByFilters(
+                            targetMuscleId: nil,
+                            equipmentId: selectedEquipmentId,
+                            bodyPartId: selectedBodyPartId,
+                            searchText: searchText
+                        )
                     }
+                }
+            }
+            .onChange(of: searchText) { oldValue, newValue in
+                // 搜索文本变化时实时过滤
+                Task {
+                    await viewModel.loadActionsByFilters(
+                        targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
+                        equipmentId: selectedEquipmentId,
+                        bodyPartId: selectedBodyPartId,
+                        searchText: newValue
+                    )
                 }
             }
         }
@@ -221,12 +400,14 @@ struct ActionListView: View {
     private var filteredActions: [Action] {
         let filtered = viewModel.actions.filter { action in
             let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
+            let matchesBodyPart = selectedBodyPartId == 0 || action.bodypart_id == selectedBodyPartId
             let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
-            return matchesEquipment && matchesSearch
+            return matchesEquipment && matchesBodyPart && matchesSearch
         }
         
         print("🔍 filteredActions - 原始动作数量: \(viewModel.actions.count)")
         print("🔍 filteredActions - selectedEquipmentId: \(selectedEquipmentId)")
+        print("🔍 filteredActions - selectedBodyPartId: \(selectedBodyPartId)")
         print("🔍 filteredActions - searchText: '\(searchText)'")
         print("🔍 filteredActions - 过滤后动作数量: \(filtered.count)")
         
@@ -234,8 +415,9 @@ struct ActionListView: View {
             print("🔍 filteredActions - 动作筛选详情:")
             for action in viewModel.actions {
                 let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
+                let matchesBodyPart = selectedBodyPartId == 0 || action.bodypart_id == selectedBodyPartId
                 let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
-                print("  - \(action.name): equipment_id=\(action.equipment_id ?? -1), matchesEquipment=\(matchesEquipment), matchesSearch=\(matchesSearch)")
+                print("  - \(action.name): equipment_id=\(action.equipment_id ?? -1), bodypart_id=\(action.bodypart_id), matchesEquipment=\(matchesEquipment), matchesBodyPart=\(matchesBodyPart), matchesSearch=\(matchesSearch)")
             }
         }
         
@@ -277,21 +459,61 @@ struct ActionCard: View {
     ActionListView()
 }
 
-// MARK: - 异步图片加载视图（与ActionDetailView的GIFView完全一致）
+// MARK: - 异步图片加载视图（支持新的目录结构）
 struct AsyncImageView: View {
     let imageName: String
+    @State private var uiImage: UIImage?
+    @State private var isLoading = true
     
     var body: some View {
-        // 使用与ActionDetailView中GIFView完全相同的代码
-        AsyncImage(url: Bundle.main.url(forResource: imageName, withExtension: "gif")) { image in
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-        } placeholder: {
-            Image(systemName: "photo")
-                .foregroundColor(.gray)
+        Group {
+            if let uiImage = uiImage {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // 加载失败时显示占位图
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(.gray)
+                    )
+            }
         }
         .frame(height: 120)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .onAppear {
+            loadImage()
+        }
+    }
+    
+    private func loadImage() {
+        // 尝试加载图片，支持新的目录结构
+        guard let url = Bundle.main.url(forResource: imageName, withExtension: "gif") else {
+            print("❌ ActionListView: 找不到GIF文件: \(imageName).gif")
+            isLoading = false
+            return
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let data = try? Data(contentsOf: url),
+                  let image = UIImage(data: data) else {
+                print("❌ ActionListView: 图片加载失败: \(imageName)")
+                DispatchQueue.main.async {
+                    isLoading = false
+                }
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.uiImage = image
+                self.isLoading = false
+                print("✅ ActionListView: 图片加载成功: \(imageName)")
+            }
+        }
     }
 } 

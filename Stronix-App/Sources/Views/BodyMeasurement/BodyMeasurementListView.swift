@@ -1,50 +1,50 @@
 import SwiftUI
 
 struct BodyMeasurementListView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: BodyMeasurementViewModel
-    @State private var showingEditSheet = false
-    @State private var selectedRecord: BodyMeasurement?
     @State private var showingDeleteAlert = false
     @State private var recordToDelete: BodyMeasurement?
     
     var body: some View {
-        NavigationView {
-            VStack {
-                if viewModel.isLoading {
-                    ProgressView("加载中...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.measurements.isEmpty {
-                    emptyStateView
-                } else {
-                    recordsList
-                }
-            }
-            .navigationTitle("体测记录")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("关闭") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        dismiss()
-                        viewModel.showAddSheet()
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .refreshable {
-                await viewModel.refreshData()
+        VStack {
+            if viewModel.isLoading {
+                ProgressView("加载中...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.measurements.isEmpty {
+                emptyStateView
+            } else {
+                recordsList
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            if let record = selectedRecord {
-                EditMeasurementSheet(viewModel: viewModel, record: record)
+        .navigationTitle("体测记录")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("返回")
+                            .font(.system(size: 16))
+                    }
+                    .foregroundColor(.blue)
+                }
             }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    viewModel.showAddSheet()
+                }) {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .refreshable {
+            await viewModel.refreshData()
         }
         .alert("删除确认", isPresented: $showingDeleteAlert) {
             Button("取消", role: .cancel) { }
@@ -83,10 +83,7 @@ struct BodyMeasurementListView: View {
             ForEach(viewModel.measurements) { record in
                 MeasurementRowView(
                     record: record,
-                    onEdit: {
-                        selectedRecord = record
-                        showingEditSheet = true
-                    },
+                    viewModel: viewModel,
                     onDelete: {
                         recordToDelete = record
                         showingDeleteAlert = true
@@ -113,7 +110,7 @@ struct BodyMeasurementListView: View {
 // 体测记录行视图
 struct MeasurementRowView: View {
     let record: BodyMeasurement
-    let onEdit: () -> Void
+    let viewModel: BodyMeasurementViewModel
     let onDelete: () -> Void
     
     var body: some View {
@@ -127,7 +124,8 @@ struct MeasurementRowView: View {
                 Spacer()
                 
                 HStack(spacing: 20) {
-                    Button(action: onEdit) {
+                    // 编辑按钮 - 改为NavigationLink
+                    NavigationLink(destination: BodyMeasurementEditView(viewModel: viewModel, record: record)) {
                         Text("编辑")
                             .foregroundColor(.blue)
                             .font(.system(size: 14))

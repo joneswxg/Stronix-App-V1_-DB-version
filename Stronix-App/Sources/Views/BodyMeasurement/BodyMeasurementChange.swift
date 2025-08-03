@@ -453,7 +453,7 @@ struct DateRangePickerView: View {
                                 .foregroundColor(.gray)
                             DatePicker("", selection: $tempStartDate, displayedComponents: .date)
                                 .datePickerStyle(CompactDatePickerStyle())
-                                .onChange(of: tempStartDate) { _ in
+                                .onChange(of: tempStartDate) {
                                     selectedQuickOption = nil // 清除快速选择状态
                                 }
                         }
@@ -466,7 +466,7 @@ struct DateRangePickerView: View {
                                 .foregroundColor(.gray)
                             DatePicker("", selection: $tempEndDate, displayedComponents: .date)
                                 .datePickerStyle(CompactDatePickerStyle())
-                                .onChange(of: tempEndDate) { _ in
+                                .onChange(of: tempEndDate) {
                                     selectedQuickOption = nil // 清除快速选择状态
                                 }
                         }
