@@ -4,6 +4,7 @@ import SwiftUI
 struct TrainingFloatingIndicator: View {
     @ObservedObject var trainingManager = TrainingSessionManager.shared
     let onTap: () -> Void
+    @Environment(\.theme) private var theme: AppTheme
     
     var body: some View {
         if trainingManager.isTrainingActive {
@@ -18,34 +19,34 @@ struct TrainingFloatingIndicator: View {
                             // 训练图标
                             Image(systemName: "figure.strengthtraining.traditional")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.onPrimary)
                             
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("训练进行中")
                                     .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(theme.onPrimary)
                                 
                                 Text(trainingManager.formattedTrainingTime())
                                     .font(.system(size: 10, weight: .regular))
-                                    .foregroundColor(.white.opacity(0.9))
+                                    .foregroundColor(theme.onPrimary.opacity(0.9))
                             }
                             
                             // 箭头图标
                             Image(systemName: "chevron.up")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(theme.onPrimary.opacity(0.8))
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                gradient: Gradient(colors: [theme.primary, theme.primary.opacity(0.8)]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .cornerRadius(25)
-                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .shadow(color: theme.onSurface.opacity(0.2), radius: 8, x: 0, y: 4)
                     }
                     .padding(.trailing, 16)
                 }
@@ -78,4 +79,4 @@ struct TrainingFloatingIndicator: View {
 #Preview {
     // 预览代码暂时注释，等待类型定义完成
     Text("TrainingFloatingIndicator Preview")
-} 
+}

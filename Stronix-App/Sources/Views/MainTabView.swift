@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @AppStorage("MainTabView_selectedTab") private var selectedTab = 0 // 持久化选中的Tab
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @AppStorage("MainTabView_lastUserSelectedTab") private var lastUserSelectedTab = 0 // 持久化用户最后选择的标签页
@@ -51,6 +52,7 @@ struct MainTabView: View {
                     }
                     .tag(4)
         }
+        .accentColor(theme.primary)
         .overlay(
             // 训练进行中的浮动指示器
             TrainingFloatingIndicator {
@@ -79,4 +81,4 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-} 
+}

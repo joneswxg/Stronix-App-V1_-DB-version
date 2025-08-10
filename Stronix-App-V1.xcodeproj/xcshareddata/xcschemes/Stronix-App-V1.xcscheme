@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9D70A7C52DDD84580085BAAF"
-               BuildableName = "Stronix-App-V1.app"
-               BlueprintName = "Stronix-App-V1"
+               BuildableName = "Stronix.app"
+               BlueprintName = "Stronix"
                ReferencedContainer = "container:Stronix-App-V1.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9D70A7C52DDD84580085BAAF"
-            BuildableName = "Stronix-App-V1.app"
-            BlueprintName = "Stronix-App-V1"
+            BuildableName = "Stronix.app"
+            BlueprintName = "Stronix"
             ReferencedContainer = "container:Stronix-App-V1.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9D70A7C52DDD84580085BAAF"
-            BuildableName = "Stronix-App-V1.app"
-            BlueprintName = "Stronix-App-V1"
+            BuildableName = "Stronix.app"
+            BlueprintName = "Stronix"
             ReferencedContainer = "container:Stronix-App-V1.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

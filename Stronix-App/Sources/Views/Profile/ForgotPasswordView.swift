@@ -3,6 +3,7 @@ import SwiftUI
 struct ForgotPasswordView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var localUserService = LocalUserService.shared
+    @Environment(\.theme) private var theme: AppTheme
     @State private var email = ""
     @State private var showSuccess = false
     @State private var errorMessage = ""
@@ -16,15 +17,15 @@ struct ForgotPasswordView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "lock.rotation")
                         .font(.system(size: 60))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     
                     Text("重置密码")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     Text("请输入您的邮箱地址，我们将发送重置密码的链接到您的邮箱")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                 }
@@ -34,18 +35,18 @@ struct ForgotPasswordView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("邮箱")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     HStack {
                         Image(systemName: "envelope")
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .frame(width: 20)
                         TextField("请输入注册时使用的邮箱", text: $email)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                     }
                     .padding()
-                    .background(Color(white: 0.97))
+                    .background(theme.background)
                     .cornerRadius(12)
                 }
                 .padding(.horizontal, 24)
@@ -57,19 +58,19 @@ struct ForgotPasswordView: View {
                     HStack {
                         if localUserService.isLoading {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .progressViewStyle(CircularProgressViewStyle(tint: theme.onPrimary))
                                 .scaleEffect(0.8)
                         } else {
                             Text("发送重置链接")
                                 .font(.system(size: 16, weight: .medium))
                         }
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.onPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
                         (email.isEmpty || localUserService.isLoading) ? 
-                            Color.gray.opacity(0.5) : Color.blue
+                            theme.secondary.opacity(0.5) : theme.primary
                     )
                     .cornerRadius(25)
                 }
@@ -84,7 +85,7 @@ struct ForgotPasswordView: View {
                 }) {
                     Text("返回登录")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                 }
                 .padding(.bottom, 40)
             }
@@ -137,4 +138,4 @@ struct ForgotPasswordView: View {
 
 #Preview {
     ForgotPasswordView()
-} 
+}

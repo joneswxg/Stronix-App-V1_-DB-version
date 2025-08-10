@@ -1,0 +1,96 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Profile/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "设置",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "显示设置",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "语言",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "颜色方案",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "颜色方案",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Color Scheme",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "通知设置",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "数据设置",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "关于",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 246
+        }
+      }
+    ]
+  },
+  "version": 1
+}

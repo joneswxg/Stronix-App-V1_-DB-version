@@ -1,0 +1,584 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/NutritionView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "营养热量计算器",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "计算方法",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "基础代谢计算",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "体脂率基础代谢计算",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "基础信息",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mifflin-St Jeor 方程",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mifflin-St Jeor 方程",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mifflin-St Jeor 方程是目前普遍认为最准确的基础代谢率（BMR）计算公式之一。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "计算公式：",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "该公式根据性别、年龄、体重和身高来估算身体在休息状态下每天消耗的卡路里。适用于大多数成年人，不考虑体脂率。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "男性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) + 5",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "女性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) - 161",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Katch-McArdle 方程",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Katch-McArdle 方程",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Katch-McArdle 方程是一种针对已知体脂率人群的基础代谢率（BMR）计算公式。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "计算公式：",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "这个公式被认为比Mifflin-St Jeor方程更准确，因为它考虑了瘦体重（Lean Body Mass），而瘦体重是影响基础代谢率的关键因素。适用于健身人群或对体脂率有准确了解的人。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "BMR = 370 + (21.6 × 去脂体重kg)",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "去脂体重 = 体重kg × (1 - 体脂率% ÷ 100)",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "性别:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "性别",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "男性",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "女性",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "年龄:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "岁",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "年龄",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "身高:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "cm",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "身高",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "体重:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "kg",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "体重",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "体脂率:",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "%",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "体脂率",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "活动水平",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "健身目标",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "目标",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "减脂",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "维持",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 255
+        }
+      },
+      {
+        "comment": "",
+        "key": "增肌",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 256
+        }
+      },
+      {
+        "comment": "",
+        "key": "营养计算结果",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "目标热量:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "目标热量说明",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 348
+        }
+      },
+      {
+        "comment": "",
+        "key": "目标热量说明",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 288
+        }
+      },
+      {
+        "comment": "",
+        "key": "目标热量是根据您的基础代谢率（BMR）、活动水平和健身目标计算得出的每日所需卡路里摄入量。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "TDEE计算公式：",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "TDEE = BMR（基础代谢率）× 活动系数",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "TDEE（Total Daily Energy Expenditure）是您每日总能量消耗，包括基础代谢、日常活动、运动等所有消耗的热量。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "热量范围依据：",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "建议值是该范围的中间值，用于后续蛋白质、碳水化合物和脂肪的比例计算。实际摄入可根据身体反应和目标进展在范围内调整。",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 339
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 减脂：TDEE - 300~500 卡路里",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "  创造适度热量缺口，帮助减少脂肪，同时避免过快减重导致肌肉流失。",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 317
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 维持：TDEE ± 100 卡路里",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "  保持现有体重和体组成，允许小幅波动。",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 增肌：TDEE + 300~500 卡路里",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "  提供足够的热量盈余，支持肌肉生长，同时避免过量导致过多脂肪堆积。",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld - %lld 卡路里",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 357
+        }
+      },
+      {
+        "comment": "",
+        "key": "建议值: %lld 卡路里",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 361
+        }
+      },
+      {
+        "comment": "",
+        "key": "当前热量分配:",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 429
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld 卡路里",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "建议范围:",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld - %lld 卡路里",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "最大限制:",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld 卡路里",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 449
+        }
+      },
+      {
+        "comment": "",
+        "key": "完成",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 468
+        }
+      },
+      {
+        "comment": "",
+        "key": "占总热量范围: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 536
+        }
+      },
+      {
+        "comment": "",
+        "key": "建议: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 531
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld 卡路里",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 570
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlanActionSelectView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     @StateObject private var viewModel = ActionListViewModel()
     @State private var selectedActions: Set<Int> = []
     @State private var selectedTargetMuscleId: Int = 0
@@ -31,19 +32,19 @@ struct PlanActionSelectView: View {
                     // 搜索栏
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         TextField("搜索训练动作", text: $searchText)
                     }
                     .padding()
-                    .background(Color(white: 0.97))
+                    .background(theme.surface)
                     .cornerRadius(8)
                     .padding(.horizontal)
                     .padding(.top)
                     
                     // 训练设备过滤栏
                     equipmentFilterView
-                        .background(Color.white)
-                        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                        .background(theme.background)
+                        .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
                     
                     // 主要内容区域
                     HStack(spacing: 0) {
@@ -60,16 +61,12 @@ struct PlanActionSelectView: View {
                                         }) {
                                             Text(muscle.display_name)
                                                 .font(.system(size: 13))
-                                                .foregroundColor(selectedTargetMuscleId == muscle.id ? .white : .black)
+                                                .foregroundColor(selectedTargetMuscleId == muscle.id ? theme.onPrimary : theme.onBackground)
                                                 .fontWeight(selectedTargetMuscleId == muscle.id ? .medium : .regular)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 10)
-                                                .background(
-                                                    selectedTargetMuscleId == muscle.id ?
-                                                        Color.blue :
-                                                        Color.clear
-                                                )
+                                                .background(selectedTargetMuscleId == muscle.id ? theme.primary : Color.clear)
                                                 .cornerRadius(8)
                                         }
                                         .buttonStyle(PlainButtonStyle())
@@ -79,7 +76,7 @@ struct PlanActionSelectView: View {
                                 .padding(.vertical, 12)
                             }
                             .frame(width: mainGeometry.size.width * 0.25)
-                            .background(Color(white: 0.97))
+                            .background(theme.surface)
                         }
                         .frame(maxHeight: .infinity)
                         
@@ -138,6 +135,7 @@ struct PlanActionSelectView: View {
                     Button("取消") {
                         dismiss()
                     }
+                    .foregroundColor(theme.secondary)
                 }
                 
                 // 只在多选模式下显示确定按钮
@@ -149,6 +147,7 @@ struct PlanActionSelectView: View {
                             onActionsSelected?(selectedActionsList)
                             dismiss()
                         }
+                        .foregroundColor(selectedActions.isEmpty ? theme.secondary : theme.primary)
                         .disabled(selectedActions.isEmpty)
                     }
                 }
@@ -158,10 +157,10 @@ struct PlanActionSelectView: View {
             Task {
                 viewModel.loadInitialData()
                 // 初始化完成后，自动选中第一个目标肌群并加载对应的动作
-                if !viewModel.targetMuscles.isEmpty {
-                    let firstMuscleId = viewModel.targetMuscles[0].id
+                if !viewModel.targetMuscles.isEmpty, let firstMuscle = viewModel.targetMuscles.first {
+                    let firstMuscleId = firstMuscle.id
                     selectedTargetMuscleId = firstMuscleId
-                    print("🔄 PlanActionSelectView: 自动选中第一个目标肌群 ID=\(firstMuscleId), 名称=\(viewModel.targetMuscles[0].display_name)")
+                    print("🔄 PlanActionSelectView: 自动选中第一个目标肌群 ID=\(firstMuscleId), 名称=\(firstMuscle.display_name)")
                     await viewModel.loadActionsByTargetMuscle(targetMuscleId: firstMuscleId)
                     print("🔄 PlanActionSelectView: 已加载 \(viewModel.actions.count) 个动作")
                 }
@@ -177,13 +176,13 @@ struct PlanActionSelectView: View {
                 Button(action: { selectedEquipmentId = 0 }) {
                     Text("全部")
                         .font(.system(size: 14))
-                        .foregroundColor(selectedEquipmentId == 0 ? .white : .gray)
+                        .foregroundColor(selectedEquipmentId == 0 ? theme.background : theme.secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(
                             selectedEquipmentId == 0 ?
-                                Color.blue :
-                                Color.gray.opacity(0.1)
+                                theme.primary :
+                                theme.surface
                         )
                         .cornerRadius(12)
                 }
@@ -193,13 +192,13 @@ struct PlanActionSelectView: View {
                     Button(action: { selectedEquipmentId = equipment.id }) {
                         Text(equipment.display_name)
                             .font(.system(size: 14))
-                            .foregroundColor(selectedEquipmentId == equipment.id ? .white : .gray)
+                            .foregroundColor(selectedEquipmentId == equipment.id ? theme.background : theme.secondary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(
                                 selectedEquipmentId == equipment.id ?
-                                    Color.blue :
-                                    Color.gray.opacity(0.1)
+                                    theme.primary :
+                                    theme.surface
                             )
                             .cornerRadius(12)
                     }
@@ -209,7 +208,7 @@ struct PlanActionSelectView: View {
             .padding(.vertical, 4)
         }
         .frame(height: 50)
-        .background(Color.white)
+        .background(theme.background)
     }
     
     // 过滤后的动作列表
@@ -224,6 +223,7 @@ struct PlanActionSelectView: View {
 
 // 可选择的动作卡片
 struct SelectableActionCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let action: Action
     let isSelected: Bool
     let allowMultipleSelection: Bool
@@ -240,10 +240,10 @@ struct SelectableActionCard: View {
                         .aspectRatio(contentMode: .fit)
                 } else {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(theme.secondary.opacity(0.3))
                         .overlay(
                             Image(systemName: "figure.strengthtraining.traditional")
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         )
                 }
             }
@@ -256,30 +256,30 @@ struct SelectableActionCard: View {
                     .font(.system(size: 14, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .foregroundColor(isDisabled ? .gray : .black)
+                    .foregroundColor(isDisabled ? theme.secondary : theme.onBackground)
                 
                 // 如果动作已存在，显示提示文字
                 if isDisabled {
                     Text("已添加")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.gray.opacity(0.2))
+                        .background(theme.secondary.opacity(0.2))
                         .cornerRadius(4)
                 }
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 8)
         }
-        .background(isDisabled ? Color.gray.opacity(0.1) : Color.white)
+        .background(isDisabled ? theme.secondary.opacity(0.1) : theme.background)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: theme.onBackground.opacity(0.05), radius: 5, x: 0, y: 2)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    isDisabled ? Color.gray.opacity(0.3) : 
-                    (isSelected ? Color.blue : Color.clear), 
+                    isDisabled ? theme.secondary.opacity(0.3) : 
+                    (isSelected ? theme.primary : Color.clear), 
                     lineWidth: 2
                 )
         )
@@ -347,4 +347,4 @@ private func loadLocalActionImage(fileName: String) -> UIImage? {
     PlanActionSelectView { action in
         print("选择了动作: \(action.name)")
     }
-} 
+}

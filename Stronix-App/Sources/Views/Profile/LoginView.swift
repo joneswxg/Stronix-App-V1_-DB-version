@@ -4,6 +4,7 @@ import Foundation
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var localUserService = LocalUserService.shared
+    @Environment(\.theme) private var theme: AppTheme
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
@@ -24,11 +25,11 @@ struct LoginView: View {
                         
                         Text("STRONIX")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         
                         Text("欢迎回来")
                             .font(.system(size: 16))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     .padding(.top, 40)
                     
@@ -38,18 +39,18 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("邮箱")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
                                 Image(systemName: "envelope")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 TextField("请输入邮箱", text: $email)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                         }
                         
@@ -57,16 +58,16 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("密码")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
                                 Image(systemName: "lock")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 SecureField("请输入密码", text: $password)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                         }
                         
@@ -78,7 +79,7 @@ struct LoginView: View {
                             }) {
                                 Text("忘记密码？")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                             }
                         }
                     }
@@ -92,19 +93,19 @@ struct LoginView: View {
                             HStack {
                                 if localUserService.isLoading {
                                     ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .progressViewStyle(CircularProgressViewStyle(tint: theme.onPrimary))
                                         .scaleEffect(0.8)
                                 } else {
                                     Text("登录")
                                         .font(.system(size: 16, weight: .medium))
                                 }
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.onPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
                                 (email.isEmpty || password.isEmpty || localUserService.isLoading) ? 
-                                    Color.gray.opacity(0.5) : Color.blue
+                                    theme.disabled.opacity(0.5) : theme.primary
                             )
                             .cornerRadius(25)
                         }
@@ -113,14 +114,14 @@ struct LoginView: View {
                         // 分割线
                         HStack {
                             Rectangle()
-                                .fill(Color.gray.opacity(0.3))
+                                .fill(theme.secondary.opacity(0.3))
                                 .frame(height: 1)
                             Text("或")
                                 .font(.system(size: 14))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                                 .padding(.horizontal, 16)
                             Rectangle()
-                                .fill(Color.gray.opacity(0.3))
+                                .fill(theme.secondary.opacity(0.3))
                                 .frame(height: 1)
                         }
                         
@@ -130,19 +131,19 @@ struct LoginView: View {
                         }) {
                             HStack(spacing: 12) {
                                 Image(systemName: "message.circle.fill")
-                                    .foregroundColor(.green)
+                                    .foregroundColor(theme.success)
                                     .font(.system(size: 20))
                                 Text("微信登录")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(25)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    .stroke(theme.secondary.opacity(0.3), lineWidth: 1)
                             )
                         }
                     }
@@ -152,13 +153,13 @@ struct LoginView: View {
                     HStack {
                         Text("还没有账号？")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         Button(action: {
                             showRegister = true
                         }) {
                             Text("立即注册")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                         }
                     }
                     .padding(.top, 20)
@@ -167,15 +168,15 @@ struct LoginView: View {
                     VStack(spacing: 8) {
                         Text("测试账户")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         VStack(spacing: 4) {
                             Text("邮箱: iostest@example.com")
                                 .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                             Text("密码: password123")
                                 .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                         
                         Button(action: {
@@ -184,7 +185,7 @@ struct LoginView: View {
                         }) {
                             Text("使用测试账户")
                                 .font(.system(size: 12))
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                         }
                     }
                     .padding(.top, 16)
@@ -256,4 +257,4 @@ struct LoginView: View {
 
 #Preview {
     LoginView()
-} 
+}

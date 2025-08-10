@@ -1,0 +1,88 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/BodyMeasurementDetail.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "删除确认",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "基础代谢率计算公式",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定要删除这条体测记录吗？此操作无法撤销。",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "使用 Katch-McArdle 公式计算：\n\n1. 首先计算瘦体重（LBM）\n   LBM = 体重 × (1 - 体脂百分比 ÷ 100)\n\n2. 然后计算基础代谢率\n   BMR = 370 + (21.6 × LBM)",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.1f",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "+%.1f",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 321
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.1f",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 321
+        }
+      }
+    ]
+  },
+  "version": 1
+}

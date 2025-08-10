@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HistoryListView: View {
+    @EnvironmentObject private var themeManager: ThemeManager
+    @Environment(\.theme) private var theme: AppTheme
     let selectedDate: Date
     let selectedDateString: String?
     @State private var historyList: [TrainingHistoryItem] = []
@@ -196,19 +198,19 @@ struct HistoryListView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "calendar.badge.exclamationmark")
                             .font(.system(size: 50))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Text("该日期没有训练记录")
                             .font(.headline)
-                            .foregroundColor(.primary)
+                            .foregroundColor(theme.onSurface)
                         
                         Text("\(selectedDate, formatter: dateFormatter)")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(theme.secondary)
                         
                         Text("点击其他有训练记录的日期查看详情")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .padding()
@@ -254,12 +256,12 @@ struct HistoryListView: View {
             Spacer()
             Text("STRONIX")
                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(.blue)
+                .foregroundColor(theme.primary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.white)
-        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+        .background(theme.surface)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
     }
     
     private var navigationSection: some View {
@@ -269,7 +271,7 @@ struct HistoryListView: View {
             }) {
                 Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
             }
             Spacer()
             Text("训练记录")
@@ -280,8 +282,8 @@ struct HistoryListView: View {
                 .frame(width: 44, height: 44)
         }
         .padding()
-        .background(Color.white)
-        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+        .background(theme.surface)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
     }
     
     private var historyListSection: some View {
@@ -292,7 +294,7 @@ struct HistoryListView: View {
             
             Text("该日期的训练记录：")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .padding(.bottom)
             
             ScrollView {
@@ -305,29 +307,29 @@ struct HistoryListView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(history.plan_name)
                                             .font(.headline)
-                                            .foregroundColor(.primary)
+                                            .foregroundColor(theme.onSurface)
                                         
                                         Text(formatTrainingTime(history.training_date))
                                             .font(.caption)
-                                            .foregroundColor(.secondary)
+                                            .foregroundColor(theme.secondary)
                                         
                                         HStack {
                                             Text("时长: \(formatDuration(history.duration))")
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundColor(theme.secondary)
                                             
                                             Spacer()
                                             
                                             Text("重量: \(Int(history.volume))kg")
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundColor(theme.secondary)
                                         }
                                     }
                                     
                                     Spacer()
                                     
                                     Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondary)
                                 }
                                 .padding()
                             }
@@ -340,12 +342,12 @@ struct HistoryListView: View {
                             }) {
                                 Image(systemName: "trash")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.red)
+                                    .foregroundColor(theme.error)
                                     .frame(width: 44, height: 44)
                             }
                             .disabled(isDeleting)
                         }
-                        .background(Color.gray.opacity(0.1))
+                        .background(theme.surface.opacity(0.5))
                         .cornerRadius(10)
                     }
                 }
@@ -357,4 +359,4 @@ struct HistoryListView: View {
 
 #Preview {
     HistoryListView(selectedDate: Date())
-} 
+}

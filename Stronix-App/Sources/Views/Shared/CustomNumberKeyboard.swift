@@ -212,7 +212,8 @@ struct CustomNumberKeyboard: View {
     // 从字符串更新数值
     private func updateValueFromString() {
         if let newValue = Double(inputString) {
-            value = min(newValue, maxValue)
+            let validValue = newValue.isNaN || newValue.isInfinite ? 0.0 : min(newValue, maxValue)
+            value = validValue
         } else {
             value = 0
             inputString = "0"
@@ -232,7 +233,8 @@ struct CustomNumberKeyboard: View {
     private func increaseValue() {
         // 取消选中状态
         keyboardManager?.isValueSelected = false
-        value = min(value + step, maxValue)
+        let newValue = value + step
+        value = newValue.isNaN || newValue.isInfinite ? 0.0 : min(newValue, maxValue)
         // 重新初始化输入字符串以反映新值
         isInitialized = false
         initializeInputString()
@@ -243,7 +245,8 @@ struct CustomNumberKeyboard: View {
     private func decreaseValue() {
         // 取消选中状态
         keyboardManager?.isValueSelected = false
-        value = max(value - step, 0)
+        let newValue = value - step
+        value = newValue.isNaN || newValue.isInfinite ? 0.0 : max(newValue, 0)
         // 重新初始化输入字符串以反映新值
         isInitialized = false
         initializeInputString()
@@ -297,7 +300,8 @@ class CustomKeyboardManager: ObservableObject {
     
     /// 隐藏键盘并应用值
     func hideKeyboard() {
-        onValueChanged?(currentValue)
+        let validValue = currentValue.isNaN || currentValue.isInfinite ? 0.0 : currentValue
+        onValueChanged?(validValue)
         activeInputId = ""
         isValueSelected = false
         isShowing = false
@@ -312,8 +316,9 @@ class CustomKeyboardManager: ObservableObject {
     
     /// 实时更新值（在键盘输入过程中调用）
     func updateValue(_ newValue: Double) {
-        currentValue = newValue
-        onValueChanged?(newValue) // 实时更新
+        let validValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+        currentValue = validValue
+        onValueChanged?(validValue) // 实时更新
     }
 }
 
@@ -379,4 +384,4 @@ class CustomKeyboardManager: ObservableObject {
         }
     }
     .background(Color.gray.opacity(0.1))
-} 
+}

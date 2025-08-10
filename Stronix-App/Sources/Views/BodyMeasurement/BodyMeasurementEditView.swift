@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BodyMeasurementEditView: View {
+    @Environment(\.theme) private var theme
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: BodyMeasurementViewModel
     let record: BodyMeasurement
@@ -35,22 +36,22 @@ struct BodyMeasurementEditView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("测试日期")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     HStack {
                         Text(formatDate(selectedDate))
                             .font(.system(size: 16))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         Spacer()
                         Button("修改") {
                             showingDatePicker = true
                             hideKeyboard() // 打开日期选择器时隐藏键盘
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     }
                     .padding(.vertical, 12)
                     .padding(.horizontal, 16)
-                    .background(Color.gray.opacity(0.1))
+                    .background(theme.secondary.opacity(0.1))
                     .cornerRadius(8)
                 }
             }
@@ -61,7 +62,7 @@ struct BodyMeasurementEditView: View {
             HStack {
                 Text("编辑数据")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
             }
             .padding(.horizontal, 20)
@@ -128,14 +129,14 @@ struct BodyMeasurementEditView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background((isFormValid && !isSaving) ? Color.blue : Color.gray)
+                .background((isFormValid && !isSaving) ? theme.primary : theme.secondary)
                 .cornerRadius(8)
             }
             .disabled(!isFormValid || isSaving)
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
         }
-        .background(Color.white)
+        .background(theme.surface)
         .navigationTitle("编辑体测记录")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -150,7 +151,7 @@ struct BodyMeasurementEditView: View {
                         Text("返回")
                             .font(.system(size: 16))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                 }
             }
             
@@ -258,6 +259,7 @@ struct BodyMeasurementEditView: View {
 
 // 编辑输入字段组件
 struct EditInputField: View {
+    @Environment(\.theme) private var theme
     let title: String
     @Binding var value: String
     let unit: String
@@ -269,7 +271,7 @@ struct EditInputField: View {
             HStack {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
                 HStack(spacing: 8) {
                     TextField(placeholder, text: $value)
@@ -279,19 +281,19 @@ struct EditInputField: View {
                         .focused($isFocused)
                     Text(unit)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     Button(action: {
                         value = ""
                         isFocused = false // 清空输入时隐藏键盘
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray.opacity(0.6))
+                            .foregroundColor(theme.secondary.opacity(0.6))
                     }
                 }
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color.gray.opacity(0.1))
+            .background(theme.secondary.opacity(0.1))
             .cornerRadius(8)
         }
     }
@@ -315,4 +317,4 @@ struct EditInputField: View {
             )
         )
     }
-} 
+}

@@ -1,0 +1,376 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/CreatePlanView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "创建计划",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "错误",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "成功",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "保存",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "输入计划名称",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加描述",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除描述",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "编辑计划名称",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加计划描述",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加动作",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "确认删除",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 538
+        }
+      },
+      {
+        "comment": "",
+        "key": "确认删除",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 546
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 539
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 540
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定要删除这个训练动作吗？",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 544
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 547
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 550
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定要删除这组吗？",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 557
+        }
+      },
+      {
+        "comment": "",
+        "key": "休息计时器",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "设置休息时间",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 565
+        }
+      },
+      {
+        "comment": "",
+        "key": "分钟: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 566
+        }
+      },
+      {
+        "comment": "",
+        "key": "秒数: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 567
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 574
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 579
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 620
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld组",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 626
+        }
+      },
+      {
+        "comment": "",
+        "key": "记录左右",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 634
+        }
+      },
+      {
+        "comment": "",
+        "key": "动作详情",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 661
+        }
+      },
+      {
+        "comment": "",
+        "key": "设置休息计时器",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 669
+        }
+      },
+      {
+        "comment": "",
+        "key": "切换单位 (%@)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 673
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除动作",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 679
+        }
+      },
+      {
+        "comment": "",
+        "key": "组",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 713
+        }
+      },
+      {
+        "comment": "",
+        "key": "左%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 721
+        }
+      },
+      {
+        "comment": "",
+        "key": "右%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 728
+        }
+      },
+      {
+        "comment": "",
+        "key": "次数",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 743
+        }
+      },
+      {
+        "comment": "",
+        "key": "新增一组",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 772
+        }
+      },
+      {
+        "comment": "",
+        "key": "动作历史",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 783
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 800
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 936
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除备注",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 960
+        }
+      },
+      {
+        "comment": "",
+        "key": "输入备注",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 969
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 977
+        }
+      },
+      {
+        "comment": "",
+        "key": "输入备注",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 997
+        }
+      }
+    ]
+  },
+  "version": 1
+}

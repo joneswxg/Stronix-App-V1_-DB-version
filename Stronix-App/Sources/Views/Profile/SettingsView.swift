@@ -2,14 +2,14 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var selectedLanguage = "中文"
-    @State private var selectedTheme = "浅色"
     @State private var notificationsEnabled = true
     @State private var soundEnabled = true
     @State private var vibrationEnabled = true
     
     let languages = ["中文", "English"]
-    let themes = ["浅色", "深色", "跟随系统"]
     
     var body: some View {
         NavigationView {
@@ -19,6 +19,7 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         Text("显示设置")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
@@ -26,21 +27,45 @@ struct SettingsView: View {
                             SettingRow(title: "语言", subtitle: "Language") {
                                 Picker("语言", selection: $selectedLanguage) {
                                     ForEach(languages, id: \.self) { language in
-                                        Text(language).tag(language)
+                                        Text(language)
+                                            .foregroundColor(language == "English" ? theme.secondary.opacity(0.5) : theme.onSurface)
+                                            .tag(language)
                                     }
                                 }
                                 .pickerStyle(MenuPickerStyle())
+                                .disabled(selectedLanguage == "English")
                             }
                             
-                            // 主题设置
-                            SettingRow(title: "主题", subtitle: "Theme") {
-                                Picker("主题", selection: $selectedTheme) {
-                                    ForEach(themes, id: \.self) { theme in
-                                        Text(theme).tag(theme)
+                            // 颜色方案设置
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("颜色方案")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(theme.onSurface)
+                                        
+                                        Text("Color Scheme")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(theme.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                
+                                Picker("颜色方案", selection: $themeManager.currentThemeType) {
+                                    ForEach(ThemeType.allCases, id: \.self) { themeType in
+                                        Text(themeType.displayName).tag(themeType)
                                     }
                                 }
-                                .pickerStyle(MenuPickerStyle())
+                                .pickerStyle(SegmentedPickerStyle())
+                                .onChange(of: themeManager.currentThemeType) { _, newTheme in
+                                    themeManager.setTheme(newTheme)
+                                }
                             }
+                            .padding(16)
+                            .background(theme.surface)
+                            .cornerRadius(12)
+                            .shadow(color: theme.shadow, radius: 4, x: 0, y: 2)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -49,6 +74,7 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         Text("通知设置")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
@@ -77,17 +103,10 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         Text("数据设置")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
-                            SettingActionRow(
-                                title: "导出数据",
-                                subtitle: "导出训练记录和个人数据",
-                                icon: "square.and.arrow.up"
-                            ) {
-                                exportData()
-                            }
-                            
                             SettingActionRow(
                                 title: "清除缓存",
                                 subtitle: "清除应用缓存数据",
@@ -112,6 +131,7 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         Text("关于")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
@@ -139,7 +159,7 @@ struct SettingsView: View {
                     .padding(.bottom, 30)
                 }
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -147,6 +167,7 @@ struct SettingsView: View {
                     Button("关闭") {
                         dismiss()
                     }
+                    .foregroundColor(theme.primary)
                 }
             }
         }
@@ -175,6 +196,7 @@ struct SettingsView: View {
 
 // 设置行组件
 struct SettingRow<Content: View>: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let subtitle: String
     let content: Content
@@ -190,11 +212,11 @@ struct SettingRow<Content: View>: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 
                 Text(subtitle)
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             
             Spacer()
@@ -202,9 +224,9 @@ struct SettingRow<Content: View>: View {
             content
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: theme.shadow, radius: 4, x: 0, y: 2)
     }
 }
 
@@ -224,6 +246,7 @@ struct SettingToggleRow: View {
 
 // 操作设置行
 struct SettingActionRow: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let subtitle: String
     let icon: String
@@ -244,22 +267,22 @@ struct SettingActionRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(isDestructive ? .red : .black)
+                        .foregroundColor(isDestructive ? theme.error : theme.onSurface)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: icon)
-                    .foregroundColor(isDestructive ? .red : .blue)
+                    .foregroundColor(isDestructive ? theme.error : theme.primary)
             }
             .padding(16)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            .shadow(color: theme.shadow, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -279,4 +302,4 @@ struct SettingInfoRow: View {
 
 #Preview {
     SettingsView()
-} 
+}

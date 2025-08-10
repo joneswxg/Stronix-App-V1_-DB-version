@@ -82,7 +82,6 @@ class LocalActionService: ObservableObject {
         
         do {
             let query = targetMuscleTable.select(targetMuscleId, targetMuscleName, targetMuscleDisplayName)
-                .order(targetMuscleId.asc)
             
             let rows = try db.prepare(query)
             var targetMuscles: [TargetMuscle] = []
@@ -96,7 +95,20 @@ class LocalActionService: ObservableObject {
                 targetMuscles.append(targetMuscle)
             }
             
-            print("✅ LocalActionService: 成功获取 \(targetMuscles.count) 个目标肌肉")
+            // 自定义排序：按照指定的显示顺序
+            let customOrder = [
+                "胸肌", "上背部", "背阔肌", "脊椎肌", "三角肌", "二头肌", "三头肌",
+                "股四头肌", "臀部肌群", "腘绳肌", "内收肌", "外展肌", "腹肌", "斜方肌",
+                "小腿肌", "肩胛提肌", "前锯肌", "前臂肌", "心血管系统"
+            ]
+            
+            targetMuscles.sort { muscle1, muscle2 in
+                let index1 = customOrder.firstIndex(of: muscle1.display_name) ?? Int.max
+                let index2 = customOrder.firstIndex(of: muscle2.display_name) ?? Int.max
+                return index1 < index2
+            }
+            
+            print("✅ LocalActionService: 成功获取 \(targetMuscles.count) 个目标肌肉，已按自定义顺序排序")
             return targetMuscles
             
         } catch {
@@ -188,6 +200,12 @@ class LocalActionService: ObservableObject {
             var actions: [Action] = []
             
             for row in rows {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 12 else {
+                    print("⚠️ LocalActionService: 跳过不完整的行数据，列数: \(row.count)")
+                    continue
+                }
+                
                 let targetMuscleIdsString = row[11] as? String
                 let targetMuscleIds: [Int]
                 if let idsString = targetMuscleIdsString, !idsString.isEmpty {
@@ -272,6 +290,12 @@ class LocalActionService: ObservableObject {
             print("🔍 开始处理查询结果")
             
             for row in statement {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 12 else {
+                    print("⚠️ LocalActionService: 跳过不完整的行数据，列数: \(row.count)")
+                    continue
+                }
+                
                 print("🔍 处理行数据，第一个字段值: \(String(describing: row[0])), 类型: \(type(of: row[0]))")
                 
                 // 尝试不同的类型转换
@@ -370,6 +394,12 @@ class LocalActionService: ObservableObject {
             var actions: [Action] = []
             
             for row in rows {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 12 else {
+                    print("⚠️ LocalActionService: 跳过不完整的行数据，列数: \(row.count)")
+                    continue
+                }
+                
                 let targetMuscleIdsString = row[11] as? String
                 let targetMuscleIds: [Int]
                 if let idsString = targetMuscleIdsString, !idsString.isEmpty {
@@ -443,7 +473,7 @@ class LocalActionService: ObservableObject {
                 let nameValue = row[1] 
                 let displayNameValue = row[2]
                 
-                print("🔍 LocalActionService: 解析前 - id: \(idValue), name: \(nameValue), display_name: \(displayNameValue)")
+                print("🔍 LocalActionService: 解析前 - id: \(String(describing: idValue)), name: \(String(describing: nameValue)), display_name: \(String(describing: displayNameValue))")
                 
                 // 尝试多种类型转换
                 var id: Int?
@@ -774,4 +804,4 @@ class LocalActionService: ObservableObject {
             throw LocalActionError.queryFailed(error)
         }
     }
-} 
+}

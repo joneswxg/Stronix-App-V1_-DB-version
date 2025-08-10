@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlanListView: View {
+    @Environment(\.theme) private var theme
     @StateObject private var viewModel = PlanViewModel()
     @ObservedObject private var authService = LocalUserService.shared
     @State private var showLogin = false
@@ -22,7 +23,7 @@ struct PlanListView: View {
                 Spacer()
                 Text("STRONIX")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                 
                 // 登录状态指示器
                 if authService.isLoggedIn {
@@ -33,7 +34,7 @@ struct PlanListView: View {
                     }) {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                     }
                 } else {
                     Button(action: {
@@ -41,14 +42,14 @@ struct PlanListView: View {
                     }) {
                         Image(systemName: "person.circle")
                             .font(.system(size: 20))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color.white)
-            .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+            .background(theme.surface)
+            .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
             
             if !authService.isLoggedIn {
                 // 未登录状态视图
@@ -57,15 +58,15 @@ struct PlanListView: View {
                     
                     Image(systemName: "person.circle")
                         .font(.system(size: 64))
-                        .foregroundColor(.gray.opacity(0.5))
+                        .foregroundColor(theme.secondary.opacity(0.5))
                     
                     Text("请先登录")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     Text("登录后可以查看和管理您的训练计划")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .multilineTextAlignment(.center)
                     
                     Button(action: {
@@ -73,38 +74,38 @@ struct PlanListView: View {
                     }) {
                         Text("立即登录")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.onPrimary)
                             .frame(width: 120, height: 44)
-                            .background(Color.blue)
+                            .background(theme.primary)
                             .cornerRadius(22)
                     }
                     
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(white: 0.95))
+                .background(theme.background)
             } else if !viewModel.hasAnyPlans && !viewModel.isLoadingTemplates && !viewModel.isLoadingPersonal {
                 // 空状态视图
                 VStack(spacing: 20) {
                     Spacer()
                     Text("您还没有创建任何训练计划")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     
                     Button(action: {
                         navigateToCreatePlan = true
                     }) {
                         Text("创建计划")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.onPrimary)
                             .frame(width: 120, height: 44)
-                            .background(Color.blue)
+                            .background(theme.primary)
                             .cornerRadius(22)
                     }
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(white: 0.95))
+                .background(theme.background)
             } else {
                 VStack(spacing: 0) {
                     // 快速开始按钮
@@ -112,33 +113,33 @@ struct PlanListView: View {
                         HStack {
                             Image(systemName: "play.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.onPrimary)
                             
                             Text("快速开始")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.onPrimary)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(theme.onPrimary.opacity(0.8))
                         }
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                gradient: Gradient(colors: [theme.primary, theme.primary.opacity(0.8)]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .cornerRadius(10)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        .shadow(color: theme.primary.opacity(0.3), radius: 6, x: 0, y: 3)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color(white: 0.98))
+                    .background(theme.background)
                     
                     // 标签页切换器
                     HStack(spacing: 0) {
@@ -150,7 +151,7 @@ struct PlanListView: View {
                                 HStack(spacing: 4) {
                                     Text("计划模版")
                                         .font(.system(size: 16, weight: selectedTab == 0 ? .medium : .regular))
-                                        .foregroundColor(selectedTab == 0 ? .blue : .gray)
+                                        .foregroundColor(selectedTab == 0 ? theme.primary : theme.secondary)
                                     
                                     if viewModel.isLoadingTemplates {
                                         ProgressView()
@@ -159,7 +160,7 @@ struct PlanListView: View {
                                 }
                                 
                                 Rectangle()
-                                    .fill(selectedTab == 0 ? Color.blue : Color.clear)
+                                    .fill(selectedTab == 0 ? theme.primary : Color.clear)
                                     .frame(height: 2)
                             }
                         }
@@ -174,7 +175,7 @@ struct PlanListView: View {
                                     HStack(spacing: 4) {
                                         Text("个人计划")
                                             .font(.system(size: 16, weight: selectedTab == 1 ? .medium : .regular))
-                                            .foregroundColor(selectedTab == 1 ? .blue : .gray)
+                                            .foregroundColor(selectedTab == 1 ? theme.primary : theme.secondary)
                                         
                                         if viewModel.isLoadingPersonal {
                                             ProgressView()
@@ -187,14 +188,14 @@ struct PlanListView: View {
                                             navigateToCreatePlan = true
                                         }) {
                                             Image(systemName: "plus.circle.fill")
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(theme.primary)
                                                 .font(.system(size: 18))
                                         }
                                     }
                                 }
                                 
                                 Rectangle()
-                                    .fill(selectedTab == 1 ? Color.blue : Color.clear)
+                                    .fill(selectedTab == 1 ? theme.primary : Color.clear)
                                     .frame(height: 2)
                             }
                         }
@@ -202,8 +203,8 @@ struct PlanListView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .background(Color.white)
-                    .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                    .background(theme.surface)
+                    .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
                     
                     // 内容区域
                     TabView(selection: $selectedTab) {
@@ -307,6 +308,7 @@ struct PlanListView: View {
 
 // 计划模版视图
 struct TemplatesView: View {
+    @Environment(\.theme) private var theme
     @ObservedObject var viewModel: PlanViewModel
     
     let columns = [
@@ -325,30 +327,31 @@ struct TemplatesView: View {
                     
                     Text("暂无模板计划")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     
                     Text("系统模板计划正在准备中")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray.opacity(0.7))
+                        .foregroundColor(theme.secondary.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.top, 100)
             } else {
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(viewModel.templatePlans) { plan in
-                        PlanTemplateCard(plan: plan, viewModel: viewModel)
+                        TemplatePlanCard(plan: plan, viewModel: viewModel)
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
         }
-        .background(Color(white: 0.97))
+        .background(theme.background)
     }
 }
 
 // 个人计划视图
 struct PersonalPlansView: View {
+    @Environment(\.theme) private var theme
     @ObservedObject var viewModel: PlanViewModel
     
     let columns = [
@@ -363,15 +366,15 @@ struct PersonalPlansView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "person.crop.circle")
                         .font(.system(size: 48))
-                        .foregroundColor(.gray.opacity(0.5))
+                        .foregroundColor(theme.secondary.opacity(0.5))
                     
                     Text("暂无个人计划")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     
                     Text("点击右上角 + 号创建您的第一个训练计划")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray.opacity(0.7))
+                        .foregroundColor(theme.secondary.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -386,23 +389,24 @@ struct PersonalPlansView: View {
                 .padding(.vertical, 12)
             }
         }
-        .background(Color(white: 0.97))
+        .background(theme.background)
     }
 }
 
 // 计划模版卡片
-struct PlanTemplateCard: View {
+struct TemplatePlanCard: View {
+    @Environment(\.theme) private var theme
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
-    @State private var isUsing = false
     @State private var showCopyConfirmation = false
+    @State private var isUsing = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(plan.name)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.black)
-                .lineLimit(1)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(theme.onSurface)
+                    .lineLimit(1)
             
             VStack(alignment: .leading, spacing: 2) {
                 // 显示动作信息 - 固定高度区域，只显示两行
@@ -411,19 +415,19 @@ struct PlanTemplateCard: View {
                         ForEach(actions.prefix(2), id: \.id) { action in
                             Text("\(action.name) x \(action.totalSets)")
                                 .font(.system(size: 11))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                                 .lineLimit(1)
                         }
                         
                         if actions.count > 2 {
                             Text("...")
                                 .font(.system(size: 11))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                     } else {
                         Text("暂无动作")
                             .font(.system(size: 11))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -432,7 +436,7 @@ struct PlanTemplateCard: View {
                 HStack {
                     Text("容量: \(plan.calculatedVolume)kg")
                         .font(.system(size: 10))
-                        .foregroundColor(.gray.opacity(0.8))
+                        .foregroundColor(theme.secondary.opacity(0.8))
                     
                     Spacer()
                 }
@@ -444,10 +448,10 @@ struct PlanTemplateCard: View {
                 NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
                     Text("查看")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.blue.opacity(0.1))
+                        .background(theme.primary.opacity(0.1))
                         .cornerRadius(10)
                 }
                 
@@ -463,10 +467,10 @@ struct PlanTemplateCard: View {
                         }
                     }
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.blue.opacity(0.1))
+                    .background(theme.primary.opacity(0.1))
                     .cornerRadius(10)
                 }
                 .disabled(isUsing)
@@ -474,9 +478,9 @@ struct PlanTemplateCard: View {
         }
         .padding(10)
         .frame(height: 120)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
         .alert("复制模板计划", isPresented: $showCopyConfirmation) {
             Button("取消", role: .cancel) { }
             Button("是") {
@@ -494,6 +498,7 @@ struct PlanTemplateCard: View {
 
 // 个人计划卡片
 struct PersonalPlanCard: View {
+    @Environment(\.theme) private var theme
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
     @State private var showEditPlan = false
@@ -505,7 +510,7 @@ struct PersonalPlanCard: View {
             HStack {
                 Text(plan.name)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                     .lineLimit(1)
                 
                 Spacer()
@@ -526,11 +531,11 @@ struct PersonalPlanCard: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .frame(width: 20, height: 20)
-                        .background(Color.white)
+                        .background(theme.surface)
                         .cornerRadius(10)
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        .shadow(color: theme.onSurface.opacity(0.1), radius: 2, x: 0, y: 1)
                 }
             }
             
@@ -541,19 +546,19 @@ struct PersonalPlanCard: View {
                         ForEach(actions.prefix(2), id: \.id) { action in
                             Text("\(action.name) x \(action.totalSets)")
                                 .font(.system(size: 11))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                                 .lineLimit(1)
                         }
                         
                         if actions.count > 2 {
                             Text("...")
                                 .font(.system(size: 11))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                     } else {
                         Text("暂无动作")
                             .font(.system(size: 11))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -562,7 +567,7 @@ struct PersonalPlanCard: View {
                 HStack {
                     Text("容量: \(plan.calculatedVolume)kg")
                         .font(.system(size: 10))
-                        .foregroundColor(.gray.opacity(0.8))
+                        .foregroundColor(theme.secondary.opacity(0.8))
                     
                     Spacer()
                 }
@@ -574,10 +579,10 @@ struct PersonalPlanCard: View {
                 NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
                     Text("查看")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.blue.opacity(0.1))
+                        .background(theme.primary.opacity(0.1))
                         .cornerRadius(10)
                 }
                 
@@ -592,19 +597,19 @@ struct PersonalPlanCard: View {
                 }) {
                     Text("编辑")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.blue.opacity(0.1))
+                        .background(theme.primary.opacity(0.1))
                         .cornerRadius(10)
                 }
             }
         }
         .padding(10)
         .frame(height: 120)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
         .fullScreenCover(isPresented: $showEditPlan) {
             if let selectedPlan = viewModel.selectedPlan {
                 EditPlanView(plan: selectedPlan, onSaveSuccess: { updatedPlan in
@@ -681,10 +686,10 @@ struct PersonalPlanCard: View {
             // 删除中的加载指示器
             Group {
                 if isDeleting {
-                    Color.black.opacity(0.3)
+                    theme.onSurface.opacity(0.3)
                         .cornerRadius(12)
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(CircularProgressViewStyle(tint: theme.onPrimary))
                 }
             }
         )
@@ -693,4 +698,4 @@ struct PersonalPlanCard: View {
 
 #Preview {
     PlanListView()
-} 
+}

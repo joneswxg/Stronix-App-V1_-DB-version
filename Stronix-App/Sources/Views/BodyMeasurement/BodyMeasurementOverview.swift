@@ -2,6 +2,7 @@ import SwiftUI
 import Charts
 
 struct BodyMeasurementOverview: View {
+    @Environment(\.theme) private var theme
     @StateObject private var viewModel = BodyMeasurementViewModel()
     
     var body: some View {
@@ -10,7 +11,7 @@ struct BodyMeasurementOverview: View {
                 mainContent
                 bottomButtons
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(theme.background)
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $viewModel.showingAddSheet) {
@@ -60,15 +61,15 @@ struct BodyMeasurementOverview: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("暂无体测数据")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("点击下方按钮添加您的第一条体测记录")
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 80)
@@ -78,13 +79,13 @@ struct BodyMeasurementOverview: View {
         HStack {
             Text("体测概要")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             Spacer()
             Button(action: {
                 // 显示项设置功能，暂时不实现
             }) {
                 Image(systemName: "gearshape")
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
         }
         .padding(.horizontal, 20)
@@ -131,9 +132,9 @@ struct BodyMeasurementOverview: View {
             chartView
         }
         .padding(.vertical, 10)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 5, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 5, x: 0, y: 2)
         .padding(.horizontal, 20)
     }
     
@@ -143,7 +144,7 @@ struct BodyMeasurementOverview: View {
             HStack {
                 Text(formatDateForDisplay(selectedData.measurementTimestamp))
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                 Spacer()
                 Text(viewModel.formatValue(viewModel.getValueForMetric(selectedData), for: viewModel.selectedMetric))
                     .font(.system(size: 16, weight: .bold))
@@ -161,21 +162,21 @@ struct BodyMeasurementOverview: View {
                 x: .value("日期", index),
                 y: .value("数值", viewModel.getValueForMetric(data))
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(theme.primary)
             .lineStyle(StrokeStyle(lineWidth: 2))
             
             PointMark(
                 x: .value("日期", index),
                 y: .value("数值", viewModel.getValueForMetric(data))
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(theme.primary)
             .symbolSize(50)
             
             // 显示选中点的垂直虚线
             if let selectedData = viewModel.selectedDataPoint,
                let selectedIndex = sortedChartData.firstIndex(where: { $0.id == selectedData.id }) {
                 RuleMark(x: .value("Selected", selectedIndex))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(theme.secondary)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
@@ -190,7 +191,7 @@ struct BodyMeasurementOverview: View {
                         if let index = value.as(Int.self), index < sortedChartData.count {
                             Text(formatDateForChart(sortedChartData[index].measurementTimestamp))
                                 .font(.system(size: 10))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                     }
                 }
@@ -245,13 +246,13 @@ struct BodyMeasurementOverview: View {
                             Image(systemName: "list.bullet")
                             Text("查看记录")
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .padding(.vertical, 12)
                         .padding(.horizontal, 25)
                         .frame(height: 70)
-                        .background(Color.white)
+                        .background(theme.surface)
                         .cornerRadius(25)
-                        .shadow(color: .gray.opacity(0.3), radius: 3, x: 0, y: 2)
+                        .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
                     }
                 }
                 
@@ -270,13 +271,13 @@ struct BodyMeasurementOverview: View {
                 Image(systemName: "square.and.arrow.up")
                 Text("分享")
             }
-            .foregroundColor(.blue)
+            .foregroundColor(theme.primary)
             .padding(.vertical, 12)
             .padding(.horizontal, 30)
             .frame(height: 70)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(25)
-            .shadow(color: .gray.opacity(0.3), radius: 3, x: 0, y: 2)
+            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
         }
     }
     
@@ -292,9 +293,9 @@ struct BodyMeasurementOverview: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 30)
             .frame(height: 70)
-            .background(Color.blue)
+            .background(theme.primary)
             .cornerRadius(25)
-            .shadow(color: .gray.opacity(0.3), radius: 3, x: 0, y: 2)
+            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
         }
     }
     
@@ -303,6 +304,7 @@ struct BodyMeasurementOverview: View {
 
 // 指标卡片组件
 struct MetricCard: View {
+    @Environment(\.theme) private var theme
     let title: String
     let value: Double
     let unit: String
@@ -313,26 +315,26 @@ struct MetricCard: View {
         VStack(spacing: 8) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             HStack(alignment: .bottom, spacing: 2) {
                 Text("\(value, specifier: "%.1f")")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Text(unit)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? Color.blue.opacity(0.1) : Color.white)
+        .background(isSelected ? theme.primary.opacity(0.1) : theme.surface)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? theme.primary : Color.clear, lineWidth: 2)
         )
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
         .onTapGesture {
             onTap()
         }
@@ -341,4 +343,4 @@ struct MetricCard: View {
 
 #Preview {
     BodyMeasurementOverview()
-} 
+}

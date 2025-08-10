@@ -3,6 +3,7 @@ import UIKit
 
 struct EditPlanView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     let plan: TrainingPlan
     let onSaveSuccess: ((TrainingPlan?) -> Void)?
     
@@ -67,9 +68,14 @@ struct EditPlanView: View {
         editingActions.reduce(0) { total, action in
             total + action.sets.reduce(0) { setTotal, set in
                 if action.recordBilateral {
-                    return setTotal + ((set.leftWeight + set.rightWeight) * Double(set.reps))
+                    let leftWeight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
+                    let rightWeight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
+                    let volume = (leftWeight + rightWeight) * Double(set.reps)
+                    return setTotal + (volume.isNaN || volume.isInfinite ? 0.0 : volume)
                 } else {
-                    return setTotal + (set.weight * Double(set.reps))
+                    let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
+                    let volume = weight * Double(set.reps)
+                    return setTotal + (volume.isNaN || volume.isInfinite ? 0.0 : volume)
                 }
             }
         }
@@ -84,7 +90,7 @@ struct EditPlanView: View {
                         HStack {
                             Text("容量: \(Int(totalVolume)) kg")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                             Spacer()
                         }
                         .padding(.horizontal, 16)
@@ -162,10 +168,10 @@ struct EditPlanView: View {
                                         Image(systemName: "plus.circle")
                                         Text("添加动作")
                                     }
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .background(Color(white: 0.97))
+                                    .background(theme.surface)
                                     .cornerRadius(12)
                                 }
                                 .padding(.horizontal, 16)
@@ -180,10 +186,10 @@ struct EditPlanView: View {
                                     Image(systemName: "plus.circle.fill")
                                     Text("添加动作")
                                 }
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color(white: 0.97))
+                                .background(theme.surface)
                                 .cornerRadius(12)
                             }
                             .padding(.horizontal, 16)
@@ -201,7 +207,7 @@ struct EditPlanView: View {
                     }
                     .padding(.top, 20)
                 }
-                .background(Color(UIColor.systemGroupedBackground))
+                .background(theme.background)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     // 点击空白区域隐藏键盘
@@ -237,7 +243,7 @@ struct EditPlanView: View {
                             dismiss()
                         }
                     }
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                     .disabled(isSaving || preventDismiss)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -255,7 +261,7 @@ struct EditPlanView: View {
                             }
                         }
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                     .fontWeight(.medium)
                     .disabled(isSaving || planName.isEmpty)
                 }
@@ -275,12 +281,12 @@ struct EditPlanView: View {
                     if showToast {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
+                                .foregroundColor(theme.success)
                             Text(toastMessage)
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.onSurface)
                         }
                         .padding()
-                        .background(Color.black.opacity(0.8))
+                        .background(theme.surface.opacity(0.9))
                         .cornerRadius(12)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
@@ -537,6 +543,7 @@ struct EditingActionCardWrapper: View {
 // MARK: - 编辑动作卡片
 
 struct EditingActionCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Binding var action: EditingAction
     let onDelete: () -> Void
     let onUpdate: (EditingAction) -> Void
@@ -552,9 +559,14 @@ struct EditingActionCard: View {
     var actionVolume: Double {
         action.sets.reduce(0) { total, set in
             if action.recordBilateral {
-                return total + ((set.leftWeight + set.rightWeight) * Double(set.reps))
+                let leftWeight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
+                let rightWeight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
+                let volume = (leftWeight + rightWeight) * Double(set.reps)
+                return total + (volume.isNaN || volume.isInfinite ? 0.0 : volume)
             } else {
-                return total + (set.weight * Double(set.reps))
+                let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
+                let volume = weight * Double(set.reps)
+                return total + (volume.isNaN || volume.isInfinite ? 0.0 : volume)
             }
         }
     }
@@ -569,9 +581,9 @@ struct EditingActionCard: View {
                 setsSection
             }
         }
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: theme.onBackground.opacity(0.05), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showRestTimer) {
             restTimerSettingSheet
         }
@@ -625,15 +637,15 @@ struct EditingActionCard: View {
                             .aspectRatio(contentMode: .fit)
                     } else {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(theme.secondary.opacity(0.3))
                             .overlay(
                                 Image(systemName: "figure.strengthtraining.traditional")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                             )
                     }
                 }
                 .frame(width: 50, height: 50)
-                .background(Color.gray.opacity(0.1))
+                .background(theme.secondary.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 // 动作信息
@@ -648,13 +660,13 @@ struct EditingActionCard: View {
                         // 容量显示
                         Text("\(Int(actionVolume))")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     
                     HStack {
                         Text("\(action.sets.count)组")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Spacer()
                         
@@ -662,7 +674,7 @@ struct EditingActionCard: View {
                         Toggle(isOn: $action.recordBilateral) {
                             Text("记录左右")
                                 .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                         .scaleEffect(0.8)
                         .disabled(isDisabled)
@@ -706,10 +718,10 @@ struct EditingActionCard: View {
                     }) {
                         Label("删除动作", systemImage: "trash")
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(theme.error)
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .font(.system(size: 20))
                 }
                 .disabled(isDisabled)
@@ -740,29 +752,29 @@ struct EditingActionCard: View {
             Text("组")
                 .frame(width: 30, alignment: .center)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             if action.recordBilateral {
                 Text("左kg")
                     .frame(width: 40, alignment: .leading)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                 
                 Text("右kg")
                     .frame(width: 40, alignment: .leading)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             } else {
                 Text("kg")
                     .frame(width: 40, alignment: .leading)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             
             Text("次数")
                 .frame(width: 40, alignment: .leading)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Spacer()
         }
@@ -795,7 +807,7 @@ struct EditingActionCard: View {
                 }) {
                     Text("新增一组")
                         .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                 }
                 .disabled(isDisabled)
                 
@@ -806,7 +818,7 @@ struct EditingActionCard: View {
                 }) {
                     Text("动作历史")
                         .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                 }
                 .disabled(isDisabled)
             }
@@ -846,14 +858,18 @@ struct EditingActionCard: View {
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].leftWeight = newValue
+                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                            action.sets[index].leftWeight = safeValue
                             onUpdate(action)
                         }
                     }) {
                         let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(index)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].leftWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].leftWeight))
+                        Text({
+                            let weight = action.sets[index].leftWeight.isNaN || action.sets[index].leftWeight.isInfinite ? 0.0 : action.sets[index].leftWeight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 40, height: 32)
@@ -877,14 +893,18 @@ struct EditingActionCard: View {
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].rightWeight = newValue
+                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                            action.sets[index].rightWeight = safeValue
                             onUpdate(action)
                         }
                     }) {
                         let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(index)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].rightWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].rightWeight))
+                        Text({
+                            let weight = action.sets[index].rightWeight.isNaN || action.sets[index].rightWeight.isInfinite ? 0.0 : action.sets[index].rightWeight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 40, height: 32)
@@ -908,14 +928,18 @@ struct EditingActionCard: View {
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].weight = newValue
+                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                            action.sets[index].weight = safeValue
                             onUpdate(action)
                         }
                     }) {
                         let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(index)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].weight == 0 ? "0" : String(format: "%.1f", action.sets[index].weight))
+                        Text({
+                            let weight = action.sets[index].weight.isNaN || action.sets[index].weight.isInfinite ? 0.0 : action.sets[index].weight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 40, height: 32)
@@ -940,7 +964,8 @@ struct EditingActionCard: View {
                         step: 1.0,
                         maxValue: 999.0
                     ) { newValue in
-                        action.sets[index].reps = Int(newValue)
+                        let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                        action.sets[index].reps = Int(safeValue)
                         onUpdate(action)
                     }
                 }) {

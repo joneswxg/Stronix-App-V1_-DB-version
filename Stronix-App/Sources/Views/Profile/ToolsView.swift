@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct ToolsView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
     @State private var showOneRMCalculator = false
     @State private var showBMICalculator = false
-    @State private var showCalorieCalculator = false
+    @State private var showNutritionView = false
     
     var body: some View {
         NavigationView {
@@ -14,6 +15,7 @@ struct ToolsView: View {
                     VStack(spacing: 16) {
                         Text("计算器工具")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
@@ -41,47 +43,7 @@ struct ToolsView: View {
                                 subtitle: "计算每日所需卡路里",
                                 color: .orange
                             ) {
-                                showCalorieCalculator = true
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    
-                    // 其他工具
-                    VStack(spacing: 16) {
-                        Text("其他工具")
-                            .font(.system(size: 18, weight: .semibold))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        VStack(spacing: 12) {
-                            ToolCard(
-                                icon: "timer",
-                                title: "训练计时器",
-                                subtitle: "组间休息时间提醒",
-                                color: .purple
-                            ) {
-                                // 训练计时器功能
-                                print("打开训练计时器")
-                            }
-                            
-                            ToolCard(
-                                icon: "chart.line.uptrend.xyaxis",
-                                title: "进度追踪",
-                                subtitle: "可视化训练进度",
-                                color: .red
-                            ) {
-                                // 进度追踪功能
-                                print("打开进度追踪")
-                            }
-                            
-                            ToolCard(
-                                icon: "water.waves",
-                                title: "饮水提醒",
-                                subtitle: "保持充足水分摄入",
-                                color: .cyan
-                            ) {
-                                // 饮水提醒功能
-                                print("打开饮水提醒")
+                                showNutritionView = true
                             }
                         }
                     }
@@ -89,7 +51,7 @@ struct ToolsView: View {
                     .padding(.bottom, 30)
                 }
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
             .navigationTitle("小工具")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -106,14 +68,15 @@ struct ToolsView: View {
         .sheet(isPresented: $showBMICalculator) {
             BMICalculatorView()
         }
-        .sheet(isPresented: $showCalorieCalculator) {
-            CalorieCalculatorView()
+        .sheet(isPresented: $showNutritionView) {
+            NutritionView()
         }
     }
 }
 
 // 工具卡片
 struct ToolCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let icon: String
     let title: String
     let subtitle: String
@@ -125,7 +88,7 @@ struct ToolCard: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.onPrimary)
                     .frame(width: 50, height: 50)
                     .background(color)
                     .cornerRadius(12)
@@ -133,23 +96,23 @@ struct ToolCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             .padding(16)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
+            .shadow(color: theme.shadow, radius: 6, x: 0, y: 3)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -157,6 +120,7 @@ struct ToolCard: View {
 
 // 1RM计算器视图
 struct OneRMCalculatorView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
     @State private var weight = ""
     @State private var reps = ""
@@ -169,10 +133,11 @@ struct OneRMCalculatorView: View {
                 VStack(spacing: 12) {
                     Text("1RM计算器")
                         .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(theme.onSurface)
                     
                     Text("输入您能完成的重量和次数，计算预测的最大单次重复重量")
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 20)
@@ -182,6 +147,7 @@ struct OneRMCalculatorView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("重量 (kg)")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(theme.onSurface)
                         
                         TextField("请输入重量", text: $weight)
                             .keyboardType(.decimalPad)
@@ -191,6 +157,7 @@ struct OneRMCalculatorView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("次数")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(theme.onSurface)
                         
                         TextField("请输入次数", text: $reps)
                             .keyboardType(.numberPad)
@@ -203,10 +170,10 @@ struct OneRMCalculatorView: View {
                 Button(action: calculateOneRM) {
                     Text("计算1RM")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.onPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(Color.blue)
+                        .background(theme.primary)
                         .cornerRadius(25)
                 }
                 .padding(.horizontal, 20)
@@ -216,19 +183,19 @@ struct OneRMCalculatorView: View {
                     VStack(spacing: 12) {
                         Text("预测1RM")
                             .font(.system(size: 16))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Text("\(oneRM, specifier: "%.1f") kg")
                             .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                         
                         Text("* 此结果仅供参考，实际训练请量力而行")
                             .font(.system(size: 12))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .padding(20)
-                    .background(Color.blue.opacity(0.1))
+                    .background(theme.primary.opacity(0.1))
                     .cornerRadius(16)
                     .padding(.horizontal, 20)
                 }
@@ -262,6 +229,7 @@ struct OneRMCalculatorView: View {
 
 // BMI计算器视图
 struct BMICalculatorView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
     @State private var height = ""
     @State private var weight = ""
@@ -284,12 +252,14 @@ struct BMICalculatorView: View {
             VStack(spacing: 30) {
                 Text("BMI计算器")
                     .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(theme.onSurface)
                     .padding(.top, 20)
                 
                 VStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("身高 (cm)")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(theme.onSurface)
                         
                         TextField("请输入身高", text: $height)
                             .keyboardType(.decimalPad)
@@ -299,6 +269,7 @@ struct BMICalculatorView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("体重 (kg)")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(theme.onSurface)
                         
                         TextField("请输入体重", text: $weight)
                             .keyboardType(.decimalPad)
@@ -310,7 +281,7 @@ struct BMICalculatorView: View {
                 Button(action: calculateBMI) {
                     Text("计算BMI")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.onPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(Color.green)
@@ -322,7 +293,7 @@ struct BMICalculatorView: View {
                     VStack(spacing: 12) {
                         Text("BMI指数")
                             .font(.system(size: 16))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Text("\(bmi, specifier: "%.1f")")
                             .font(.system(size: 32, weight: .bold))
@@ -330,7 +301,7 @@ struct BMICalculatorView: View {
                         
                         Text(bmiCategory)
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                     }
                     .padding(20)
                     .background(Color.green.opacity(0.1))
@@ -365,31 +336,8 @@ struct BMICalculatorView: View {
     }
 }
 
-// 卡路里计算器视图
-struct CalorieCalculatorView: View {
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("卡路里计算器")
-                    .font(.title)
-                Text("卡路里计算器开发中...")
-                    .foregroundColor(.gray)
-            }
-            .navigationTitle("卡路里计算器")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("关闭") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
+
 
 #Preview {
     ToolsView()
-} 
+}

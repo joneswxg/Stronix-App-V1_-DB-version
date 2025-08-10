@@ -2,6 +2,7 @@ import SwiftUI
 
 struct UserInfoView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     @State private var height = "175"
     @State private var weight = "70"
     @State private var age = "25"
@@ -19,13 +20,13 @@ struct UserInfoView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                         
                         Button("更换头像") {
                             // 更换头像功能
                         }
                         .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     }
                     .padding(.top, 20)
                     
@@ -33,6 +34,7 @@ struct UserInfoView: View {
                     VStack(spacing: 16) {
                         Text("基本信息")
                             .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(spacing: 12) {
@@ -44,6 +46,7 @@ struct UserInfoView: View {
                             HStack {
                                 Text("性别")
                                     .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(theme.onSurface)
                                     .frame(width: 60, alignment: .leading)
                                 
                                 Picker("性别", selection: $gender) {
@@ -55,7 +58,7 @@ struct UserInfoView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
-                            .background(Color.white)
+                            .background(theme.surface)
                             .cornerRadius(12)
                             
                             
@@ -71,17 +74,17 @@ struct UserInfoView: View {
                     }) {
                         Text("保存信息")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.onPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(Color.blue)
+                            .background(theme.primary)
                             .cornerRadius(25)
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 30)
                 }
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
             .navigationTitle("用户信息")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -102,6 +105,7 @@ struct UserInfoView: View {
 
 // 用户信息行
 struct UserInfoRow: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     @Binding var value: String
     let unit: String
@@ -110,6 +114,7 @@ struct UserInfoRow: View {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .medium))
+                .foregroundColor(theme.onSurface)
                 .frame(width: 60, alignment: .leading)
             
             TextField("请输入\(title)", text: $value)
@@ -118,18 +123,19 @@ struct UserInfoRow: View {
             
             Text(unit)
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .frame(width: 30, alignment: .leading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
     }
 }
 
 // 统计卡片
 struct StatCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let value: String
     let subtitle: String
@@ -139,28 +145,28 @@ struct StatCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                 
                 HStack(alignment: .bottom, spacing: 4) {
                     Text(value)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
             }
             
             Spacer()
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: theme.shadow, radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
     UserInfoView()
-} 
+}

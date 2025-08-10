@@ -1,0 +1,24 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Setter.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Setter.swiftconstvalues"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Setter.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Setter.o"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Setter.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Setter.dia"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Query.swift":
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query.d"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query.swiftconstvalues"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query.dia"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query.o"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query.swiftdeps"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Schema.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Schema.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Schema.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Schema.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Schema.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Schema.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/WindowFunctions.swift":
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/WindowFunctions.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/WindowFunctions.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/WindowFunctions.o"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/WindowFunctions.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/WindowFunctions.swiftdeps"

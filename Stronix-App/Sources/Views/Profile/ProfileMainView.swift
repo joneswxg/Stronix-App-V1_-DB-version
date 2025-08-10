@@ -8,6 +8,7 @@ struct ProfileMainView: View {
     @State private var showTools = false
     @State private var showGuide = false
     @ObservedObject private var localUserService = LocalUserService.shared
+    @Environment(\.theme) private var theme: AppTheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -20,12 +21,12 @@ struct ProfileMainView: View {
                 Spacer()
                 Text("STRONIX")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color.white)
-            .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+            .background(theme.surface)
+            .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
             
             ScrollView {
                 VStack(spacing: 20) {
@@ -35,17 +36,17 @@ struct ProfileMainView: View {
                         HStack(spacing: 16) {
                             Image(systemName: "person.crop.circle.fill")
                                 .font(.system(size: 60))
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(localUserService.currentUser?.username ?? "未登录")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                 
                                 if !localUserService.isLoggedIn {
                                     Text("点击登录")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(theme.primary)
                                 }
                             }
                             
@@ -57,18 +58,18 @@ struct ProfileMainView: View {
                                 }) {
                                     Text("登录")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(theme.onPrimary)
                                         .padding(.horizontal, 20)
                                         .padding(.vertical, 8)
-                                        .background(Color.blue)
+                                        .background(theme.primary)
                                         .cornerRadius(16)
                                 }
                             }
                         }
                         .padding(20)
-                        .background(Color.white)
+                        .background(theme.surface)
                         .cornerRadius(16)
-                        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+                        .shadow(color: theme.onSurface.opacity(0.05), radius: 8, x: 0, y: 4)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 20)
@@ -83,14 +84,6 @@ struct ProfileMainView: View {
                                 subtitle: "身体数据、个人资料"
                             ) {
                                 showUserInfo = true
-                            }
-                            
-                            ProfileMenuItem(
-                                icon: "doc.text",
-                                title: "科普文章",
-                                subtitle: "健身知识、营养指导"
-                            ) {
-                                showArticles = true
                             }
                             
                             ProfileMenuItem(
@@ -136,14 +129,14 @@ struct ProfileMainView: View {
                             }) {
                                 Text("退出登录")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.red)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                                    .background(Color.white)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.red, lineWidth: 1)
-                                    )
+                                    .foregroundColor(theme.error)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(theme.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(theme.error, lineWidth: 1)
+                                )
                                     .cornerRadius(12)
                             }
                             .padding(.top, 20)
@@ -153,7 +146,7 @@ struct ProfileMainView: View {
                     .padding(.bottom, 30)
                 }
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
         }
         .sheet(isPresented: $showLogin) {
             LoginView()
@@ -193,37 +186,38 @@ struct ProfileMenuItem: View {
     let title: String
     let subtitle: String
     let action: () -> Void
+    @Environment(\.theme) private var theme: AppTheme
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                     .frame(width: 40, height: 40)
-                    .background(Color.blue.opacity(0.1))
+                    .background(theme.primary.opacity(0.1))
                     .cornerRadius(8)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             .padding(16)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            .shadow(color: theme.onSurface.opacity(0.05), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -231,4 +225,4 @@ struct ProfileMenuItem: View {
 
 #Preview {
     ProfileMainView()
-} 
+}

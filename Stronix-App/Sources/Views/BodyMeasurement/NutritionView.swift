@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 
 struct NutritionView: View {
+    @Environment(\.theme) private var theme
     @StateObject private var calculator = NutritionCalculator()
     @State private var showingMifflinInfo = false
     @State private var showingKatchInfo = false
@@ -37,7 +38,7 @@ struct NutritionView: View {
                                     showingMifflinInfo = true
                                 }) {
                                     Image(systemName: "info.circle")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(theme.primary)
                                 }
                                 .sheet(isPresented: $showingMifflinInfo) {
                                     NavigationView {
@@ -59,14 +60,14 @@ struct NutritionView: View {
                                                         .font(.system(.body, design: .monospaced))
                                                         .padding(.horizontal, 10)
                                                         .padding(.vertical, 5)
-                                                        .background(Color.gray.opacity(0.1))
+                                                        .background(theme.secondary.opacity(0.1))
                                                         .cornerRadius(5)
                                                     
                                                     Text("女性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) - 161")
                                                         .font(.system(.body, design: .monospaced))
                                                         .padding(.horizontal, 10)
                                                         .padding(.vertical, 5)
-                                                        .background(Color.gray.opacity(0.1))
+                                                        .background(theme.secondary.opacity(0.1))
                                                         .cornerRadius(5)
                                                 }
                                                 
@@ -88,7 +89,7 @@ struct NutritionView: View {
                                     showingKatchInfo = true
                                 }) {
                                     Image(systemName: "info.circle")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(theme.primary)
                                 }
                                 .sheet(isPresented: $showingKatchInfo) {
                                     NavigationView {
@@ -110,14 +111,14 @@ struct NutritionView: View {
                                                         .font(.system(.body, design: .monospaced))
                                                         .padding(.horizontal, 10)
                                                         .padding(.vertical, 5)
-                                                        .background(Color.gray.opacity(0.1))
+                                                        .background(theme.secondary.opacity(0.1))
                                                         .cornerRadius(5)
                                                     
                                                     Text("去脂体重 = 体重kg × (1 - 体脂率% ÷ 100)")
                                                         .font(.system(.body, design: .monospaced))
                                                         .padding(.horizontal, 10)
                                                         .padding(.vertical, 5)
-                                                        .background(Color.gray.opacity(0.1))
+                                                        .background(theme.secondary.opacity(0.1))
                                                         .cornerRadius(5)
                                                 }
                                                 
@@ -229,12 +230,12 @@ struct NutritionView: View {
                                         Spacer()
                                         if calculator.activityLevel == level {
                                             Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(theme.primary)
                                         }
                                     }
                                     .padding(.horizontal)
                                     .padding(.vertical, 8)
-                                    .background(calculator.activityLevel == level ? Color.blue.opacity(0.1) : Color.gray.opacity(0.05))
+                                    .background(calculator.activityLevel == level ? theme.primary.opacity(0.1) : theme.secondary.opacity(0.05))
                                     .cornerRadius(8)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -256,7 +257,7 @@ struct NutritionView: View {
                         }
                         .pickerStyle(SegmentedPickerStyle())
                         .padding(.horizontal)
-                        .onChange(of: calculator.goal) { _ in
+                        .onChange(of: calculator.goal) {
                             isInputFocused = false // 切换目标时隐藏键盘
                         }
                     }
@@ -452,7 +453,7 @@ struct NutritionView: View {
                                 .font(.caption)
                             }
                         }
-                        .background(Color.blue.opacity(0.05))
+                        .background(theme.primary.opacity(0.05))
                         .cornerRadius(10)
                         .padding(.horizontal)
                     }
@@ -667,8 +668,8 @@ class NutritionCalculator: ObservableObject {
     var fatRecommendedRange: ClosedRange<Double> {
         switch goal {
         case .weightLoss: return 0.8...1.2
-        case .maintenance: return 0.8...1.2
-        case .muscleGain: return 0.8...1.0
+        case .maintenance: return 1.0...1.2
+        case .muscleGain: return 0.8...1.2
         }
     }
     

@@ -394,6 +394,12 @@ class LocalTrainingHistoryService {
                 
                 let dataRows = try db.prepare(dataQuery, allParams)
                 for row in dataRows {
+                    // 安全检查：确保行数据包含足够的列
+                    guard row.count >= 11 else {
+                        print("⚠️ LocalTrainingHistoryService: 跳过不完整的行数据，列数: \(row.count)")
+                        continue
+                    }
+                    
                     let historyItem = TrainingHistoryItem(
                         id: Int(row[0] as? Int64 ?? 0),
                         plan_id: row[2] as? Int64 != nil ? Int(row[2] as! Int64) : nil,
@@ -533,6 +539,12 @@ class LocalTrainingHistoryService {
             
             let detailRows = try db.prepare(detailQuery, [historyId])
             for row in detailRows {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 10 else {
+                    print("⚠️ LocalTrainingHistoryService: 跳过不完整的详情行数据，列数: \(row.count)")
+                    continue
+                }
+                
                 let detail = TrainingHistoryDetailItem(
                     action_id: Int(row[0] as? Int64 ?? 0),
                     set_number: Int(row[1] as? Int64 ?? 0),
@@ -937,4 +949,4 @@ class LocalTrainingHistoryService {
             throw LocalTrainingHistoryError.serverError("获取动作进步数据失败: \(error.localizedDescription)")
         }
     }
-} 
+}

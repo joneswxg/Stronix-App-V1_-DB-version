@@ -2,6 +2,8 @@ import SwiftUI
 import Charts
 
 struct StatisticsView: View {
+    @Environment(\.theme) private var theme: AppTheme
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var selectedTab: StatisticsTab = .overview
     @State private var selectedTimeRange: TimeRange = .thisWeek
     @State private var isLoading = false
@@ -52,7 +54,7 @@ struct StatisticsView: View {
                 ActionAnalysisView()
             }
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(theme.background)
         .onAppear {
             loadStatisticsData()
         }
@@ -130,6 +132,7 @@ struct StatisticsView: View {
 
 // MARK: - 概览统计视图
 struct OverviewStatisticsView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Binding var selectedTimeRange: StatisticsView.TimeRange
     @Binding var statisticsData: StatisticsData?
     @Binding var isLoading: Bool
@@ -161,7 +164,7 @@ struct OverviewStatisticsView: View {
         HStack {
             Text("时间范围")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             Spacer()
             
@@ -175,18 +178,18 @@ struct OverviewStatisticsView: View {
                 HStack {
                     Text(selectedTimeRange.rawValue)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.white)
+                .background(theme.surface)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        .stroke(theme.secondary.opacity(0.3), lineWidth: 1)
                 )
             }
         }
@@ -198,7 +201,7 @@ struct OverviewStatisticsView: View {
             ProgressView("加载统计数据...")
             Text("正在分析您的训练数据")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
@@ -208,15 +211,15 @@ struct OverviewStatisticsView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50))
-                .foregroundColor(.orange)
+                .foregroundColor(theme.warning)
             
             Text("加载失败")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundColor(theme.onSurface)
             
             Text(error)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
@@ -226,15 +229,15 @@ struct OverviewStatisticsView: View {
         VStack(spacing: 16) {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 50))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("暂无统计数据")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundColor(theme.onSurface)
             
             Text("完成更多训练后查看统计信息")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
@@ -257,7 +260,7 @@ struct OverviewStatisticsView: View {
             HStack {
                 Text("核心指标")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
             }
             
@@ -269,28 +272,28 @@ struct OverviewStatisticsView: View {
                     title: "总训练容量",
                     value: formatVolumeNumber(data.totalVolume),
                     icon: "scalemass",
-                    color: .blue
+                    color: theme.primary
                 )
                 
                 StatisticsMetricCard(
                     title: "总训练时长",
                     value: formatDuration(data.totalDuration),
                     icon: "clock",
-                    color: .green
+                    color: theme.success
                 )
                 
                 StatisticsMetricCard(
                     title: "训练次数",
                     value: "\(data.trainingCount)次",
                     icon: "figure.strengthtraining.traditional",
-                    color: .orange
+                    color: theme.warning
                 )
                 
                 StatisticsMetricCard(
                     title: "连续训练",
                     value: "\(data.streakDays)天",
                     icon: "flame",
-                    color: .red
+                    color: theme.error
                 )
             }
         }
@@ -300,21 +303,21 @@ struct OverviewStatisticsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("训练容量趋势")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             Chart(data.volumeTrend) { item in
                 LineMark(
                     x: .value("日期", item.date),
                     y: .value("容量", item.value)
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(theme.primary)
                 .lineStyle(StrokeStyle(lineWidth: 3))
                 
                 PointMark(
                     x: .value("日期", item.date),
                     y: .value("容量", item.value)
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(theme.primary)
                 .symbolSize(60)
             }
             .frame(height: 200)
@@ -342,16 +345,16 @@ struct OverviewStatisticsView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
     
     private func planUsageSection(_ data: StatisticsData) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("最常用训练计划")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             VStack(spacing: 12) {
                 ForEach(Array(data.planUsage.enumerated()), id: \.0) { index, plan in
@@ -365,9 +368,9 @@ struct OverviewStatisticsView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
     
     // 格式化数字
@@ -398,6 +401,7 @@ struct OverviewStatisticsView: View {
 
 // MARK: - 动作分析视图
 struct ActionAnalysisView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @State private var selectedAction: BigThreeAction = .squat
     @State private var actionProgressData: ActionProgressResponse?
     @State private var isLoading = false
@@ -459,7 +463,7 @@ struct ActionAnalysisView: View {
             ProgressView("加载动作数据...")
             Text("正在分析\(selectedAction.rawValue)的进步情况")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
@@ -469,15 +473,15 @@ struct ActionAnalysisView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50))
-                .foregroundColor(.orange)
+                .foregroundColor(theme.warning)
             
             Text("加载失败")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundColor(theme.onSurface)
             
             Text(error)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
             
             Button("重试") {
@@ -522,7 +526,7 @@ struct ActionAnalysisView: View {
             HStack {
                 Text("选择动作")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
             }
             
@@ -545,10 +549,10 @@ struct ActionAnalysisView: View {
             HStack {
                 Image(systemName: selectedAction.icon)
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                 Text(selectedAction.rawValue)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
             }
             
@@ -556,34 +560,34 @@ struct ActionAnalysisView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("最大重量")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     Text("\(Int(actionProgressData?.best_record.max_weight ?? 0))kg")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     Text(formatDate(actionProgressData?.best_record.date ?? ""))
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("最近训练")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     Text("\(Int(actionProgressData?.current_record.max_weight ?? 0))kg × \(actionProgressData?.current_record.max_reps ?? 0)")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.green)
+                        .foregroundColor(theme.success)
                     Text(formatDate(actionProgressData?.current_record.date ?? ""))
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 Spacer()
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
     
     private func formatDate(_ dateString: String) -> String {
@@ -600,7 +604,7 @@ struct ActionAnalysisView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("重量进步曲线")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             // 使用真实的进步数据
             let progressData = convertProgressData(actionProgressData?.progress_data ?? [])
@@ -610,14 +614,14 @@ struct ActionAnalysisView: View {
                     x: .value("日期", item.date),
                     y: .value("重量", item.value)
                 )
-                .foregroundStyle(.red)
+                .foregroundStyle(theme.error)
                 .lineStyle(StrokeStyle(lineWidth: 3))
                 
                 PointMark(
                     x: .value("日期", item.date),
                     y: .value("重量", item.value)
                 )
-                .foregroundStyle(.red)
+                .foregroundStyle(theme.error)
                 .symbolSize(60)
             }
             .frame(height: 200)
@@ -645,16 +649,16 @@ struct ActionAnalysisView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
     
     private var volumeChart: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("训练容量趋势")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             // 使用真实的容量数据
             let volumeData = convertVolumeData(actionProgressData?.progress_data ?? [])
@@ -664,13 +668,13 @@ struct ActionAnalysisView: View {
                     x: .value("日期", item.date),
                     y: .value("容量", item.value)
                 )
-                .foregroundStyle(.purple.opacity(0.3))
+                .foregroundStyle(theme.secondary.opacity(0.3))
                 
                 LineMark(
                     x: .value("日期", item.date),
                     y: .value("容量", item.value)
                 )
-                .foregroundStyle(.purple)
+                .foregroundStyle(theme.secondary)
                 .lineStyle(StrokeStyle(lineWidth: 3))
             }
             .frame(height: 200)
@@ -698,9 +702,9 @@ struct ActionAnalysisView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
     
     /// 转换进步数据为图表数据
@@ -746,8 +750,9 @@ struct PlanUsageData {
     let percentage: Int
 }
 
-// MARK: - UI组件
+// MARK: - 统计指标卡片
 struct StatisticsMetricCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let value: String
     let icon: String
@@ -761,22 +766,23 @@ struct StatisticsMetricCard: View {
             
             Text(value)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
     }
 }
 
 struct PlanUsageRow: View {
+    @Environment(\.theme) private var theme: AppTheme
     let rank: Int
     let planName: String
     let count: Int
@@ -787,13 +793,13 @@ struct PlanUsageRow: View {
             // 排名
             Text("\(rank)")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.blue)
+                .foregroundColor(theme.primary)
                 .frame(width: 24)
             
             // 计划名称
             Text(planName)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
             
             Spacer()
             
@@ -801,10 +807,10 @@ struct PlanUsageRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(count)次")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Text("\(percentage)%")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
         }
         .padding(.vertical, 8)
@@ -812,6 +818,7 @@ struct PlanUsageRow: View {
 }
 
 struct ActionButton: View {
+    @Environment(\.theme) private var theme: AppTheme
     let action: ActionAnalysisView.BigThreeAction
     let isSelected: Bool
     let onTap: () -> Void
@@ -821,19 +828,19 @@ struct ActionButton: View {
             VStack(spacing: 8) {
                 Image(systemName: action.icon)
                     .font(.title2)
-                    .foregroundColor(isSelected ? .white : .blue)
+                    .foregroundColor(isSelected ? theme.onPrimary : theme.primary)
                 
                 Text(action.rawValue)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .black)
+                    .foregroundColor(isSelected ? theme.onPrimary : theme.onSurface)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(isSelected ? Color.blue : Color.white)
+            .background(isSelected ? theme.primary : theme.surface)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.blue.opacity(0.3), lineWidth: isSelected ? 0 : 1)
+                    .stroke(theme.primary.opacity(0.3), lineWidth: isSelected ? 0 : 1)
             )
         }
     }
@@ -841,4 +848,4 @@ struct ActionButton: View {
 
 #Preview {
     StatisticsView()
-} 
+}

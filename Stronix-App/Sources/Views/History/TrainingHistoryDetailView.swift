@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct TrainingHistoryDetailView: View {
+    @Environment(\.theme) private var theme: AppTheme
+    
     let historyId: Int
     @State private var showEditView = false
     @State private var selectedHistory: TrainingHistoryDetailResponse?
@@ -131,7 +133,7 @@ struct TrainingHistoryDetailView: View {
                     ProgressView("加载训练详情...")
                     Text("正在加载训练详细数据")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .padding(.top, 8)
                 }
                 Spacer()
@@ -140,23 +142,23 @@ struct TrainingHistoryDetailView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 50))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.warning)
                     
                     Text("加载失败")
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(theme.onSurface)
                     
                     Text(errorMessage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(theme.secondary)
                         .multilineTextAlignment(.center)
                     
                     Button("重试") {
                         loadHistoryDetail()
                     }
                     .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
+                    .background(theme.primary)
+                    .foregroundColor(theme.onPrimary)
                     .cornerRadius(8)
                 }
                 .padding()
@@ -167,7 +169,7 @@ struct TrainingHistoryDetailView: View {
                 Spacer()
                 VStack {
                     Text("没有训练数据")
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 Spacer()
             }
@@ -198,12 +200,12 @@ struct TrainingHistoryDetailView: View {
             Spacer()
             Text("STRONIX")
                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(.blue)
+                .foregroundColor(theme.primary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.white)
-        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+        .background(theme.surface)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
     }
     
     private var navigationSection: some View {
@@ -213,23 +215,24 @@ struct TrainingHistoryDetailView: View {
             }) {
                 Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
             }
             Spacer()
             Text("训练详情")
                 .font(.headline)
+                .foregroundColor(theme.onSurface)
             Spacer()
             Button(action: {
                 showEditView = true
             }) {
                 Text("编辑")
                     .font(.headline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
             }
         }
         .padding()
-        .background(Color.white)
-        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+        .background(theme.surface)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
     }
     
     private func contentScrollView(_ data: TrainingDetailData) -> some View {
@@ -246,17 +249,17 @@ struct TrainingHistoryDetailView: View {
     private var dateTimeSection: some View {
         HStack(spacing: 15) {
             Image(systemName: "clock")
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.secondary)
             
             if let selectedHistory = selectedHistory {
                 let trainingDate = getTrainingDate()
                 Text("\(trainingDate, formatter: dateFormatter)")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.secondary)
                 
                 Text("• \(formatTrainingTime(selectedHistory.history.training_date))")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.secondary)
             }
             
             Spacer()
@@ -283,7 +286,7 @@ struct TrainingHistoryDetailView: View {
             Spacer()
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
+        .background(theme.shadow.opacity(0.1))
         .cornerRadius(10)
     }
     
@@ -295,6 +298,7 @@ struct TrainingHistoryDetailView: View {
 }
 
 struct ExerciseCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let exercise: ExerciseDetail
     
     var body: some View {
@@ -303,9 +307,9 @@ struct ExerciseCard: View {
             exerciseSets
         }
         .padding()
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(10)
-        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 2, x: 0, y: 2)
         .padding(.horizontal)
     }
     
@@ -313,17 +317,18 @@ struct ExerciseCard: View {
         HStack {
             Image(systemName: "figure.strengthtraining.traditional")
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(theme.primary)
                 .frame(width: 40, height: 40)
-                .background(Color.blue.opacity(0.1))
+                .background(theme.primary.opacity(0.1))
                 .cornerRadius(8)
             
             VStack(alignment: .leading) {
                 Text(exercise.name)
                     .font(.headline)
+                    .foregroundColor(theme.onSurface)
                 Text("\(calculateVolume())kg 容量")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             
             Spacer()
@@ -346,7 +351,7 @@ struct ExerciseCard: View {
                 if set.isCompleted {
                 Image(systemName: "checkmark")
                     .font(.subheadline)
-                    .foregroundColor(.green)
+                    .foregroundColor(theme.success)
                 }
             }
             .padding(.vertical, 2)
@@ -360,4 +365,4 @@ struct ExerciseCard: View {
 
 #Preview {
     TrainingHistoryDetailView(historyId: 1)
-} 
+}

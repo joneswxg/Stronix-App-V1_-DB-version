@@ -26,7 +26,7 @@ struct GIFImageView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     // 设置占位图
                     imageView.image = UIImage(systemName: "figure.strengthtraining.traditional")
-                    imageView.tintColor = .gray
+                    imageView.tintColor = UIColor(.gray)
                 }
                 return
             }
@@ -132,8 +132,10 @@ struct AnimatedImageView: View {
 
 struct ActionDetailView: View {
     let action: Action
+    @Binding var selectedTargetMuscleId: Int
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ActionDetailViewModel()
+    @EnvironmentObject private var themeManager: ThemeManager
 
     
     var body: some View {
@@ -145,9 +147,9 @@ struct ActionDetailView: View {
                         .frame(height: 300)
                         .clipped()
                 }
-                .background(Color.white)
+                .background(themeManager.currentTheme.background)
                 .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                .shadow(color: themeManager.currentTheme.onBackground.opacity(0.1), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
                 
@@ -155,7 +157,7 @@ struct ActionDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(action.name)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(themeManager.currentTheme.onBackground)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
@@ -163,7 +165,7 @@ struct ActionDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("动作信息")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(themeManager.currentTheme.onBackground)
                         
                         if let actionDetail = viewModel.actionDetail {
                             VStack(alignment: .leading, spacing: 8) {
@@ -201,23 +203,23 @@ struct ActionDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("动作描述")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(themeManager.currentTheme.onBackground)
                         
                         if let description = action.description, !description.isEmpty {
                             Text(description)
                                 .font(.system(size: 16))
-                                .foregroundColor(.black)
+                                .foregroundColor(themeManager.currentTheme.onBackground)
                                 .multilineTextAlignment(.leading)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(16)
-                                .background(Color.gray.opacity(0.05))
+                                .background(themeManager.currentTheme.secondary.opacity(0.05))
                                 .cornerRadius(12)
                         } else {
                             // 空白内容区域
                             Text("")
                                 .frame(height: 50)
                                 .frame(maxWidth: .infinity)
-                                .background(Color.gray.opacity(0.05))
+                                .background(themeManager.currentTheme.secondary.opacity(0.05))
                                 .cornerRadius(12)
                         }
                     }
@@ -234,6 +236,11 @@ struct ActionDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
+                    // 根据当前动作的目标肌肉设置selectedTargetMuscleId
+                    if let actionDetail = viewModel.actionDetail,
+                       let firstTargetMuscle = actionDetail.target_muscles.first {
+                        selectedTargetMuscleId = firstTargetMuscle.id
+                    }
                     dismiss()
                 }) {
                     HStack(spacing: 4) {
@@ -242,7 +249,7 @@ struct ActionDetailView: View {
                         Text("返回")
                             .font(.system(size: 16))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(themeManager.currentTheme.primary)
                 }
             }
         }
@@ -258,17 +265,18 @@ struct ActionDetailView: View {
 struct InfoRow: View {
     let title: String
     let value: String
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(themeManager.currentTheme.secondary)
                 .frame(width: 80, alignment: .leading)
             
             Text(value)
                 .font(.system(size: 16))
-                .foregroundColor(.black)
+                .foregroundColor(themeManager.currentTheme.onBackground)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -310,20 +318,25 @@ class ActionDetailViewModel: ObservableObject {
 }
 
 #Preview {
-    NavigationView {
-        ActionDetailView(action: Action(
-            id: 1,
-            external_id: "1",
-            name: "腹轮滚动",
-            name_en: "Ab Wheel Rollout",
-            gifUrl: "exercise_1.gif",
-            description: "腹轮滚动是一个很好的核心训练动作，可以有效锻炼腹部肌肉群，提高核心稳定性。动作要求保持身体稳定，缓慢向前滚动，然后回到起始位置。",
-            description_en: "Ab wheel rollout is a great core exercise",
-            difficulty: "中等",
-            bodypart_id: 1,
-            equipment_id: 2,
-            is_bilateral: false,
-            target_muscle_ids: [1, 2, 3]
-        ))
+    @Previewable @State var selectedTargetMuscleId = 1
+    
+    return NavigationView {
+        ActionDetailView(
+            action: Action(
+                id: 1,
+                external_id: "1",
+                name: "腹轮滚动",
+                name_en: "Ab Wheel Rollout",
+                gifUrl: "exercise_1.gif",
+                description: "腹轮滚动是一个很好的核心训练动作，可以有效锻炼腹部肌肉群，提高核心稳定性。动作要求保持身体稳定，缓慢向前滚动，然后回到起始位置。",
+                description_en: "Ab wheel rollout is a great core exercise",
+                difficulty: "中等",
+                bodypart_id: 1,
+                equipment_id: 2,
+                is_bilateral: false,
+                target_muscle_ids: [1, 2, 3]
+            ),
+            selectedTargetMuscleId: $selectedTargetMuscleId
+        )
     }
-} 
+}

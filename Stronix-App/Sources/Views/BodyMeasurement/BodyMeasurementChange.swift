@@ -10,8 +10,9 @@ struct MeasurementData {
 }
 
 struct BodyMeasurementChange: View {
+    @Environment(\.theme) private var theme
     @StateObject private var viewModel = BodyMeasurementViewModel()
-    @State private var selectedStartDate = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+    @State private var selectedStartDate = Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date()
     @State private var selectedEndDate = Date()
     @State private var showingDatePicker = false
     @State private var selectedDataIndex: Int? = nil
@@ -108,7 +109,7 @@ struct BodyMeasurementChange: View {
             }
             .padding(.horizontal, 20)
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(theme.background)
         .onAppear {
             Task {
                 await viewModel.loadMeasurements()
@@ -134,15 +135,15 @@ struct BodyMeasurementChange: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("暂无体测数据")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("请先添加体测记录")
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 80)
@@ -156,18 +157,18 @@ struct BodyMeasurementChange: View {
                 HStack {
                     Text(formatDateRange())
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.white)
+                .background(theme.surface)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        .stroke(theme.secondary.opacity(0.3), lineWidth: 1)
                 )
             }
             
@@ -177,7 +178,7 @@ struct BodyMeasurementChange: View {
                 // 显示项设置功能
             }) {
                 Image(systemName: "gearshape")
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
         }
         .padding(.top, 10)
@@ -232,14 +233,14 @@ struct BodyMeasurementChange: View {
                 x: .value("Date", measurementData.date),
                 y: .value("Value", value)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(theme.primary)
             .lineStyle(StrokeStyle(lineWidth: 2))
             
             PointMark(
                 x: .value("Date", measurementData.date),
                 y: .value("Value", value)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(theme.primary)
             .symbolSize(40)
             
             // 显示选中点的垂直虚线
@@ -287,8 +288,10 @@ struct BodyMeasurementChange: View {
             let targetDate = Date(timeIntervalSince1970: targetTimeInterval)
             
             // 找到最接近的数据点
+            guard !chartData.isEmpty else { return }
             var closestIndex = 0
-            var minTimeDifference = abs(chartData[0].date.timeIntervalSince(targetDate))
+            guard let firstData = chartData.first else { return }
+            var minTimeDifference = abs(firstData.date.timeIntervalSince(targetDate))
             
             for (index, data) in chartData.enumerated() {
                 let timeDifference = abs(data.date.timeIntervalSince(targetDate))
@@ -415,6 +418,7 @@ struct BodyMeasurementChange: View {
 
 // MARK: - 日期范围选择器
 struct DateRangePickerView: View {
+    @Environment(\.theme) private var theme
     @Binding var startDate: Date
     @Binding var endDate: Date
     let onDismiss: () -> Void
@@ -450,12 +454,11 @@ struct DateRangePickerView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("开始日期")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                             DatePicker("", selection: $tempStartDate, displayedComponents: .date)
                                 .datePickerStyle(CompactDatePickerStyle())
-                                .onChange(of: tempStartDate) {
-                                    selectedQuickOption = nil // 清除快速选择状态
-                                }
+                                .foregroundColor(theme.primary)
+                                // 移除这行：.onChange(of: tempStartDate) { selectedQuickOption = nil }
                         }
                         .padding(.horizontal, 20)
                         
@@ -463,12 +466,11 @@ struct DateRangePickerView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("结束日期")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                             DatePicker("", selection: $tempEndDate, displayedComponents: .date)
                                 .datePickerStyle(CompactDatePickerStyle())
-                                .onChange(of: tempEndDate) {
-                                    selectedQuickOption = nil // 清除快速选择状态
-                                }
+                                .foregroundColor(theme.primary)
+                                // 移除这行：.onChange(of: tempEndDate) { selectedQuickOption = nil }
                         }
                         .padding(.horizontal, 20)
                     }
@@ -567,6 +569,7 @@ struct DateRangePickerView: View {
 
 // MARK: - 快速日期选择按钮
 struct QuickDateButton: View {
+    @Environment(\.theme) private var theme
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -575,14 +578,14 @@ struct QuickDateButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
-                .foregroundColor(isSelected ? .white : .blue)
+                .foregroundColor(isSelected ? .white : theme.onSurface)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(isSelected ? Color.blue : Color.blue.opacity(0.1))
+                .background(isSelected ? theme.primary : theme.surface)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.blue, lineWidth: isSelected ? 0 : 1)
+                        .stroke(theme.secondary.opacity(0.3), lineWidth: 1)
                 )
         }
         .scaleEffect(isSelected ? 1.02 : 1.0)
@@ -592,4 +595,4 @@ struct QuickDateButton: View {
 
 #Preview {
     BodyMeasurementChange()
-} 
+}

@@ -1,0 +1,96 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Actions/ActionListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "全部器材",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "全部部位",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "STRONIX",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "搜索训练动作",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "所有动作",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "加载中...",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "加载失败",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 302
+        }
+      },
+      {
+        "comment": "",
+        "key": "重试",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "暂无动作",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "请尝试切换其他肌肉群或调整筛选条件",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld个动作",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 356
+        }
+      }
+    ]
+  },
+  "version": 1
+}

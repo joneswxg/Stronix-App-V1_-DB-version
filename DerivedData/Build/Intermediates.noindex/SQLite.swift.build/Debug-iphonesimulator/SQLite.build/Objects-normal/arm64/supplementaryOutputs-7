@@ -1,0 +1,24 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Operators.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Operators.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Operators.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Operators.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Operators.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Operators.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Query+with.swift":
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query+with.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query+with.d"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query+with.swiftdeps"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query+with.o"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Query+with.swiftconstvalues"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/Expression.swift":
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Expression.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Expression.dia"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Expression.swiftconstvalues"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Expression.o"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/Expression.d"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/SourcePackages/checkouts/SQLite.swift/Sources/SQLite/Typed/DateAndTimeFunctions.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/DateAndTimeFunctions.swiftconstvalues"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/DateAndTimeFunctions.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/DateAndTimeFunctions.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/DateAndTimeFunctions.o"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/SQLite.swift.build/Debug-iphonesimulator/SQLite.build/Objects-normal/arm64/DateAndTimeFunctions.swiftdeps"

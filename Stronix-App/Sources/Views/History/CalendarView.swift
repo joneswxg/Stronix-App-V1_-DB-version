@@ -23,6 +23,16 @@ struct CalendarDate: Hashable {
     }
 }
 
+struct CalendarView: View {
+    @Environment(\.theme) private var theme: AppTheme
+    @EnvironmentObject private var themeManager: ThemeManager
+    @State private var currentDate = Date()
+    @State private var selectedDateString: String?
+    @State private var trainingDatesInMonth: Set<String> = []
+    @State private var isLoadingMonth = false
+    
+    @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
+
 // 模拟训练数据结构
 struct TrainingDayData: Identifiable {
     let id = UUID()
@@ -41,13 +51,7 @@ struct TrainingDayData: Identifiable {
     }
 }
 
-struct CalendarView: View {
-    @State private var currentDate = Date()
-    @State private var selectedDateString: String?
-    @State private var trainingDatesInMonth: Set<String> = []
-    @State private var isLoadingMonth = false
-    
-    @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
+
     
     // 加载当前月份的训练日期
     private func loadTrainingDatesForCurrentMonth() {
@@ -114,8 +118,8 @@ struct CalendarView: View {
         HStack {
             Button(action: previousMonth) {
                 Image(systemName: "chevron.left")
-                    .font(.title2)
-                    .foregroundColor(.black)
+                     .font(.title2)
+                     .foregroundColor(theme.onSurface)
             }
             Spacer()
             Text(currentDate, formatter: DateFormatter.yearMonth)
@@ -123,8 +127,8 @@ struct CalendarView: View {
             Spacer()
             Button(action: nextMonth) {
                 Image(systemName: "chevron.right")
-                    .font(.title2)
-                    .foregroundColor(.black)
+                     .font(.title2)
+                     .foregroundColor(theme.onSurface)
             }
         }
         .padding(.horizontal)
@@ -138,7 +142,7 @@ struct CalendarView: View {
                 Text(weekday)
                     .font(.caption)
                     .frame(maxWidth: .infinity)
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
         }
         .padding(.bottom, 5)
@@ -246,6 +250,7 @@ struct CalendarView: View {
 
 // 日历单元格组件
 struct CalendarDayView: View {
+    @Environment(\.theme) private var theme: AppTheme
     let calendarDate: CalendarDate
     let currentDate: Date
     let hasTraining: Bool
@@ -258,8 +263,8 @@ struct CalendarDayView: View {
                 Spacer()
             }
             .frame(width: geometry.size.width, height: geometry.size.width)
-            .background(Color.white)
-            .border(Color.gray.opacity(0.2), width: 0.5)
+            .background(theme.surface)
+             .border(theme.secondary.opacity(0.2), width: 0.5)
         }
         .aspectRatio(1, contentMode: .fit)
     }
@@ -276,14 +281,14 @@ struct CalendarDayView: View {
     
     // 今天的背景色
     private var todayBackground: Color {
-        calendarDate.isToday ? Color.blue.opacity(0.2) : Color.clear
+        calendarDate.isToday ? theme.primary.opacity(0.2) : Color.clear
     }
     
     // 日期文字颜色
     private var dayTextColor: Color {
         let currentComponents = Calendar.current.dateComponents([.year, .month], from: currentDate)
         let isCurrentMonth = calendarDate.isInMonth(currentComponents.month ?? 0, year: currentComponents.year ?? 0)
-        return isCurrentMonth ? .black : .gray
+        return isCurrentMonth ? theme.onSurface : theme.secondary
     }
     
     // 训练标记显示
@@ -297,7 +302,7 @@ struct CalendarDayView: View {
                     Spacer()
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     Spacer()
                 }
                 Spacer()
@@ -317,4 +322,4 @@ extension DateFormatter {
 
 #Preview {
     CalendarView()
-} 
+}

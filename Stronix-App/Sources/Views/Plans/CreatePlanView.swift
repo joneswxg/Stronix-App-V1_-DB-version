@@ -4,6 +4,7 @@ import UIKit
 // MARK: - 数据模型
 struct PlanAction: Identifiable {
     let id: Int
+    let actionId: Int // 真正的动作ID，用于保存到数据库
     let name: String
     let imageUrl: String
     let nameEn: String // 新增英文名
@@ -30,6 +31,7 @@ struct PlanSet: Identifiable {
 
 struct CreatePlanView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     @State private var planName = ""
     @State private var planNote = ""
     @State private var showPlanNote = false
@@ -42,8 +44,9 @@ struct CreatePlanView: View {
     @State private var errorMessage = ""
     @State private var showSuccess = false
     @State private var successMessage = ""
+    @State private var selectedTargetMuscleId = 0 // 添加目标肌肉ID状态
     
-    // 自定义键盘状态
+    // MARK: - 键盘管理器
     @StateObject private var keyboardManager = CustomKeyboardManager()
     
     private let localPlanService = LocalPlanService.shared
@@ -74,16 +77,14 @@ struct CreatePlanView: View {
                         if showPlanNote {
                             planNoteSection
                         }
-                        
-                        // 添加动作按钮
-                        if selectedActions.isEmpty {
-                            addActionButton
-                        }
-                        
+                     
                         // 动作列表
                         if !selectedActions.isEmpty {
                             actionListSection
                         }
+                        
+                        // 添加动作按钮（始终显示）
+                        addActionButton
                         
                         // 底部间距
                         Spacer(minLength: 50)
@@ -96,7 +97,7 @@ struct CreatePlanView: View {
                     }
                     .padding(.top, 20)
                 }
-                .background(Color(UIColor.systemGroupedBackground))
+                .background(theme.background)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     // 点击空白区域隐藏键盘
@@ -125,6 +126,7 @@ struct CreatePlanView: View {
             }
             .navigationTitle("创建计划")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
@@ -168,10 +170,10 @@ struct CreatePlanView: View {
         }
         .sheet(isPresented: $showActionSelect) {
             PlanActionSelectView(
-                onActionsSelected: { actions in
-                    addSelectedActions(actions)
+                onActionSelected: { actionInfo in
+                    addSelectedActionInfo(actionInfo)
                 },
-                existingActionIds: Set(selectedActions.map { $0.id })
+                existingActionIds: Set(selectedActions.map { $0.actionId })
             )
         }
     }
@@ -212,9 +214,9 @@ struct CreatePlanView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                     .frame(width: 30, height: 30)
-                    .background(Color.gray.opacity(0.1))
+                    .background(theme.secondary.opacity(0.1))
                     .cornerRadius(6)
             }
             .disabled(isSaving)
@@ -251,7 +253,7 @@ struct CreatePlanView: View {
             .foregroundColor(.blue)
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(white: 0.97))
+            .background(theme.surface)
             .cornerRadius(12)
         }
         .padding(.horizontal, 16)
@@ -261,55 +263,63 @@ struct CreatePlanView: View {
     // MARK: - 动作列表区域
     private var actionListSection: some View {
         VStack(spacing: 12) {
-            ForEach(selectedActions.indices, id: \.self) { index in
-                PlanActionCard(
-                    action: $selectedActions[index],
+            ForEach(selectedActions, id: \.id) { action in
+                PlanActionCardWrapper(
+                    action: action,
+                    selectedActions: $selectedActions,
                     weightUnit: weightUnit,
                     onDelete: {
-                        selectedActions.remove(at: index)
+                        deleteAction(action)
                     },
                     onToggleUnit: {
                         toggleWeightUnit()
                     },
                     isDisabled: isSaving,
-                    keyboardManager: keyboardManager
+                    keyboardManager: keyboardManager,
+                    selectedTargetMuscleId: $selectedTargetMuscleId
                 )
             }
-            
-            // 添加更多动作按钮
-            Button(action: {
-                showActionSelect = true
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle")
-                    Text("添加动作")
-                }
-                .foregroundColor(.blue)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color(white: 0.97))
-                .cornerRadius(12)
-            }
-            .padding(.horizontal, 16)
-            .disabled(isSaving)
         }
     }
     
     // MARK: - 方法
-    private func addSelectedActions(_ actions: [Action]) {
-        let newActions = actions.map { action in
-            PlanAction(
-                id: action.id,
-                name: action.name,
-                imageUrl: action.gifUrl ?? "",
-                nameEn: action.name_en ?? "",
-                bodyPartId: action.bodypart_id,
-                equipmentId: action.equipment_id ?? 0,
-                targetMuscleIds: action.target_muscle_ids,
-                sets: [PlanSet()] // 默认添加一组
-            )
-        }
-        selectedActions.append(contentsOf: newActions)
+    private func addSelectedActionInfo(_ actionInfo: ActionInfo) {
+        // 将ActionInfo转换为Action
+        let action = Action(
+            id: actionInfo.id,
+            external_id: String(actionInfo.id),
+            name: actionInfo.name,
+            name_en: nil,
+            gifUrl: actionInfo.imageUrl,
+            description: nil,
+            description_en: nil,
+            difficulty: nil,
+            bodypart_id: 0,
+            equipment_id: nil,
+            is_bilateral: false,
+            target_muscle_ids: []
+        )
+        addSelectedAction(action)
+    }
+    
+    private func addSelectedAction(_ action: Action) {
+        let newAction = PlanAction(
+            id: Int.random(in: 100000...999999), // 使用随机ID避免冲突
+            actionId: action.id, // 真正的动作ID
+            name: action.name,
+            imageUrl: action.gifUrl ?? "",
+            nameEn: action.name_en ?? "",
+            bodyPartId: action.bodypart_id,
+            equipmentId: action.equipment_id ?? 0,
+            targetMuscleIds: action.target_muscle_ids,
+            sets: [PlanSet()] // 默认添加一组
+        )
+        selectedActions.append(newAction)
+    }
+    
+    private func deleteAction(_ action: PlanAction) {
+        // 立即删除，不使用动画，避免竞态条件
+        selectedActions.removeAll { $0.id == action.id }
     }
     
     private func toggleWeightUnit() {
@@ -330,7 +340,7 @@ struct CreatePlanView: View {
                 duration: nil,   // 可以后续添加时长估算
                 actions: selectedActions.enumerated().map { (index, action) in
                     CreatePlanAction(
-                        action_id: action.id,
+                        action_id: action.actionId, // 使用真正的动作ID
                         order: index + 1,
                         rest: action.restTime,
                         note: action.notes,
@@ -356,7 +366,7 @@ struct CreatePlanView: View {
                 "duration": planData.duration ?? 0,
                 "actions": planData.actions.map { action in
                     [
-                        "action_id": action.action_id,
+                        "action_id": action.action_id, // 这里已经是正确的actionId
                         "rest": action.rest,
                         "note": action.note ?? "",
                         "record_bilateral": action.record_bilateral,
@@ -409,14 +419,53 @@ struct CreatePlanView: View {
     }
 }
 
+// MARK: - 动作卡片包装器
+struct PlanActionCardWrapper: View {
+    let action: PlanAction
+    @Binding var selectedActions: [PlanAction]
+    let weightUnit: CreatePlanView.WeightUnit
+    let onDelete: () -> Void
+    let onToggleUnit: () -> Void
+    let isDisabled: Bool
+    let keyboardManager: CustomKeyboardManager
+    @Binding var selectedTargetMuscleId: Int
+    
+    private var actionBinding: Binding<PlanAction> {
+        Binding(
+            get: {
+                selectedActions.first { $0.id == action.id } ?? action
+            },
+            set: { newValue in
+                if let index = selectedActions.firstIndex(where: { $0.id == action.id }) {
+                    selectedActions[index] = newValue
+                }
+            }
+        )
+    }
+    
+    var body: some View {
+        PlanActionCard(
+            action: actionBinding,
+            weightUnit: weightUnit,
+            onDelete: onDelete,
+            onToggleUnit: onToggleUnit,
+            isDisabled: isDisabled,
+            keyboardManager: keyboardManager,
+            selectedTargetMuscleId: $selectedTargetMuscleId
+        )
+    }
+}
+
 // MARK: - 动作卡片组件
 struct PlanActionCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Binding var action: PlanAction
     let weightUnit: CreatePlanView.WeightUnit
     let onDelete: () -> Void
     let onToggleUnit: () -> Void
     let isDisabled: Bool
     let keyboardManager: CustomKeyboardManager
+    @Binding var selectedTargetMuscleId: Int
     
     @State private var showActionMenu = false
     @State private var showSetMenu = false
@@ -425,14 +474,22 @@ struct PlanActionCard: View {
     @State private var minutes: Int = 1 // 新增：分钟设置
     @State private var seconds: Int = 0 // 新增：秒数设置
     @State private var showActionDetail = false // 新增：显示动作详情
+    @State private var showDeleteAlert = false // 新增：删除确认弹窗
+    @State private var showDeleteSetAlert = false // 新增：删除组确认弹窗
+    @State private var setToDelete: PlanSet? = nil // 新增：要删除的组
     
     // 计算总容量
     private var totalVolume: Int {
         action.sets.reduce(0) { total, set in
             if action.isLeftRightMode {
-                return total + Int((set.leftWeight + set.rightWeight) * Double(set.reps))
+                let leftWeight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
+                let rightWeight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
+                let volume = (leftWeight + rightWeight) * Double(set.reps)
+                return total + Int(volume.isNaN || volume.isInfinite ? 0.0 : volume)
             } else {
-                return total + Int(set.weight * Double(set.reps))
+                let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
+                let volume = weight * Double(set.reps)
+                return total + Int(volume.isNaN || volume.isInfinite ? 0.0 : volume)
             }
         }
     }
@@ -460,20 +517,44 @@ struct PlanActionCard: View {
             restTimerSettingSheet
         }
         .navigationDestination(isPresented: $showActionDetail) {
-            ActionDetailView(action: Action(
-                id: action.id,
-                external_id: String(action.id),
-                name: action.name,
-                name_en: action.nameEn,
-                gifUrl: action.imageUrl,
-                description: nil,
-                description_en: nil,
-                difficulty: nil,
-                bodypart_id: action.bodyPartId,
-                equipment_id: action.equipmentId,
-                is_bilateral: false,
-                target_muscle_ids: action.targetMuscleIds
-            ))
+            ActionDetailView(
+                action: Action(
+                    id: action.actionId, // 使用真正的动作ID
+                    external_id: String(action.actionId),
+                    name: action.name,
+                    name_en: action.nameEn,
+                    gifUrl: action.imageUrl,
+                    description: nil,
+                    description_en: nil,
+                    difficulty: nil,
+                    bodypart_id: action.bodyPartId,
+                    equipment_id: action.equipmentId,
+                    is_bilateral: false,
+                    target_muscle_ids: action.targetMuscleIds
+                ),
+                selectedTargetMuscleId: $selectedTargetMuscleId
+            )
+        }
+        .alert("确认删除", isPresented: $showDeleteAlert) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive) {
+                onDelete()
+            }
+        } message: {
+            Text("确定要删除这个训练动作吗？")
+        }
+        .alert("确认删除", isPresented: $showDeleteSetAlert) {
+            Button("取消", role: .cancel) { 
+                setToDelete = nil
+            }
+            Button("删除", role: .destructive) {
+                if let setToDelete = setToDelete {
+                    action.sets.removeAll { $0.id == setToDelete.id }
+                }
+                setToDelete = nil
+            }
+        } message: {
+            Text("确定要删除这组吗？")
         }
     }
     
@@ -488,7 +569,7 @@ struct PlanActionCard: View {
             }
             .navigationTitle("休息计时器")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
                         showRestTimer = false
@@ -500,7 +581,7 @@ struct PlanActionCard: View {
                         showRestTimer = false
                     }
                 }
-            }
+            })
         }
     }
     
@@ -516,10 +597,10 @@ struct PlanActionCard: View {
                             .aspectRatio(contentMode: .fit)
                     } else {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(theme.secondary.opacity(0.3))
                             .overlay(
                                 Image(systemName: "figure.strengthtraining.traditional")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                             )
                     }
                 }
@@ -538,13 +619,13 @@ struct PlanActionCard: View {
                         // 容量显示
                         Text("\(totalVolume)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     
                     HStack {
                         Text("\(action.sets.count)组")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Spacer()
                         
@@ -552,7 +633,7 @@ struct PlanActionCard: View {
                         Toggle(isOn: $action.isLeftRightMode) {
                             Text("记录左右")
                                 .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                         .scaleEffect(0.8)
                         .disabled(isDisabled)
@@ -592,13 +673,15 @@ struct PlanActionCard: View {
                         Label("切换单位 (\(weightUnit.displayName))", systemImage: "arrow.2.squarepath")
                     }
                     
-                    Button(action: onDelete) {
+                    Button(action: {
+                        showDeleteAlert = true
+                    }) {
                         Label("删除动作", systemImage: "trash")
                     }
                     .foregroundColor(.red)
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .font(.system(size: 20))
                 }
                 .disabled(isDisabled)
@@ -625,46 +708,60 @@ struct PlanActionCard: View {
     
     // 表头组件
     private var tableHeader: some View {
-        HStack(spacing: 12) {
-            Text("组")
-                .frame(width: 30, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
-            
-            if action.isLeftRightMode {
-                Text("左\(weightUnit.displayName)")
-                    .frame(width: 40, alignment: .leading)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+        VStack(spacing: 8) {
+            HStack(spacing: 16) {
+                Text("组")
+                    .frame(width: 30, height: 36, alignment: .center)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(theme.secondary)
+                    .background(theme.surface)
+                    .cornerRadius(6)
+
+                if action.isLeftRightMode {
+                    Text("左\(weightUnit.displayName)")
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
+                        .cornerRadius(6)
+                    
+                    Text("右\(weightUnit.displayName)")
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.gray)
+                        .background(Color(UIColor.systemGroupedBackground))
+                        .cornerRadius(6)
+                } else {
+                    Text(weightUnit.displayName)
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.gray)
+                        .background(Color(UIColor.systemGroupedBackground))
+                        .cornerRadius(6)
+                }
                 
-                Text("右\(weightUnit.displayName)")
-                    .frame(width: 40, alignment: .leading)
+                Text("次数")
+                    .frame(width: 60, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.gray)
-            } else {
-                Text(weightUnit.displayName)
-                    .frame(width: 40, alignment: .leading)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .background(Color(UIColor.systemGroupedBackground))
+                    .cornerRadius(6)
+                
+                Spacer()
             }
-            
-            Text("次数")
-                .frame(width: 40, alignment: .leading)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
-            
-            Spacer()
+            .padding(.leading, 5)
+            .padding(.trailing, 16)
         }
-        .padding(.leading, 16)
+        .padding(.leading, 20)
         .padding(.trailing, 16)
     }
     
     // MARK: - 组数区域
     private var setsSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
             // 组数列表
             ForEach(action.sets.indices, id: \.self) { index in
-                setRow(index: index)
+                setRow(set: action.sets[index], setNumber: index + 1, setIndex: index)
             }
             
             // 底部按钮区域
@@ -674,7 +771,7 @@ struct PlanActionCard: View {
                 }) {
                     Text("新增一组")
                         .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                 }
                 .disabled(isDisabled)
                 
@@ -685,7 +782,7 @@ struct PlanActionCard: View {
                 }) {
                     Text("动作历史")
                         .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                 }
                 .disabled(isDisabled)
                                 
@@ -696,37 +793,45 @@ struct PlanActionCard: View {
     }
     
     // MARK: - 单组行
-    private func setRow(index: Int) -> some View {
+    private func setRow(set: PlanSet, setNumber: Int, setIndex: Int) -> some View {
         VStack(spacing: 8) {
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 // 组数标号
-                Text("\(index + 1)")
+                Text("\(setNumber)")
                     .font(.system(size: 16, weight: .medium))
-                    .frame(width: 30, alignment: .center)
-                
+                    .frame(width: 30, height: 36, alignment: .center)
+                    .background(Color(UIColor.systemGroupedBackground))
+                    .cornerRadius(6)
+
                 if action.isLeftRightMode {
                     // 左侧重量
                     Button(action: {
                         hideSystemKeyboard()
-                        let inputId = "left_weight_\(action.id)_\(index)"
+                        let inputId = "left_weight_\(action.id)_\(set.id)"
                         keyboardManager.showKeyboard(
                             inputId: inputId,
-                            initialValue: action.sets[index].leftWeight,
+                            initialValue: set.leftWeight,
                             isInteger: false,
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].leftWeight = newValue
+                            if setIndex < action.sets.count {
+                                let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                                action.sets[setIndex].leftWeight = safeValue
+                            }
                         }
                     }) {
-                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(index)"
+                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(set.id)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].leftWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].leftWeight))
+                        Text({
+                            let weight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
@@ -738,25 +843,31 @@ struct PlanActionCard: View {
                     // 右侧重量
                     Button(action: {
                         hideSystemKeyboard()
-                        let inputId = "right_weight_\(action.id)_\(index)"
+                        let inputId = "right_weight_\(action.id)_\(set.id)"
                         keyboardManager.showKeyboard(
                             inputId: inputId,
-                            initialValue: action.sets[index].rightWeight,
+                            initialValue: set.rightWeight,
                             isInteger: false,
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].rightWeight = newValue
+                            if setIndex < action.sets.count {
+                                let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                                action.sets[setIndex].rightWeight = safeValue
+                            }
                         }
                     }) {
-                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(index)"
+                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(set.id)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].rightWeight == 0 ? "0" : String(format: "%.1f", action.sets[index].rightWeight))
+                        Text({
+                            let weight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
@@ -768,30 +879,36 @@ struct PlanActionCard: View {
                     // 普通重量
                     Button(action: {
                         hideSystemKeyboard()
-                        let inputId = "weight_\(action.id)_\(index)"
+                        let inputId = "weight_\(action.id)_\(set.id)"
                         keyboardManager.showKeyboard(
                             inputId: inputId,
-                            initialValue: action.sets[index].weight,
+                            initialValue: set.weight,
                             isInteger: false,
                             step: 1.0,
                             maxValue: 999.0
                         ) { newValue in
-                            action.sets[index].weight = newValue
+                        if setIndex < action.sets.count {
+                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                            action.sets[setIndex].weight = safeValue
                         }
+                    }
                     }) {
-                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(index)"
+                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(set.id)"
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
-                        Text(action.sets[index].weight == 0 ? "0" : String(format: "%.1f", action.sets[index].weight))
+                        Text({
+                            let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
+                            return weight == 0 ? "0" : String(format: "%.1f", weight)
+                        }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
-                            )
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
                     }
                     .disabled(isDisabled)
                 }
@@ -799,25 +916,28 @@ struct PlanActionCard: View {
                 // 次数输入
                 Button(action: {
                     hideSystemKeyboard()
-                    let inputId = "reps_\(action.id)_\(index)"
+                    let inputId = "reps_\(action.id)_\(set.id)"
                     keyboardManager.showKeyboard(
                         inputId: inputId,
-                        initialValue: Double(action.sets[index].reps),
+                        initialValue: Double(set.reps),
                         isInteger: true,
                         step: 1.0,
                         maxValue: 999.0
                     ) { newValue in
-                        action.sets[index].reps = Int(newValue)
+                        if setIndex < action.sets.count {
+                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
+                            action.sets[setIndex].reps = Int(safeValue)
+                        }
                     }
                 }) {
-                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(index)"
+                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(set.id)"
                     let isSelected = isActive && keyboardManager.isValueSelected
                     
-                    Text("\(action.sets[index].reps)")
+                    Text("\(set.reps)")
                         .font(.system(size: 14))
                         .foregroundColor(isSelected ? .white : .black)
-                        .frame(width: 40, height: 32)
-                        .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                        .frame(width: 60, height: 36)
+                        .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
@@ -830,24 +950,29 @@ struct PlanActionCard: View {
                 
                 // 组菜单
                 Menu {
-                    if action.sets[index].hasNotes {
+                    if set.hasNotes {
                         Button(action: {
-                            action.sets[index].hasNotes = false
-                            action.sets[index].notes = ""
+                            if setIndex < action.sets.count {
+                                action.sets[setIndex].hasNotes = false
+                                action.sets[setIndex].notes = ""
+                            }
                         }) {
                             Label("删除备注", systemImage: "trash")
                         }
                         .foregroundColor(.red)
                     } else {
                         Button(action: {
-                            action.sets[index].hasNotes = true
+                            if setIndex < action.sets.count {
+                                action.sets[setIndex].hasNotes = true
+                            }
                         }) {
                             Label("输入备注", systemImage: "note.text")
                         }
                     }
                     
                     Button(action: {
-                        action.sets.remove(at: index)
+                        setToDelete = set
+                        showDeleteSetAlert = true
                     }) {
                         Label("删除", systemImage: "trash")
                     }
@@ -859,24 +984,28 @@ struct PlanActionCard: View {
                 }
                 .disabled(isDisabled)
             }
+            .padding(.leading, 20)
+            .padding(.trailing, 16)
             
             // 备注输入框
-            if action.sets[index].hasNotes {
+            if set.hasNotes {
                 HStack {
                     Spacer()
                         .frame(width: 42) // 对齐组数标号
                     
-                    TextField("输入备注", text: $action.sets[index].notes)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .font(.system(size: 14))
-                        .disabled(isDisabled)
+                    if setIndex < action.sets.count {
+                        TextField("输入备注", text: $action.sets[setIndex].notes)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .font(.system(size: 14))
+                            .disabled(isDisabled)
+                    }
                     
                     Spacer()
                         .frame(width: 42) // 对齐菜单按钮
                 }
             }
         }
-        .padding(.leading, 16)
+        .padding(.leading, 20)
         .padding(.trailing, 16)
     }
     
@@ -933,4 +1062,4 @@ struct PlanActionCard: View {
 
 #Preview {
     CreatePlanView()
-} 
+}

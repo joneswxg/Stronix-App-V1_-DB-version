@@ -1,0 +1,312 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/EditPlanView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "编辑训练计划",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 236
+        }
+      },
+      {
+        "comment": "",
+        "key": "容量: %lld kg",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "计划名称",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "输入计划名称",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "计划描述",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "输入计划描述",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "训练动作",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加动作",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加动作",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "返回",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "保存",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "确认删除",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 588
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 589
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 590
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定要删除这个训练动作吗？",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "休息计时器",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 607
+        }
+      },
+      {
+        "comment": "",
+        "key": "设置休息时间",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 602
+        }
+      },
+      {
+        "comment": "",
+        "key": "分钟: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 603
+        }
+      },
+      {
+        "comment": "",
+        "key": "秒数: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 604
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 611
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 616
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 659
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld组",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 665
+        }
+      },
+      {
+        "comment": "",
+        "key": "记录左右",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 673
+        }
+      },
+      {
+        "comment": "",
+        "key": "动作详情",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 703
+        }
+      },
+      {
+        "comment": "",
+        "key": "设置休息计时器",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 711
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除动作",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 717
+        }
+      },
+      {
+        "comment": "",
+        "key": "组",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 750
+        }
+      },
+      {
+        "comment": "",
+        "key": "左kg",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 756
+        }
+      },
+      {
+        "comment": "",
+        "key": "右kg",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 761
+        }
+      },
+      {
+        "comment": "",
+        "key": "kg",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 766
+        }
+      },
+      {
+        "comment": "",
+        "key": "次数",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 772
+        }
+      },
+      {
+        "comment": "",
+        "key": "新增一组",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 806
+        }
+      },
+      {
+        "comment": "",
+        "key": "动作历史",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 817
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 843
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 973
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 998
+        }
+      },
+      {
+        "comment": "",
+        "key": "EditPlanView Preview",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 1014
+        }
+      }
+    ]
+  },
+  "version": 1
+}

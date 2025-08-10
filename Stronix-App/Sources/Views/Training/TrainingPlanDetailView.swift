@@ -3,6 +3,7 @@ import SwiftUI
 struct TrainingPlanDetailView: View {
     let plan: TrainingPlan
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     @State private var showEditPlan = false
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @State private var showTrainingConflictAlert = false
@@ -14,20 +15,20 @@ struct TrainingPlanDetailView: View {
                     HStack {
                         Text(plan.name)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         
                         Spacer()
                         
                         Text("\(plan.calculatedVolume) kg")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                     }
                     
                     // 计划信息
                     HStack(spacing: 16) {
                         Text("创建: \(plan.createdDate)")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         
                         Spacer()
                     }
@@ -36,7 +37,7 @@ struct TrainingPlanDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
                 .padding(.bottom, 20)
-                .background(Color.white)
+                .background(theme.surface)
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -45,15 +46,15 @@ struct TrainingPlanDetailView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("计划描述")
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                 
                                 Text(description)
                                     .font(.system(size: 14))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color.white)
+                                    .background(theme.surface)
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                             }
@@ -71,10 +72,10 @@ struct TrainingPlanDetailView: View {
                                 } else {
                                     Text("暂无训练动作")
                                         .font(.system(size: 16))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondary)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 40)
-                                        .background(Color.white)
+                                        .background(theme.surface)
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                                 }
@@ -94,7 +95,7 @@ struct TrainingPlanDetailView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
-                                        .background(plan.actions?.isEmpty == false ? Color.blue : Color.gray)
+                                        .background(plan.actions?.isEmpty == false ? theme.primary : theme.disabled)
                                         .cornerRadius(25)
                                 }
                                 .disabled(plan.actions?.isEmpty != false)
@@ -104,7 +105,7 @@ struct TrainingPlanDetailView: View {
                         .padding(.bottom, 30)
                     }
                 }
-                .background(Color(white: 0.95))
+                .background(theme.background)
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
@@ -113,7 +114,7 @@ struct TrainingPlanDetailView: View {
                     Button("返回") {
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                 }
                 
                 ToolbarItem(placement: .principal) {
@@ -127,7 +128,7 @@ struct TrainingPlanDetailView: View {
                         Button("编辑") {
                             showEditPlan = true
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     }
                 }
             }
@@ -175,6 +176,7 @@ struct TrainingPlanDetailView: View {
 // 详情页动作卡片
 struct DetailActionCard: View {
     let action: TrainingAction
+    @Environment(\.theme) private var theme: AppTheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -187,26 +189,26 @@ struct DetailActionCard: View {
                             .aspectRatio(contentMode: .fit)
                     } else {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(theme.secondary.opacity(0.3))
                             .overlay(
                                 Image(systemName: "figure.strengthtraining.traditional")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                             )
                     }
                 }
                 .frame(width: 60, height: 60)
-                .background(Color.gray.opacity(0.1))
+                .background(theme.secondary.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(action.name)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     if let notes = action.notes, !notes.isEmpty {
                         Text(notes)
                             .font(.system(size: 12))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                             .lineLimit(2)
                     }
                 }
@@ -216,11 +218,11 @@ struct DetailActionCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(action.totalVolume) kg")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                     
                     Text("\(action.totalSets) 组")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
             }
             
@@ -230,7 +232,7 @@ struct DetailActionCard: View {
                     HStack {
                         Text("组数详情")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         Spacer()
                     }
                     
@@ -238,35 +240,35 @@ struct DetailActionCard: View {
                         HStack {
                             Text("第\(index + 1)组")
                                 .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                                 .frame(width: 50, alignment: .leading)
                             
                             if action.recordBilateral {
                                 // 双侧训练显示左右重量
                                 Text("左\(Int(set.leftWeight))kg")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                     .frame(width: 60, alignment: .leading)
                                 
                                 Text("右\(Int(set.rightWeight))kg")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                     .frame(width: 60, alignment: .leading)
                             } else {
                                 // 普通训练显示单一重量
                                 Text("\(Int(set.weight))kg")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                     .frame(width: 50, alignment: .leading)
                                 
                                 Text("×")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                             }
                             
                             Text("\(set.reps)次")
                                 .font(.system(size: 12))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                                 .frame(width: 50, alignment: .leading)
                             
                             Spacer()
@@ -276,16 +278,16 @@ struct DetailActionCard: View {
                                 let totalWeight = set.leftWeight + set.rightWeight
                                 Text("\(Int(totalWeight * Double(set.reps)))kg")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                             } else {
                                 Text("\(Int(set.weight * Double(set.reps)))kg")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                             }
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.gray.opacity(0.05))
+                        .background(theme.secondary.opacity(0.05))
                         .cornerRadius(6)
                     }
                 }
@@ -296,13 +298,13 @@ struct DetailActionCard: View {
             HStack {
                 Text("休息时间: \(action.restTime)秒")
                     .font(.system(size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                 Spacer()
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
@@ -369,4 +371,4 @@ private func loadLocalActionImage(fileName: String) -> UIImage? {
 #Preview {
     // 预览代码暂时注释，等待类型定义完成
     Text("TrainingPlanDetailView Preview")
-} 
+}

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditHistoryDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     let selectedDate: Date
     let historyData: TrainingDetailData
     
@@ -71,13 +72,13 @@ struct EditHistoryDetailView: View {
                             .frame(height: 35)
                         Spacer()
                         Text("STRONIX")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.blue)
+                             .font(.system(size: 20, weight: .bold, design: .rounded))
+                             .foregroundColor(theme.primary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.white)
-                    .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                    .background(theme.background)
+                    .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
                     
                     // 顶部信息栏
                     HStack {
@@ -85,13 +86,13 @@ struct EditHistoryDetailView: View {
                             Text("训练总容量：\(calculatedVolume) kg")
                                 .font(.system(size: 14, weight: .medium))
                             Text("实时计算，随输入更新")
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                 .font(.system(size: 12))
+                                 .foregroundColor(theme.secondary)
                         }
                         Spacer()
                     }
                     .padding(16)
-                    .background(Color.cyan.opacity(0.1))
+                    .background(theme.primary.opacity(0.1))
                     .cornerRadius(12)
                     .padding(.horizontal, 16)
                     
@@ -105,7 +106,7 @@ struct EditHistoryDetailView: View {
                             .font(.system(size: 16))
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.gray.opacity(0.1))
+                            .background(theme.secondary.opacity(0.1))
                             .cornerRadius(8)
                             .padding(.horizontal, 16)
                     }
@@ -167,7 +168,7 @@ struct EditHistoryDetailView: View {
                 }
                 .padding(.top, 20)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(theme.background)
             .navigationTitle("编辑训练记录")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(true)
@@ -180,13 +181,14 @@ struct EditHistoryDetailView: View {
                                 dismiss()
                             }
                         }
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .disabled(isSaving || preventDismiss)
                         
                         Spacer()
                         
                         Text("编辑训练记录")
                             .font(.headline)
+                            .foregroundColor(theme.onSurface)
                         
                         Spacer()
                         
@@ -204,13 +206,13 @@ struct EditHistoryDetailView: View {
                                 }
                             }
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .fontWeight(.medium)
                         .disabled(isSaving || planName.isEmpty)
                     }
                     .padding()
-                    .background(Color.white)
-                    .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                    .background(theme.surface)
+                    .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
                     
                     Spacer()
                 }
@@ -222,12 +224,12 @@ struct EditHistoryDetailView: View {
                     if showToast {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
+                                .foregroundColor(theme.success)
                             Text(toastMessage)
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.onPrimary)
                         }
                         .padding()
-                        .background(Color.black.opacity(0.8))
+                        .background(theme.onSurface.opacity(0.8))
                         .cornerRadius(12)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
@@ -327,6 +329,7 @@ struct EditingExerciseCardWrapper: View {
 // MARK: - 编辑动作卡片
 
 struct EditingExerciseCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Binding var exercise: EditingExercise
     let onDelete: () -> Void
     let onUpdate: (EditingExercise) -> Void
@@ -350,9 +353,9 @@ struct EditingExerciseCard: View {
                 setsSection
             }
         }
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: theme.shadow.opacity(0.05), radius: 5, x: 0, y: 2)
         .alert("确认删除", isPresented: $showDeleteAlert) {
             Button("取消", role: .cancel) { }
             Button("删除", role: .destructive) {
@@ -369,10 +372,10 @@ struct EditingExerciseCard: View {
             HStack(spacing: 12) {
                 // 动作图片
                 Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-                    .frame(width: 40, height: 40)
-                    .background(Color.blue.opacity(0.1))
+                     .font(.title2)
+                     .foregroundColor(theme.primary)
+                     .frame(width: 40, height: 40)
+                     .background(theme.primary.opacity(0.1))
                     .cornerRadius(8)
                 
                 // 动作信息
@@ -387,12 +390,12 @@ struct EditingExerciseCard: View {
                         // 容量显示
                         Text("\(exerciseVolume)容量")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     
                     Text("\(exercise.sets.count)组")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                         .font(.system(size: 14))
+                         .foregroundColor(theme.secondary)
                 }
                 
                 // 删除按钮
@@ -400,7 +403,7 @@ struct EditingExerciseCard: View {
                     showDeleteAlert = true
                 }) {
                     Image(systemName: "trash")
-                        .foregroundColor(.red)
+                         .foregroundColor(theme.error)
                         .font(.system(size: 16))
                 }
                 .disabled(isDisabled)
@@ -431,13 +434,13 @@ struct EditingExerciseCard: View {
             Text("组")
                 .frame(width: 30, alignment: .center)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
-                .padding(.leading, 52) // 与动作名称对齐
-            
-            Text("重量")
-                .frame(width: 50, alignment: .leading)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
+                 .padding(.leading, 52) // 与动作名称对齐
+             
+             Text("重量")
+                 .frame(width: 50, alignment: .leading)
+                 .font(.system(size: 14, weight: .medium))
+                 .foregroundColor(theme.secondary)
             
             Text("次数")
                 .frame(width: 50, alignment: .leading)
@@ -482,8 +485,8 @@ struct EditingExerciseCard: View {
                     onUpdate(exercise)
                 }) {
                     Text("新增一组")
-                        .font(.system(size: 14))
-                        .foregroundColor(.blue)
+                         .font(.system(size: 14))
+                         .foregroundColor(theme.primary)
                 }
                 .disabled(isDisabled)
                 
@@ -568,8 +571,9 @@ struct EditingExerciseCard: View {
                     exercise.sets[index].isCompleted.toggle()
                     onUpdate(exercise)
                 }) {
-                    Image(systemName: exercise.sets[index].isCompleted ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(exercise.sets[index].isCompleted ? .green : .gray)
+                    let isCompleted = index < exercise.sets.count ? exercise.sets[index].isCompleted : false
+                    Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isCompleted ? theme.success : theme.secondary)
                         .font(.system(size: 20))
                 }
                 .frame(width: 50, alignment: .center)
@@ -591,7 +595,7 @@ struct EditingExerciseCard: View {
                     .foregroundColor(.red)
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .frame(width: 30, height: 30)
                 }
                 .disabled(isDisabled)

@@ -1,0 +1,32 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Shared/CustomNumberKeyboard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "当前值: %.1f",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "点击输入重量",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "点击输入次数",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 325
+        }
+      }
+    ]
+  },
+  "version": 1
+}

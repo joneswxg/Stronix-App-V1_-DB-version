@@ -87,6 +87,12 @@ class LocalUserService: ObservableObject {
             let rows = try db.prepare(query, [email])
             
             if let row = rows.makeIterator().next() {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 10 else {
+                    print("⚠️ LocalUserService: 跳过不完整的用户行数据，列数: \(row.count)")
+                    throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
+                }
+                
                 let storedPasswordHash = row[9] as? String ?? ""
                 
                 print("🔍 验证用户: \(email)")
@@ -97,6 +103,12 @@ class LocalUserService: ObservableObject {
                 let isPasswordValid = verifyPassword(password: password, hash: storedPasswordHash)
                 
                 if isPasswordValid {
+                    // 数据已经通过边界检查，可以安全访问
+                    guard row.count >= 9 else {
+                        print("⚠️ LocalUserService: 跳过不完整的用户行数据，列数: \(row.count)")
+                        throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
+                    }
+                    
                     // 正确的数据类型转换
                     let userId = Int(row[0] as? Int64 ?? 0)
                     let username = row[1] as? String ?? ""
@@ -213,6 +225,12 @@ class LocalUserService: ObservableObject {
             let newUserRows = try db.prepare(newUserQuery, [email])
             
             if let row = newUserRows.makeIterator().next() {
+                // 安全检查：确保行数据包含足够的列
+                guard row.count >= 9 else {
+                    print("⚠️ LocalUserService: 新用户行数据不完整，列数: \(row.count)")
+                    throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "新用户数据行不完整"]))
+                }
+                
                 let user = User(
                     id: Int(row[0] as? Int64 ?? 0),
                     username: row[1] as? String ?? "",
@@ -380,6 +398,10 @@ class LocalUserService: ObservableObject {
                 
                 print("📋 数据库中的所有用户:")
                 for row in userRows {
+                    guard row.count >= 4 else {
+                        print("⚠️ LocalUserService: 跳过不完整的用户行数据，列数: \(row.count)")
+                        continue
+                    }
                     let id = Int(row[0] as? Int64 ?? 0)
                     let username = row[1] as? String ?? ""
                     let email = row[2] as? String ?? ""
@@ -392,6 +414,10 @@ class LocalUserService: ObservableObject {
                 let testRows = try db.prepare(testUserQuery, ["iostest@example.com"])
                 
                 if let testRow = testRows.makeIterator().next() {
+                    guard testRow.count >= 4 else {
+                        print("⚠️ LocalUserService: 测试用户行数据不完整，列数: \(testRow.count)")
+                        return
+                    }
                     let id = Int(testRow[0] as? Int64 ?? 0)
                     let username = testRow[1] as? String ?? ""
                     let email = testRow[2] as? String ?? ""
@@ -481,4 +507,4 @@ class LocalUserService: ObservableObject {
         // 本地模式下简化处理 - 可以重置为默认密码或提供其他解决方案
         return AuthResponse(success: false, message: "本地模式暂不支持密码重置，请联系管理员", user: nil)
     }
-} 
+}

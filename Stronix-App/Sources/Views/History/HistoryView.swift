@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HistoryView: View {
+    @Environment(\.theme) private var theme: AppTheme
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var selectedHistoryTab: HistoryTab = .calendar
 
     enum HistoryTab: String, CaseIterable, Identifiable {
@@ -23,7 +25,7 @@ struct HistoryView: View {
                         Spacer()
                         Text("STRONIX")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                     }
                     
                     HStack {
@@ -38,14 +40,14 @@ struct HistoryView: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                                 .font(.title2)
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                         }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.white)
-                .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                .background(theme.surface)
+                .shadow(color: theme.shadow, radius: 1, y: 1)
 
                 // 日历/统计 切换器
                 Picker("历史选项", selection: $selectedHistoryTab) {
@@ -66,6 +68,7 @@ struct HistoryView: View {
                 }
                 Spacer()
             }
+            .background(theme.background)
             .navigationBarHidden(true)
         }
     }
@@ -73,4 +76,4 @@ struct HistoryView: View {
 
 #Preview {
     HistoryView()
-} 
+}

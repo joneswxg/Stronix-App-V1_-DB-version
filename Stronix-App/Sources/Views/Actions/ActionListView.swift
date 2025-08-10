@@ -1,6 +1,8 @@
 import SwiftUI
+import Foundation
 
 struct ActionListView: View {
+    @EnvironmentObject private var themeManager: ThemeManager
     // MARK: - 状态属性
     @State private var selectedBodyPartId: Int = 0 // 0表示"全部"
     @State private var searchText = ""
@@ -36,7 +38,7 @@ struct ActionListView: View {
                                 Text("全部器材")
                                 if selectedEquipmentId == 0 {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(themeManager.currentTheme.primary)
                                 }
                             }
                         }
@@ -60,7 +62,7 @@ struct ActionListView: View {
                                     Text(equipment.display_name)
                                     if selectedEquipmentId == equipment.id {
                                         Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(themeManager.currentTheme.primary)
                                     }
                                 }
                             }
@@ -69,15 +71,15 @@ struct ActionListView: View {
                         HStack {
                             Text(selectedEquipmentName)
                                 .font(.system(size: 14))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.white)
                                 .lineLimit(1)
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.white)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color.blue)
+                        .background(themeManager.currentTheme.primary)
                         .cornerRadius(8)
                     }
                     .frame(width: 120) // 与动作图片宽度对齐
@@ -100,7 +102,7 @@ struct ActionListView: View {
                                 Text("全部部位")
                                 if selectedBodyPartId == 0 {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(themeManager.currentTheme.primary)
                                 }
                             }
                         }
@@ -124,7 +126,7 @@ struct ActionListView: View {
                                     Text(bodyPart.display_name)
                                     if selectedBodyPartId == bodyPart.id {
                                         Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(themeManager.currentTheme.primary)
                                     }
                                 }
                             }
@@ -133,16 +135,16 @@ struct ActionListView: View {
                         HStack {
                             Text(selectedBodyPartName)
                                 .font(.system(size: 14))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.white)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.white)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color.blue)
+                        .background(themeManager.currentTheme.primary)
                         .cornerRadius(8)
                     }
                     .frame(width: 120) // 身体部位下拉框宽度
@@ -154,8 +156,8 @@ struct ActionListView: View {
             }
         }
         .frame(height: 50) // 固定高度
-        .background(Color.white)
-        .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+        .background(themeManager.currentTheme.background)
+        .shadow(color: themeManager.currentTheme.secondary.opacity(0.1), radius: 1, y: 1)
     }
     
     // MARK: - 计算属性：当前选中的设备名称
@@ -188,21 +190,21 @@ struct ActionListView: View {
                         Spacer()
                         Text("STRONIX")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.blue)
+                            .foregroundColor(themeManager.currentTheme.primary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.white)
-                    .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+                    .background(themeManager.currentTheme.background)
+                    .shadow(color: themeManager.currentTheme.secondary.opacity(0.1), radius: 1, y: 1)
                     
                     // 搜索栏
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
+                            .foregroundColor(themeManager.currentTheme.secondary)
                         TextField("搜索训练动作", text: $searchText)
                     }
                     .padding()
-                    .background(Color(white: 0.97))
+                    .background(themeManager.currentTheme.secondary.opacity(0.1))
                     .cornerRadius(8)
                     .padding(.horizontal)
                     .padding(.top)
@@ -226,7 +228,7 @@ struct ActionListView: View {
                                         selectedTargetMuscleId = 0
                                         Task {
                                             await viewModel.loadActionsByFilters(
-                                                targetMuscleId: nil,
+                                                targetMuscleId: nil as Int?,
                                                 equipmentId: selectedEquipmentId,
                                                 bodyPartId: selectedBodyPartId,
                                                 searchText: searchText
@@ -235,14 +237,14 @@ struct ActionListView: View {
                                     }) {
                                         Text("所有动作")
                                             .font(.system(size: 13))
-                                            .foregroundColor(selectedTargetMuscleId == 0 ? .white : .black)
+                                            .foregroundColor(selectedTargetMuscleId == 0 ? Color.white : themeManager.currentTheme.onBackground)
                                             .fontWeight(selectedTargetMuscleId == 0 ? .medium : .regular)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 10)
                                             .background(
                                                 selectedTargetMuscleId == 0 ?
-                                                    Color.blue :
+                                    themeManager.currentTheme.primary :
                                                     Color.clear
                                             )
                                             .cornerRadius(8)
@@ -263,14 +265,14 @@ struct ActionListView: View {
                                         }) {
                                             Text(muscle.display_name)
                                                 .font(.system(size: 13))
-                                                .foregroundColor(selectedTargetMuscleId == muscle.id ? .white : .black)
+                                                .foregroundColor(selectedTargetMuscleId == muscle.id ? Color.white : themeManager.currentTheme.onBackground)
                                                 .fontWeight(selectedTargetMuscleId == muscle.id ? .medium : .regular)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 10)
                                                 .background(
                                                     selectedTargetMuscleId == muscle.id ?
-                                                        Color.blue :
+                                        themeManager.currentTheme.primary :
                                                         Color.clear
                                                 )
                                                 .cornerRadius(8)
@@ -282,7 +284,7 @@ struct ActionListView: View {
                                 .padding(.vertical, 12)
                             }
                             .frame(width: mainGeometry.size.width * 0.25)
-                            .background(Color(white: 0.97))
+                            .background(themeManager.currentTheme.secondary.opacity(0.1))
                         }
                         .frame(maxHeight: .infinity)
                         
@@ -302,7 +304,7 @@ struct ActionListView: View {
                                     
                                     Text(error.localizedDescription)
                                         .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(themeManager.currentTheme.secondary)
                                         .multilineTextAlignment(.center)
                                     
                                     Button("重试") {
@@ -317,8 +319,8 @@ struct ActionListView: View {
                                     }
                                     .padding(.horizontal, 20)
                                     .padding(.vertical, 8)
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
+                                    .background(themeManager.currentTheme.primary)
+                                    .foregroundColor(Color.white)
                                     .cornerRadius(8)
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 200)
@@ -326,27 +328,52 @@ struct ActionListView: View {
                                 VStack(spacing: 16) {
                                     Image(systemName: "magnifyingglass")
                                         .font(.system(size: 48))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(themeManager.currentTheme.secondary)
                                     
                                     Text("暂无动作")
                                         .font(.system(size: 16, weight: .medium))
                                     
                                     Text("请尝试切换其他肌肉群或调整筛选条件")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(themeManager.currentTheme.secondary)
                                         .multilineTextAlignment(.center)
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 200)
                             } else {
-                                LazyVGrid(columns: [
-                                    GridItem(.flexible()),
-                                    GridItem(.flexible())
-                                ], spacing: 16) {
-                                    ForEach(filteredActions) { action in
-                                        ActionCard(action: action)
+                                // 按器材分组显示动作
+                                LazyVStack(alignment: .leading, spacing: 20) {
+                                    ForEach(groupedActionsByEquipment.keys.sorted(by: { $0 < $1 }), id: \.self) { equipmentName in
+                                        if let actions = groupedActionsByEquipment[equipmentName], !actions.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                // 器材分类标题
+                                                HStack {
+                                                    Text(equipmentName)
+                                                        .font(.system(size: 18, weight: .semibold))
+                                                        .foregroundColor(themeManager.currentTheme.onBackground)
+                                                    
+                                                    Spacer()
+                                                    
+                                                    Text("\(actions.count)个动作")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(themeManager.currentTheme.secondary)
+                                                }
+                                                .padding(.horizontal, 16)
+                                                
+                                                // 该器材下的动作网格
+                                                LazyVGrid(columns: [
+                                                    GridItem(.flexible()),
+                                                    GridItem(.flexible())
+                                                ], spacing: 16) {
+                                                    ForEach(actions) { action in
+                                                        ActionCard(action: action, selectedTargetMuscleId: $selectedTargetMuscleId)
+                                                    }
+                                                }
+                                                .padding(.horizontal, 16)
+                                            }
+                                        }
                                     }
                                 }
-                                .padding()
+                                .padding(.vertical)
                             }
                         }
                         .frame(width: mainGeometry.size.width * 0.75)
@@ -359,22 +386,21 @@ struct ActionListView: View {
             .onAppear {
                 Task {
                     await viewModel.loadFilters()
-                    // 默认选中"所有动作"并加载所有动作
-                    selectedTargetMuscleId = 0
+                    // 初始化时加载动作，保持当前的 selectedTargetMuscleId 状态
                     await viewModel.loadActionsByFilters(
-                        targetMuscleId: nil,
+                        targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
                         equipmentId: selectedEquipmentId,
                         bodyPartId: selectedBodyPartId,
                         searchText: searchText
                     )
                 }
             }
-            .onChange(of: viewModel.targetMuscles) { oldValue, newValue in
+            .onChange(of: viewModel.targetMuscles) { (oldValue: [TargetMuscle], newValue: [TargetMuscle]) in
                 // 当目标肌肉数据加载完成时，如果当前没有选中任何肌肉，保持"所有动作"状态
                 if !newValue.isEmpty && selectedTargetMuscleId == 0 {
                     Task {
                         await viewModel.loadActionsByFilters(
-                            targetMuscleId: nil,
+                            targetMuscleId: nil as Int?,
                             equipmentId: selectedEquipmentId,
                             bodyPartId: selectedBodyPartId,
                             searchText: searchText
@@ -382,7 +408,7 @@ struct ActionListView: View {
                     }
                 }
             }
-            .onChange(of: searchText) { oldValue, newValue in
+            .onChange(of: searchText) { (oldValue: String, newValue: String) in
                 // 搜索文本变化时实时过滤
                 Task {
                     await viewModel.loadActionsByFilters(
@@ -402,12 +428,14 @@ struct ActionListView: View {
             let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
             let matchesBodyPart = selectedBodyPartId == 0 || action.bodypart_id == selectedBodyPartId
             let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
-            return matchesEquipment && matchesBodyPart && matchesSearch
+            let matchesTargetMuscle = selectedTargetMuscleId == 0 || action.target_muscle_ids.contains(selectedTargetMuscleId)
+            return matchesEquipment && matchesBodyPart && matchesSearch && matchesTargetMuscle
         }
         
         print("🔍 filteredActions - 原始动作数量: \(viewModel.actions.count)")
         print("🔍 filteredActions - selectedEquipmentId: \(selectedEquipmentId)")
         print("🔍 filteredActions - selectedBodyPartId: \(selectedBodyPartId)")
+        print("🔍 filteredActions - selectedTargetMuscleId: \(selectedTargetMuscleId)")
         print("🔍 filteredActions - searchText: '\(searchText)'")
         print("🔍 filteredActions - 过滤后动作数量: \(filtered.count)")
         
@@ -423,14 +451,40 @@ struct ActionListView: View {
         
         return filtered
     }
+    
+    // MARK: - 按器材分组的动作列表
+    private var groupedActionsByEquipment: [String: [Action]] {
+        let actions = filteredActions
+        var grouped: [String: [Action]] = [:]
+        
+        for action in actions {
+            // 获取器材名称
+            let equipmentName: String
+            if let equipmentId = action.equipment_id {
+                equipmentName = viewModel.equipments.first { $0.id == equipmentId }?.display_name ?? "未知器材"
+            } else {
+                equipmentName = "无器材"
+            }
+            
+            // 将动作添加到对应器材分组
+            if grouped[equipmentName] == nil {
+                grouped[equipmentName] = []
+            }
+            grouped[equipmentName]?.append(action)
+        }
+        
+        return grouped
+    }
 }
 
 // MARK: - 动作卡片视图
 struct ActionCard: View {
     let action: Action
+    @Binding var selectedTargetMuscleId: Int
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
-        NavigationLink(destination: ActionDetailView(action: action)) {
+        NavigationLink(destination: ActionDetailView(action: action, selectedTargetMuscleId: $selectedTargetMuscleId)) {
             VStack(alignment: .leading, spacing: 8) {
                 // 动作图片 - 使用本地图片资源
                 AsyncImageView(imageName: action.localImageName)
@@ -441,14 +495,14 @@ struct ActionCard: View {
                         .font(.system(size: 14, weight: .medium))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
-                        .foregroundColor(.black)
+                        .foregroundColor(themeManager.currentTheme.onBackground)
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 8)
             }
-            .background(Color.white)
+            .background(themeManager.currentTheme.background)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .shadow(color: themeManager.currentTheme.onBackground.opacity(0.05), radius: 5, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -462,25 +516,26 @@ struct ActionCard: View {
 // MARK: - 异步图片加载视图（支持新的目录结构）
 struct AsyncImageView: View {
     let imageName: String
-    @State private var uiImage: UIImage?
+    @State private var image: Image?
     @State private var isLoading = true
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
-        Group {
-            if let uiImage = uiImage {
-                Image(uiImage: uiImage)
+        ZStack {
+            if let image = image {
+                image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } else if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                // 加载失败时显示占位图
+                // 占位图
                 Rectangle()
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(themeManager.currentTheme.secondary.opacity(0.3))
                     .overlay(
                         Image(systemName: "photo")
-                            .foregroundColor(.gray)
+                            .foregroundColor(themeManager.currentTheme.secondary)
                     )
             }
         }
@@ -500,20 +555,26 @@ struct AsyncImageView: View {
         }
         
         DispatchQueue.global(qos: .userInitiated).async {
-            guard let data = try? Data(contentsOf: url),
-                  let image = UIImage(data: data) else {
+            guard let data = try? Data(contentsOf: url) else {
                 print("❌ ActionListView: 图片加载失败: \(imageName)")
                 DispatchQueue.main.async {
-                    isLoading = false
+                    self.isLoading = false
                 }
                 return
             }
             
             DispatchQueue.main.async {
-                self.uiImage = image
+                #if canImport(UIKit)
+                if let uiImage = UIImage(data: data) {
+                    self.image = Image(uiImage: uiImage)
+                }
+                #elseif canImport(AppKit)
+                if let nsImage = NSImage(data: data) {
+                    self.image = Image(nsImage: nsImage)
+                }
+                #endif
                 self.isLoading = false
-                print("✅ ActionListView: 图片加载成功: \(imageName)")
             }
         }
     }
-} 
+}

@@ -1,0 +1,40 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Profile/ProfileMainView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "STRONIX",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "点击登录",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "登录",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "退出登录",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 137
+        }
+      }
+    ]
+  },
+  "version": 1
+}

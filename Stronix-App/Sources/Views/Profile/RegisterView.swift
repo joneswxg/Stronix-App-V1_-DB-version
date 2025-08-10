@@ -3,6 +3,7 @@ import SwiftUI
 struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var userService = LocalUserService.shared
+    @Environment(\.theme) private var theme: AppTheme
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
@@ -29,11 +30,11 @@ struct RegisterView: View {
                         
                         Text("创建账号")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         
                         Text("加入STRONIX，开始您的健身之旅")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     .padding(.top, 20)
                     
@@ -43,16 +44,16 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("用户名")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
                                 Image(systemName: "person")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 TextField("请输入用户名", text: $username)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                         }
                         
@@ -60,18 +61,18 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("邮箱")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
                                 Image(systemName: "envelope")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 TextField("请输入邮箱", text: $email)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                         }
                         
@@ -79,16 +80,16 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("密码")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
                                 Image(systemName: "lock")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 SecureField("请输入密码（至少6位）", text: $password)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                         }
                         
@@ -96,22 +97,23 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("确认密码")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack {
-                                Image(systemName: "lock.fill")
-                                    .foregroundColor(.gray)
+                                Image(systemName: "lock")
+                                    .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 SecureField("请再次输入密码", text: $confirmPassword)
                             }
                             .padding()
-                            .background(Color(white: 0.97))
+                            .background(theme.background)
                             .cornerRadius(12)
                             
-                            if !confirmPassword.isEmpty && password != confirmPassword {
+                            if !password.isEmpty && !confirmPassword.isEmpty && password != confirmPassword {
                                 Text("密码不匹配")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.red)
+                                    .foregroundColor(theme.error)
+                                    .padding(.top, 5)
                             }
                         }
                         
@@ -119,7 +121,7 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("性别")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             HStack(spacing: 12) {
                                 ForEach(genderOptions, id: \.self) { option in
@@ -128,17 +130,17 @@ struct RegisterView: View {
                                     }) {
                                         HStack {
                                             Image(systemName: gender == option ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(gender == option ? .blue : .gray)
+                                                .foregroundColor(gender == option ? theme.primary : theme.secondary)
                                             Text(option)
                                                 .font(.system(size: 14))
-                                                .foregroundColor(gender == option ? .blue : .black)
+                                                .foregroundColor(gender == option ? theme.primary : theme.onSurface)
                                         }
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
                                         .background(
                                             gender == option ? 
-                                                Color.blue.opacity(0.1) : 
-                                                Color(white: 0.97)
+                                                theme.primary.opacity(0.1) : 
+                                                theme.background
                                         )
                                         .cornerRadius(20)
                                     }
@@ -153,17 +155,17 @@ struct RegisterView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("身高 (cm)")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                 
                                 HStack {
                                     Image(systemName: "ruler")
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondary)
                                         .frame(width: 20)
                                     TextField("170", text: $height)
                                         .keyboardType(.numberPad)
                                 }
                                 .padding()
-                                .background(Color(white: 0.97))
+                                .background(theme.background)
                                 .cornerRadius(12)
                             }
                             
@@ -171,17 +173,17 @@ struct RegisterView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("体重 (kg)")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                 
                                 HStack {
                                     Image(systemName: "scalemass")
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondary)
                                         .frame(width: 20)
                                     TextField("70", text: $weight)
                                         .keyboardType(.numberPad)
                                 }
                                 .padding()
-                                .background(Color(white: 0.97))
+                                .background(theme.background)
                                 .cornerRadius(12)
                             }
                         }
@@ -192,30 +194,30 @@ struct RegisterView: View {
                                 agreeToTerms.toggle()
                             }) {
                                 Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(agreeToTerms ? .blue : .gray)
+                                    .foregroundColor(agreeToTerms ? theme.primary : theme.secondary)
                                     .font(.system(size: 18))
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("我已阅读并同意")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(theme.onSurface)
                                 HStack(spacing: 4) {
                                     Button("《用户协议》") {
                                         // TODO: 显示用户协议
                                     }
                                     .font(.system(size: 14))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                                     
                                     Text("和")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(theme.onSurface)
                                     
                                     Button("《隐私政策》") {
                                         // TODO: 显示隐私政策
                                     }
                                     .font(.system(size: 14))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(theme.primary)
                                 }
                             }
                             Spacer()
@@ -235,13 +237,13 @@ struct RegisterView: View {
                             } else {
                                 Text("注册")
                                     .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(theme.onPrimary)
                             }
                         }
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            isFormValid ? Color.blue : Color.gray.opacity(0.5)
+                            isFormValid ? theme.primary : theme.secondary.opacity(0.5)
                         )
                         .cornerRadius(25)
                     }
@@ -252,13 +254,13 @@ struct RegisterView: View {
                     HStack {
                         Text("已有账号？")
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                         Button(action: {
                             dismiss()
                         }) {
                             Text("立即登录")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                         }
                     }
                     .padding(.bottom, 20)
@@ -324,4 +326,5 @@ struct RegisterView: View {
 
 #Preview {
     RegisterView()
-} 
+        .environment(\.theme, BlueTheme())
+}

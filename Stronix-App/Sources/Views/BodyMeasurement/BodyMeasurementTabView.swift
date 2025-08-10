@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BodyMeasurementTabView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @State private var selectedTab = 0
     
     var body: some View {
@@ -14,12 +15,12 @@ struct BodyMeasurementTabView: View {
                 Spacer()
                 Text("STRONIX")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color.white)
-            .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+            .background(theme.surface)
+            .shadow(color: theme.shadow, radius: 1, y: 1)
             
             // 顶部Tab导航
             HStack(spacing: 0) {
@@ -36,8 +37,8 @@ struct BodyMeasurementTabView: View {
                     selectedTab = 3
                 }
             }
-            .background(Color.white)
-            .shadow(color: .gray.opacity(0.1), radius: 1, y: 1)
+            .background(theme.surface)
+            .shadow(color: theme.shadow, radius: 1, y: 1)
             
             // 内容区域
             VStack {
@@ -60,6 +61,7 @@ struct BodyMeasurementTabView: View {
 
 // 自定义Tab按钮组件
 struct TabButton: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -69,10 +71,10 @@ struct TabButton: View {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .foregroundColor(isSelected ? theme.primary : theme.secondary)
                 
                 Rectangle()
-                    .fill(isSelected ? Color.blue : Color.clear)
+                    .fill(isSelected ? theme.primary : Color.clear)
                     .frame(height: 2)
             }
             .padding(.vertical, 12)
@@ -83,4 +85,4 @@ struct TabButton: View {
 
 #Preview {
     BodyMeasurementTabView()
-} 
+}

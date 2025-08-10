@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AddMeasurementSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     @ObservedObject var viewModel: BodyMeasurementViewModel
     
     @State private var selectedDate = Date()
@@ -20,29 +21,29 @@ struct AddMeasurementSheet: View {
                 VStack(spacing: 16) {
                     Text("手动输入体测仪测试结果")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                         .padding(.top, 20)
                     
                     // 测试日期
                     VStack(alignment: .leading, spacing: 8) {
                         Text("测试日期")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         
                         HStack {
                             Text(formatDate(selectedDate))
                                 .font(.system(size: 16))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             Spacer()
                             Button("修改") {
                                 showingDatePicker = true
                                 hideKeyboard() // 打开日期选择器时隐藏键盘
                             }
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                         }
                         .padding(.vertical, 12)
                         .padding(.horizontal, 16)
-                        .background(Color.gray.opacity(0.1))
+                        .background(theme.secondary.opacity(0.1))
                         .cornerRadius(8)
                     }
                 }
@@ -52,7 +53,7 @@ struct AddMeasurementSheet: View {
                 HStack {
                     Text("添加结果")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     Spacer()
                 }
                 .padding(.horizontal, 20)
@@ -102,10 +103,10 @@ struct AddMeasurementSheet: View {
                 VStack(spacing: 4) {
                     Text("由于报告纸上只会显示小数点一位数，")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     Text("所以手动输入时可能会产生微小的误差")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 .padding(.top, 20)
                 .padding(.horizontal, 20)
@@ -123,22 +124,22 @@ struct AddMeasurementSheet: View {
                         if isSaving {
                             ProgressView()
                                 .scaleEffect(0.8)
-                                .foregroundColor(.white)
+                                .foregroundColor(theme.surface)
                         }
                         Text(isSaving ? "保存中..." : "确认")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.surface)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background((isFormValid && !isSaving) ? Color.blue : Color.gray)
+                    .background((isFormValid && !isSaving) ? theme.primary : theme.secondary)
                     .cornerRadius(8)
                 }
                 .disabled(!isFormValid || isSaving)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
-            .background(Color.white)
+            .background(theme.surface)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -147,7 +148,7 @@ struct AddMeasurementSheet: View {
                         dismiss()
                     }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                 }
                 
@@ -297,6 +298,7 @@ struct DatePickerSheet: View {
 
 // 输入字段组件
 struct InputField: View {
+    @Environment(\.theme) private var theme
     let title: String
     @Binding var value: String
     let unit: String
@@ -308,7 +310,7 @@ struct InputField: View {
             HStack {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Spacer()
                 HStack(spacing: 8) {
                     TextField(placeholder, text: $value)
@@ -318,19 +320,19 @@ struct InputField: View {
                         .focused($isFocused)
                     Text(unit)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                     Button(action: {
                         value = ""
                         isFocused = false // 清空输入时隐藏键盘
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray.opacity(0.6))
+                            .foregroundColor(theme.secondary.opacity(0.6))
                     }
                 }
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color.gray.opacity(0.1))
+            .background(theme.secondary.opacity(0.1))
             .cornerRadius(8)
         }
     }
@@ -338,4 +340,4 @@ struct InputField: View {
 
 #Preview {
     AddMeasurementSheet(viewModel: BodyMeasurementViewModel())
-} 
+}

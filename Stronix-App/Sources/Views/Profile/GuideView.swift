@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GuideView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme: AppTheme
     @State private var selectedGuide: GuideItem?
     
     let guideItems: [GuideItem] = [
@@ -187,7 +188,7 @@ struct GuideView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
             .navigationTitle("操作指南")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -216,6 +217,7 @@ struct GuideItem: Identifiable {
 
 // 指南卡片
 struct GuideCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let item: GuideItem
     let onTap: () -> Void
     
@@ -232,23 +234,23 @@ struct GuideCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     Text(item.subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
             }
             .padding(16)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
+            .shadow(color: theme.shadow, radius: 6, x: 0, y: 3)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -256,6 +258,7 @@ struct GuideCard: View {
 
 // 指南详情视图
 struct GuideDetailView: View {
+    @Environment(\.theme) private var theme: AppTheme
     let guide: GuideItem
     @Environment(\.dismiss) private var dismiss
     
@@ -275,11 +278,11 @@ struct GuideDetailView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(guide.title)
                                 .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.black)
+                                .foregroundColor(theme.onSurface)
                             
                             Text(guide.subtitle)
                                 .font(.system(size: 16))
-                                .foregroundColor(.gray)
+                                .foregroundColor(theme.secondary)
                         }
                         
                         Spacer()
@@ -291,12 +294,12 @@ struct GuideDetailView: View {
                     Text(guide.content)
                         .font(.system(size: 16))
                         .lineSpacing(6)
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
                 }
             }
-            .background(Color(white: 0.95))
+            .background(theme.background)
             .navigationTitle(guide.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -312,4 +315,4 @@ struct GuideDetailView: View {
 
 #Preview {
     GuideView()
-} 
+}

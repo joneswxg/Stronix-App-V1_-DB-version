@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BodyMeasurementListView: View {
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.theme) private var theme
     @ObservedObject var viewModel: BodyMeasurementViewModel
     @State private var showingDeleteAlert = false
     @State private var recordToDelete: BodyMeasurement?
@@ -31,7 +32,7 @@ struct BodyMeasurementListView: View {
                         Text("返回")
                             .font(.system(size: 16))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(theme.primary)
                 }
             }
             
@@ -64,15 +65,15 @@ struct BodyMeasurementListView: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("暂无体测记录")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             Text("点击右上角 + 号添加您的第一条体测记录")
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 100)
@@ -109,6 +110,7 @@ struct BodyMeasurementListView: View {
 
 // 体测记录行视图
 struct MeasurementRowView: View {
+    @Environment(\.theme) private var theme
     let record: BodyMeasurement
     let viewModel: BodyMeasurementViewModel
     let onDelete: () -> Void
@@ -119,7 +121,7 @@ struct MeasurementRowView: View {
             HStack {
                 Text(formatDate(record.measurementTimestamp))
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 
                 Spacer()
                 
@@ -127,22 +129,22 @@ struct MeasurementRowView: View {
                     // 编辑按钮 - 改为NavigationLink
                     NavigationLink(destination: BodyMeasurementEditView(viewModel: viewModel, record: record)) {
                         Text("编辑")
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                             .font(.system(size: 14))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.1))
+                            .background(theme.primary.opacity(0.1))
                             .cornerRadius(6)
                     }
                     .buttonStyle(PlainButtonStyle())
                     
                     Button(action: onDelete) {
                         Text("删除")
-                            .foregroundColor(.red)
+                            .foregroundColor(theme.error)
                             .font(.system(size: 14))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.red.opacity(0.1))
+                            .background(theme.error.opacity(0.1))
                             .cornerRadius(6)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -160,9 +162,9 @@ struct MeasurementRowView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.surface)
         .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: theme.shadow, radius: 3, x: 0, y: 2)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -174,6 +176,7 @@ struct MeasurementRowView: View {
 
 // 数据项组件
 struct DataItem: View {
+    @Environment(\.theme) private var theme
     let title: String
     let value: Double
     let unit: String
@@ -182,26 +185,26 @@ struct DataItem: View {
         VStack(spacing: 4) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondary)
             
             HStack(alignment: .bottom, spacing: 2) {
                 Text(String(format: "%.1f", value))
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 if !unit.isEmpty {
                     Text(unit)
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .background(Color.gray.opacity(0.05))
+        .background(theme.secondary.opacity(0.05))
         .cornerRadius(8)
     }
 }
 
 #Preview {
     BodyMeasurementListView(viewModel: BodyMeasurementViewModel())
-} 
+}

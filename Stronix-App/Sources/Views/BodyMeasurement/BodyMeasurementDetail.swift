@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BodyMeasurementDetail: View {
+    @Environment(\.theme) private var theme
     @StateObject private var viewModel = BodyMeasurementViewModel()
     @State private var selectedDate = Date()
     @State private var currentData: DetailedMeasurementData = DetailedMeasurementData.sampleData
@@ -17,7 +18,7 @@ struct BodyMeasurementDetail: View {
                         navigateToPrevious()
                     }) {
                         Image(systemName: "chevron.left")
-                            .foregroundColor(currentIndex > 0 ? .gray : .gray.opacity(0.3))
+                            .foregroundColor(currentIndex > 0 ? theme.secondary : theme.secondary.opacity(0.3))
                     }
                     .disabled(currentIndex <= 0)
                     
@@ -26,10 +27,10 @@ struct BodyMeasurementDetail: View {
                     VStack(spacing: 2) {
                         Text(formatDate(selectedDate))
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.onSurface)
                         Text(formatTime(selectedDate))
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(theme.secondary)
                     }
                     
                     Spacer()
@@ -38,7 +39,7 @@ struct BodyMeasurementDetail: View {
                         navigateToNext()
                     }) {
                         Image(systemName: "chevron.right")
-                            .foregroundColor(currentIndex < viewModel.measurements.count - 1 ? .gray : .gray.opacity(0.3))
+                            .foregroundColor(currentIndex < viewModel.measurements.count - 1 ? theme.secondary : theme.secondary.opacity(0.3))
                     }
                     .disabled(currentIndex >= viewModel.measurements.count - 1)
                     
@@ -46,12 +47,12 @@ struct BodyMeasurementDetail: View {
                         showingDeleteAlert = true
                     }) {
                         Image(systemName: "trash")
-                            .foregroundColor(.red)
+                            .foregroundColor(theme.error)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .background(Color.white)
+                .background(theme.surface)
                 
                 // 肌肉脂肪分析
                 AnalysisSection(title: "肌肉脂肪分析") {
@@ -145,7 +146,7 @@ struct BodyMeasurementDetail: View {
                 Spacer(minLength: 50)
             }
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(theme.background)
         .onAppear {
             Task {
                 await viewModel.loadMeasurements()
@@ -239,6 +240,7 @@ struct BodyMeasurementDetail: View {
 
 // 分析区域组件
 struct AnalysisSection<Content: View>: View {
+    @Environment(\.theme) private var theme
     let title: String
     let content: Content
     
@@ -251,13 +253,13 @@ struct AnalysisSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(theme.onSurface)
                 .padding(.horizontal, 20)
             
             VStack(spacing: 0) {
                 content
             }
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
             .padding(.horizontal, 20)
         }
@@ -267,6 +269,7 @@ struct AnalysisSection<Content: View>: View {
 
 // 指标行组件
 struct MetricRow: View {
+    @Environment(\.theme) private var theme
     let title: String
     let value: Double
     let unit: String
@@ -284,14 +287,14 @@ struct MetricRow: View {
                 HStack(spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.onSurface)
                     
                     if showInfoButton {
                         Button(action: {
                             onInfoTapped?()
                         }) {
                             Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
+                                .foregroundColor(theme.primary)
                                 .font(.system(size: 14))
                         }
                     }
@@ -301,7 +304,7 @@ struct MetricRow: View {
                 
                 Button(action: {}) {
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                         .font(.system(size: 12))
                 }
             }
@@ -309,15 +312,15 @@ struct MetricRow: View {
             HStack(alignment: .bottom, spacing: 4) {
                 Text("\(value, specifier: "%.1f")")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                 Text(unit)
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                 Spacer()
                 if change != 0 {
                     Text(change > 0 ? "+\(change, specifier: "%.1f")" : "\(change, specifier: "%.1f")")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
             }
             
@@ -327,12 +330,12 @@ struct MetricRow: View {
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             Rectangle()
-                                .fill(Color.gray.opacity(0.2))
+                                .fill(theme.secondary.opacity(0.2))
                                 .frame(height: 8)
                                 .cornerRadius(4)
                             
                             Rectangle()
-                                .fill(Color.blue)
+                                .fill(theme.primary)
                                 .frame(width: geometry.size.width * progressValue, height: 8)
                                 .cornerRadius(4)
                         }
@@ -345,7 +348,7 @@ struct MetricRow: View {
                             ForEach(labels.indices, id: \.self) { index in
                                 Text(labels[index])
                                     .font(.system(size: 10))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(theme.secondary)
                                 if index < labels.count - 1 {
                                     Spacer()
                                 }
@@ -364,4 +367,4 @@ struct MetricRow: View {
 
 #Preview {
     BodyMeasurementDetail()
-} 
+}

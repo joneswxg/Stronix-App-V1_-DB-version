@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ArticlesView: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
     @State private var articles: [Article] = [
         Article(id: 1, title: "健身新手必读：如何制定训练计划", summary: "详细介绍健身新手如何科学制定训练计划，避免常见误区", publishDate: "2025-01-15", category: "训练指导"),
@@ -39,7 +40,7 @@ struct ArticlesView: View {
                     .padding(.horizontal, 16)
                 }
                 .padding(.vertical, 16)
-                .background(Color.white)
+                .background(theme.surface)
                 
                 // 文章列表
                 ScrollView {
@@ -53,7 +54,7 @@ struct ArticlesView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
                 }
-                .background(Color(white: 0.95))
+                .background(theme.background)
             }
             .navigationTitle("科普文章")
             .navigationBarTitleDisplayMode(.inline)
@@ -84,6 +85,7 @@ struct Article: Identifiable {
 
 // 分类按钮
 struct CategoryButton: View {
+    @Environment(\.theme) private var theme: AppTheme
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -92,10 +94,10 @@ struct CategoryButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? .white : .blue)
+                .foregroundColor(isSelected ? theme.onPrimary : theme.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.blue : Color.blue.opacity(0.1))
+                .background(isSelected ? theme.primary : theme.primary.opacity(0.1))
                 .cornerRadius(20)
         }
     }
@@ -103,6 +105,7 @@ struct CategoryButton: View {
 
 // 文章卡片
 struct ArticleCard: View {
+    @Environment(\.theme) private var theme: AppTheme
     let article: Article
     let onTap: () -> Void
     
@@ -113,30 +116,30 @@ struct ArticleCard: View {
                 HStack {
                     Text(article.category)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(theme.primary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
+                        .background(theme.primary.opacity(0.1))
                         .cornerRadius(8)
                     
                     Spacer()
                     
                     Text(article.publishDate)
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
                 
                 // 文章标题
                 Text(article.title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(theme.onSurface)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 // 文章摘要
                 Text(article.summary)
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(theme.secondary)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .lineLimit(2)
@@ -146,24 +149,24 @@ struct ArticleCard: View {
                     HStack(spacing: 4) {
                         Image(systemName: "link")
                             .font(.system(size: 12))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                         
                         Text("微信公众号")
                             .font(.system(size: 12))
-                            .foregroundColor(.blue)
+                            .foregroundColor(theme.primary)
                     }
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondary)
                 }
             }
             .padding(16)
-            .background(Color.white)
+            .background(theme.surface)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
+            .shadow(color: theme.shadow, radius: 6, x: 0, y: 3)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -171,4 +174,4 @@ struct ArticleCard: View {
 
 #Preview {
     ArticlesView()
-} 
+}
