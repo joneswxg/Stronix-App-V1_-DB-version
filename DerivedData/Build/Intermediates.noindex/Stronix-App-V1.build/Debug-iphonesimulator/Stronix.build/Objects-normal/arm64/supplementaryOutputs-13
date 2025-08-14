@@ -1,0 +1,18 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/PlanActionSelectView.swift":
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanActionSelectView.dia"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanActionSelectView.o"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanActionSelectView.d"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanActionSelectView.swiftdeps"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanActionSelectView.swiftconstvalues"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/BodyMeasurementEditView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementEditView.swiftconstvalues"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementEditView.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementEditView.d"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementEditView.swiftdeps"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementEditView.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/CalendarView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/CalendarView.swiftconstvalues"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/CalendarView.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/CalendarView.o"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/CalendarView.dia"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/CalendarView.swiftdeps"

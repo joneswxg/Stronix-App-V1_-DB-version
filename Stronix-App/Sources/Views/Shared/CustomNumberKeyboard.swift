@@ -3,6 +3,7 @@ import SwiftUI
 /// 自定义数字键盘组件
 /// 用于训练、编辑历史、创建计划、编辑计划等场景的数值输入
 struct CustomNumberKeyboard: View {
+    @Environment(\.theme) private var theme: AppTheme
     @Binding var value: Double
     @Binding var isShowing: Bool
     let step: Double // 步进值，重量用1.0，次数用1.0
@@ -97,7 +98,7 @@ struct CustomNumberKeyboard: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.white)
                 .frame(width: 55, height: 42)
-                .background(Color.gray.opacity(0.3))
+                .background(Color.gray.opacity(0.4))
                 .cornerRadius(6)
         }
     }
@@ -109,7 +110,7 @@ struct CustomNumberKeyboard: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
                 .frame(width: 55, height: 42)
-                .background(Color.blue.opacity(0.6))
+                .background(theme.primary)
                 .cornerRadius(6)
         }
     }

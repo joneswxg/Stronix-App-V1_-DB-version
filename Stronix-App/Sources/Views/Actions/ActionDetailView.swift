@@ -236,11 +236,7 @@ struct ActionDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    // 根据当前动作的目标肌肉设置selectedTargetMuscleId
-                    if let actionDetail = viewModel.actionDetail,
-                       let firstTargetMuscle = actionDetail.target_muscles.first {
-                        selectedTargetMuscleId = firstTargetMuscle.id
-                    }
+                    // 直接返回，不修改selectedTargetMuscleId
                     dismiss()
                 }) {
                     HStack(spacing: 4) {

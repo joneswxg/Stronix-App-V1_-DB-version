@@ -1,0 +1,40 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Actions/ActionDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "动作信息",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "动作描述",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "返回",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 249
+        }
+      }
+    ]
+  },
+  "version": 1
+}

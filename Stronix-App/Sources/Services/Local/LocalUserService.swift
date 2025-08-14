@@ -507,4 +507,201 @@ class LocalUserService: ObservableObject {
         // 本地模式下简化处理 - 可以重置为默认密码或提供其他解决方案
         return AuthResponse(success: false, message: "本地模式暂不支持密码重置，请联系管理员", user: nil)
     }
+    
+    // MARK: - 微信登录支持
+    
+    /// 微信登录功能
+    func loginWithWechat() async throws -> AuthResponse {
+        print("🚀 开始微信登录流程")
+        
+        await MainActor.run {
+            self.isLoading = true
+        }
+        
+        defer {
+            Task { @MainActor in
+                self.isLoading = false
+            }
+        }
+        
+        do {
+            // 使用微信登录服务
+            let wechatService = WechatLoginService.shared
+            
+            // 模拟微信登录获取用户信息
+            let wechatResponse = try await wechatService.simulateWechatLogin()
+            
+            if wechatResponse.success, let openId = wechatResponse.openId, let nickname = wechatResponse.nickname {
+                // 使用微信openId作为邮箱标识
+                let wechatEmail = "wechat_\(openId)"
+                
+                // 检查用户是否已存在
+                if let existingUser = try await getUserByEmail(wechatEmail) {
+                    // 用户已存在，直接登录
+                    await MainActor.run {
+                        self.currentUser = existingUser
+                        self.isLoggedIn = true
+                    }
+                    saveUserToStorage(user: existingUser)
+                    
+                    print("✅ 微信用户登录成功: \(existingUser.username)")
+                    return AuthResponse(success: true, message: "微信登录成功", user: existingUser)
+                } else {
+                    // 新用户，创建账户
+                    let newUser = try await createWechatUser(
+                        openId: openId,
+                        nickname: nickname
+                    )
+                    
+                    await MainActor.run {
+                        self.currentUser = newUser
+                        self.isLoggedIn = true
+                    }
+                    saveUserToStorage(user: newUser)
+                    
+                    print("✅ 微信新用户注册并登录成功: \(newUser.username)")
+                    return AuthResponse(success: true, message: "微信登录成功", user: newUser)
+                }
+            } else {
+                print("❌ 微信登录失败: \(wechatResponse.message)")
+                return AuthResponse(success: false, message: wechatResponse.message, user: nil)
+            }
+        } catch {
+            print("❌ 微信登录异常: \(error)")
+            throw error
+        }
+    }
+    
+    /// 检查用户是否通过微信登录
+    func isWechatUser() -> Bool {
+        guard let user = currentUser else { return false }
+        // 检查邮箱是否以wechat_开头
+        return user.email.hasPrefix("wechat_")
+    }
+    
+    /// 根据邮箱获取用户
+    private func getUserByEmail(_ email: String) async throws -> User? {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let query = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin FROM user WHERE email = ?"
+        let rows = try db.prepare(query, [email])
+        
+        if let row = rows.makeIterator().next() {
+            guard row.count >= 9 else {
+                throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
+            }
+            
+            return User(
+                id: Int(row[0] as? Int64 ?? 0),
+                username: row[1] as? String ?? "",
+                email: row[2] as? String ?? "",
+                gender: row[4] as? String,
+                height: row[5] as? Double,
+                weight: row[6] as? Double,
+                role: row[3] as? String ?? "regular",
+                isAdmin: (row[8] as? Int64 ?? 0) == 1,
+                createdAt: row[7] as? String ?? ""
+            )
+            }
+            return nil
+        } catch {
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 创建微信用户
+    private func createWechatUser(openId: String, nickname: String) async throws -> User {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let wechatEmail = "wechat_\(openId)"
+            let currentTime = ISO8601DateFormatter().string(from: Date())
+            
+            // 生成唯一的用户名
+            let uniqueUsername = try await generateUniqueUsername(baseName: nickname)
+            
+            let insertQuery = """
+                INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            
+            try db.run(insertQuery, [uniqueUsername, wechatEmail, "", nil, nil, nil, "regular", 0, currentTime])
+            
+            // 获取新创建的用户ID
+            let getUserQuery = "SELECT id FROM user WHERE email = ?"
+            let rows = try db.prepare(getUserQuery, [wechatEmail])
+            
+            if let row = rows.makeIterator().next() {
+                let userId = Int(row[0] as? Int64 ?? 0)
+                
+                return User(
+                    id: userId,
+                    username: uniqueUsername,
+                    email: wechatEmail,
+                    gender: nil,
+                    height: nil,
+                    weight: nil,
+                    role: "regular",
+                    isAdmin: false,
+                    createdAt: currentTime
+                )
+            } else {
+                throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法获取新创建的用户ID"]))
+            }
+        } catch {
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 生成唯一的用户名
+    private func generateUniqueUsername(baseName: String) async throws -> String {
+        guard databaseManager.getConnection() != nil else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        var uniqueUsername = baseName
+        var counter = 1
+        
+        // 检查用户名是否已存在
+        while try await isUsernameExists(uniqueUsername) {
+            uniqueUsername = "\(baseName)\(counter)"
+            counter += 1
+            
+            // 防止无限循环，最多尝试1000次
+            if counter > 1000 {
+                // 如果还是重复，使用时间戳
+                let timestamp = Int(Date().timeIntervalSince1970)
+                uniqueUsername = "\(baseName)_\(timestamp)"
+                break
+            }
+        }
+        
+        return uniqueUsername
+    }
+    
+    /// 检查用户名是否存在
+    private func isUsernameExists(_ username: String) async throws -> Bool {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let checkQuery = "SELECT COUNT(*) FROM user WHERE username = ?"
+            let rows = try db.prepare(checkQuery, [username])
+            
+            if let row = rows.makeIterator().next() {
+                let count = Int(row[0] as? Int64 ?? 0)
+                return count > 0
+            }
+            
+            return false
+        } catch {
+            throw UserServiceError.queryFailed(error)
+        }
+    }
 }

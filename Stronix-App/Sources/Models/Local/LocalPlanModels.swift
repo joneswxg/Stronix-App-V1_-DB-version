@@ -78,12 +78,13 @@ struct LocalPlanSet {
     let reps: Int
     let left_weight: Double?
     let right_weight: Double?
+    let notes: String?
     let created_at: Date
     
     init(id: Int? = nil, plan_id: Int = 0, action_id: Int = 0,
          set_number: Int = 1, weight: Double = 0.0, reps: Int = 12,
          left_weight: Double? = nil, right_weight: Double? = nil,
-         created_at: Date = Date()) {
+         notes: String? = nil, created_at: Date = Date()) {
         self.id = id
         self.plan_id = plan_id
         self.action_id = action_id
@@ -92,6 +93,7 @@ struct LocalPlanSet {
         self.reps = reps
         self.left_weight = left_weight
         self.right_weight = right_weight
+        self.notes = notes
         self.created_at = created_at
     }
     
@@ -106,6 +108,7 @@ struct LocalPlanSet {
             "reps": reps,
             "left_weight": left_weight as Any,
             "right_weight": right_weight as Any,
+            "notes": notes as Any,
             "created_at": ISO8601DateFormatter().string(from: created_at)
         ]
     }
@@ -122,6 +125,7 @@ struct LocalPlanSet {
             reps: data["reps"] as? Int ?? 12,
             left_weight: data["left_weight"] as? Double,
             right_weight: data["right_weight"] as? Double,
+            notes: data["notes"] as? String,
             created_at: data["created_at"] as? String != nil ?
                 dateFormatter.date(from: data["created_at"] as! String) ?? Date() : Date()
         )
@@ -320,14 +324,16 @@ struct CreatePlanSet {
     let reps: Int
     let left_weight: Double?
     let right_weight: Double?
+    let notes: String?
     
     init(set_number: Int = 1, weight: Double? = nil, reps: Int = 12,
-         left_weight: Double? = nil, right_weight: Double? = nil) {
+         left_weight: Double? = nil, right_weight: Double? = nil, notes: String? = nil) {
         self.set_number = set_number
         self.weight = weight
         self.reps = reps
         self.left_weight = left_weight
         self.right_weight = right_weight
+        self.notes = notes
     }
 }
 
@@ -376,13 +382,15 @@ struct UpdatePlanSet {
     let reps: Int
     let left_weight: Double?
     let right_weight: Double?
+    let notes: String?
     
     init(order: Int = 1, weight: Double? = nil, reps: Int = 12,
-         left_weight: Double? = nil, right_weight: Double? = nil) {
+         left_weight: Double? = nil, right_weight: Double? = nil, notes: String? = nil) {
         self.order = order
         self.weight = weight
         self.reps = reps
         self.left_weight = left_weight
         self.right_weight = right_weight
+        self.notes = notes
     }
-} 
+}

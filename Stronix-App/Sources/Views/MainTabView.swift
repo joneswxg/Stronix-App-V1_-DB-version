@@ -5,6 +5,7 @@ struct MainTabView: View {
     @AppStorage("MainTabView_selectedTab") private var selectedTab = 0 // 持久化选中的Tab
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @AppStorage("MainTabView_lastUserSelectedTab") private var lastUserSelectedTab = 0 // 持久化用户最后选择的标签页
+    @StateObject private var keyboardManager = CustomKeyboardManager()
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -55,10 +56,14 @@ struct MainTabView: View {
         .accentColor(theme.primary)
         .overlay(
             // 训练进行中的浮动指示器
-            TrainingFloatingIndicator {
-                // 点击浮动框时，切换到训练Tab
-                selectedTab = 2
-            }
+            TrainingFloatingIndicator(
+                trainingManager: trainingManager,
+                onTap: {
+                    // 点击浮动框时，切换到训练Tab
+                    selectedTab = 2
+                },
+                keyboardManager: keyboardManager
+            )
         )
         .onChange(of: selectedTab) { oldValue, newValue in
             print("🔄 MainTabView selectedTab 变化: \(oldValue) -> \(newValue)")

@@ -132,7 +132,7 @@ struct TrainingPlanDetailView: View {
                     }
                 }
             }
-        .sheet(isPresented: $showEditPlan) {
+        .fullScreenCover(isPresented: $showEditPlan) {
             // 传递回调，保存成功后直接关闭详情页
             EditPlanView(plan: plan, onSaveSuccess: { updatedPlan in
                 print("🔄 TrainingPlanDetailView EditPlanView onSaveSuccess 回调被触发")

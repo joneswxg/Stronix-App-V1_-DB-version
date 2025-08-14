@@ -10,6 +10,7 @@ struct TrainingView: View {
     @ObservedObject var viewModel: PlanViewModel
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
+    @ObservedObject private var notificationManager = NotificationManager.shared
     
     @State private var showActionSelect = false
     @State private var showCancelAlert = false
@@ -19,16 +20,7 @@ struct TrainingView: View {
     @State private var completionError: String?
     @State private var showCompletionError = false
     
-    // 休息计时器状态
-    @State private var showRestTimer = false
-    @State private var currentRestTime: Int = 0
-    @State private var restTimer: Timer?
-    @State private var isRestTimerPaused = false
-    @State private var currentSetId: String = ""
-    
-    // 组的倒计时状态
-    @State private var setRestTimers: [String: Int] = [:] // 每组的剩余休息时间
-    @State private var setTimers: [String: Timer] = [:] // 每组的计时器
+    // 计时器状态现在由TrainingSessionManager管理
     
     // 计划是否有变动
     @State private var planHasChanges = false
@@ -47,33 +39,31 @@ struct TrainingView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 8) {
-                topInfoBar
-                planNameSection
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 8) {
+                    topInfoBar
+                    planNameSection
 
-                if !trainingManager.editingActions.isEmpty {
-                    actionListContent
-                } else {
-                    emptyActionListContent
+                    if !trainingManager.editingActions.isEmpty {
+                        actionListContent
+                    } else {
+                        emptyActionListContent
+                    }
+                }
+                .padding(.top, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .offset(y: keyboardManager.isShowing ? -110 : 0) // 键盘出现时上移
+                .animation(.easeInOut(duration: 0.3), value: keyboardManager.isShowing)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // 点击空白区域隐藏键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
+                        hideSystemKeyboard()
+                    }
                 }
                 
-                // 为键盘预留空间
-                if keyboardManager.isShowing {
-                    Spacer()
-                        .frame(height: 220)
-                }
-            }
-            .padding(.top, 8)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                // 点击空白区域隐藏键盘
-                if keyboardManager.isShowing {
-                    keyboardManager.cancelKeyboard()
-                    hideSystemKeyboard()
-                }
-            }
-            
                 // 自定义键盘
                 if keyboardManager.isShowing {
                     CustomNumberKeyboard(
@@ -84,12 +74,14 @@ struct TrainingView: View {
                         isInteger: keyboardManager.isInteger,
                         keyboardManager: keyboardManager
                     )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                     .onChange(of: keyboardManager.isShowing) { _, isShowing in
                         if !isShowing {
                             hideSystemKeyboard()
                         }
                     }
                 }
+            }
         }
         .navigationTitle("训练中")
         .navigationBarTitleDisplayMode(.inline)
@@ -146,9 +138,6 @@ struct TrainingView: View {
             if !trainingManager.isTrainingActive {
                 trainingManager.startTraining(with: plan)
             }
-        }
-        .onDisappear {
-            stopAllSetTimers()
         }
     }
     
@@ -215,15 +204,14 @@ struct TrainingView: View {
         }
         
         // 清理 setRestTimers (Dictionary)
-        setRestTimers = setRestTimers.filter { key, _ in
+        trainingManager.setRestTimers = trainingManager.setRestTimers.filter { key, _ in
             !key.hasPrefix("\(actionIdString)_")
         }
         
         // 清理 setTimers (Dictionary)
-        for (key, timer) in setTimers {
-            if key.hasPrefix("\(actionIdString)_") {
-                timer.invalidate()
-                setTimers.removeValue(forKey: key)
+        for setId in trainingManager.setRestTimers.keys {
+            if setId.hasPrefix("\(actionIdString)_") {
+                trainingManager.invalidateSetTimer(setId: setId)
             }
         }
         
@@ -253,118 +241,14 @@ struct TrainingView: View {
     // MARK: - 组休息计时器方法
     
     private func handleSetCompleted(setId: String, restTime: Int) {
-        // 开始该组的倒计时
-        startSetRestTimer(setId: setId, restTime: restTime)
+        trainingManager.handleSetCompleted(setId: setId, restTime: restTime)
     }
-    
+
     private func handleRestTimerTapped(setId: String, restTime: Int) {
-        // 点击倒计时框时，弹出编辑窗口
-        currentSetId = setId
-        currentRestTime = setRestTimers[setId] ?? restTime
-        showRestTimer = true
-        startRestTimer()
+        trainingManager.handleRestTimerTapped(setId: setId, restTime: restTime)
     }
     
-    private func startSetRestTimer(setId: String, restTime: Int) {
-        // 停止该组之前的计时器
-        setTimers[setId]?.invalidate()
-        
-        // 设置初始时间
-        setRestTimers[setId] = restTime
-        
-        // 开始新的计时器
-        setTimers[setId] = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if let currentTime = setRestTimers[setId], currentTime > 0 {
-                setRestTimers[setId] = currentTime - 1
-            } else {
-                // 时间到了，停止计时器
-                setTimers[setId]?.invalidate()
-                setTimers.removeValue(forKey: setId)
-                setRestTimers.removeValue(forKey: setId)
-            }
-        }
-    }
-    
-    private func stopSetTimer(setId: String) {
-        setTimers[setId]?.invalidate()
-        setTimers.removeValue(forKey: setId)
-        setRestTimers.removeValue(forKey: setId)
-    }
-    
-    private func stopAllSetTimers() {
-        for timer in setTimers.values {
-            timer.invalidate()
-        }
-        setTimers.removeAll()
-        setRestTimers.removeAll()
-    }
-    
-    // MARK: - 浮动休息计时器方法
-    
-    private func startRestTimer() {
-        isRestTimerPaused = false
-        restTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if currentRestTime > 0 {
-                currentRestTime -= 1
-                // 同步更新组计时器
-                setRestTimers[currentSetId] = currentRestTime
-            } else {
-                skipRestTimer()
-            }
-        }
-    }
-    
-    private func stopRestTimer() {
-        restTimer?.invalidate()
-        restTimer = nil
-    }
-    
-    private func toggleRestTimer() {
-        if isRestTimerPaused {
-            startRestTimer()
-        } else {
-            stopRestTimer()
-            isRestTimerPaused = true
-        }
-    }
-    
-    private func resetRestTimer() {
-        stopRestTimer()
-        // 重置为该动作的默认休息时间
-        if let actionId = currentSetId.split(separator: "_").first,
-           let action = trainingManager.editingActions.first(where: { String($0.id) == actionId }) {
-            currentRestTime = action.restTime
-            setRestTimers[currentSetId] = action.restTime
-        }
-        startRestTimer()
-    }
-    
-    private func skipRestTimer() {
-        stopRestTimer()
-        stopSetTimer(setId: currentSetId)
-        showRestTimer = false
-        isRestTimerPaused = false
-    }
-    
-    private func closeRestTimer() {
-        stopRestTimer()
-        // 恢复组计时器
-        if let remainingTime = setRestTimers[currentSetId] {
-            startSetRestTimer(setId: currentSetId, restTime: remainingTime)
-        }
-        showRestTimer = false
-        isRestTimerPaused = false
-    }
-    
-    private func addRestTime(_ seconds: Int) {
-        currentRestTime += seconds
-        setRestTimers[currentSetId] = currentRestTime
-    }
-    
-    private func subtractRestTime(_ seconds: Int) {
-        currentRestTime = max(0, currentRestTime - seconds)
-        setRestTimers[currentSetId] = currentRestTime
-    }
+    // Timer-related methods moved to TrainingSessionManager
     
     private func checkPlanChangesAndProceed() {
         // 只检查计划是否有变动，不保存训练历史
@@ -448,7 +332,7 @@ struct TrainingView: View {
                         completedSets: $trainingManager.completedSets,
                         setNotes: $trainingManager.setNotes,
                         showNoteInput: .constant(Set<String>()),
-                        setRestTimers: $setRestTimers,
+                        setRestTimers: $trainingManager.setRestTimers,
                         onDelete: {
                             if canDeleteAction {
                                 deleteAction(action)
@@ -540,31 +424,31 @@ struct TrainingView: View {
 
     private var restTimerOverlay: some View {
         Group {
-            if showRestTimer {
+            if trainingManager.showRestTimer {
                 RestTimerOverlay(
-                    restTime: $currentRestTime,
-                    isRunning: !isRestTimerPaused,
+                    restTime: $trainingManager.currentRestTime,
+                    isRunning: !trainingManager.isRestTimerPaused,
                     onPause: {
-                        toggleRestTimer()
+                        trainingManager.toggleRestTimer()
                     },
                     onReset: {
-                        resetRestTimer()
+                        trainingManager.resetRestTimer()
                     },
                     onSkip: {
-                        skipRestTimer()
+                        trainingManager.skipRestTimer()
                     },
                     onClose: {
-                        closeRestTimer()
+                        trainingManager.closeRestTimer()
                     },
                     onAddTime: {
-                        addRestTime(10)
+                        trainingManager.addRestTime(10)
                     },
                     onSubtractTime: {
-                        subtractRestTime(10)
+                        trainingManager.subtractRestTime(10)
                     }
                 )
                 .transition(.scale.combined(with: .opacity))
-                .animation(.spring(), value: showRestTimer)
+                .animation(.spring(), value: trainingManager.showRestTimer)
             }
         }
     }
@@ -703,14 +587,16 @@ struct TrainingActionCard: View {
                     }
                 }
             })
-        }
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 16)
     }
     
     // MARK: - 动作头部
     private var actionHeader: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                // 动作图片 - 使用本地图片加载
+                 // 动作图片 - 使用本地图片加载
                 Group {
                     if let image = loadLocalActionImage(fileName: extractImageFilename(from: action.imageUrl)) {
                         image
@@ -752,12 +638,14 @@ struct TrainingActionCard: View {
                         Spacer()
                         
                         // 左右模式开关
-                        Toggle(isOn: $action.recordBilateral) {
+                        HStack(spacing: 4) {
                             Text("记录左右")
-                                .font(.system(size: 12))
+                                .font(.system(size: 14))
                                 .foregroundColor(theme.secondary)
+                            Toggle("", isOn: $action.recordBilateral)
+                                .scaleEffect(0.8)
+                                .tint(theme.primary)
                         }
-                        .scaleEffect(0.8)
                         .onChange(of: action.recordBilateral) { oldValue, newValue in
                             // 切换模式时清空重量数据 - 使用更安全的方式
                             var updatedSets = action.sets
@@ -821,47 +709,47 @@ struct TrainingActionCard: View {
     
     // 表头组件
     private var tableHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 6) {
             Text("组")
-                .frame(width: 30, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
+                .frame(width: 30, height: 36, alignment: .center)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(theme.onSurface)
             
             if action.recordBilateral {
                 Text("左kg")
-                    .frame(width: 40, alignment: .leading)
+                    .frame(width: 50, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+                    .foregroundColor(theme.onSurface)
                 
                 Text("右kg")
-                    .frame(width: 40, alignment: .leading)
+                    .frame(width: 50, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+                    .foregroundColor(theme.onSurface)
             } else {
                 Text("kg")
-                    .frame(width: 40, alignment: .leading)
+                    .frame(width: 50, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+                    .foregroundColor(theme.onSurface)
             }
             
             Text("次数")
-                .frame(width: 40, alignment: .leading)
+                .frame(width: 50, height: 36, alignment: .center)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
+                .foregroundColor(theme.onSurface)
             
             Text("完成")
-                .frame(width: 40, alignment: .center)
+                .frame(width: 50, height: 36, alignment: .center)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
+                .foregroundColor(theme.onSurface)
             
             Text("休息")
-                .frame(width: 40, alignment: .center)
+                .frame(width: 50, height: 36, alignment: .center)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
+                .foregroundColor(theme.onSurface)
             
             Spacer()
         }
-        .padding(.leading, 16)
+        .padding(.leading, 0)
         .padding(.trailing, 16)
     }
     
@@ -927,12 +815,12 @@ struct TrainingActionCard: View {
             let isCompleted = completedSets.contains(setId)
             let restTimeRemaining = setRestTimers[setId]
             
-            HStack(spacing: 12) {
+            HStack(spacing: 6) {
                 // 组数标号
                 Text("\(index + 1)")
                     .font(.system(size: 16, weight: .medium))
                     .frame(width: 30, alignment: .center)
-                    .foregroundColor(isCompleted ? .blue : .primary)
+                    .foregroundColor(isCompleted ? theme.primary : theme.onSurface)
                 
                 if action.recordBilateral {
                     // 左侧重量
@@ -958,7 +846,7 @@ struct TrainingActionCard: View {
                         Text(currentSet.leftWeight == 0 ? "0" : String(format: "%.1f", currentSet.leftWeight))
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
-                            .frame(width: 40, height: 32)
+                            .frame(width: 50, height: 36)
                             .background(isSelected ? theme.primary : theme.background)
                             .cornerRadius(6)
                             .overlay(
@@ -990,7 +878,7 @@ struct TrainingActionCard: View {
                         Text(currentSet.rightWeight == 0 ? "0" : String(format: "%.1f", currentSet.rightWeight))
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
-                             .frame(width: 40, height: 32)
+                             .frame(width: 50, height: 36)
                              .background(isSelected ? theme.primary : theme.background)
                              .cornerRadius(6)
                              .overlay(
@@ -1022,7 +910,7 @@ struct TrainingActionCard: View {
                         Text(currentSet.weight == 0 ? "0" : String(format: "%.1f", currentSet.weight))
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
-                            .frame(width: 40, height: 32)
+                            .frame(width: 50, height: 36)
                             .background(isSelected ? theme.primary : theme.background)
                             .cornerRadius(6)
                             .overlay(
@@ -1055,7 +943,7 @@ struct TrainingActionCard: View {
                     Text("\(currentSet.reps)")
                         .font(.system(size: 14))
                         .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
-                        .frame(width: 40, height: 32)
+                        .frame(width: 50, height: 36)
                         .background(isSelected ? theme.primary : theme.background)
                         .cornerRadius(6)
                         .overlay(
@@ -1075,10 +963,10 @@ struct TrainingActionCard: View {
                     }
                 }) {
                     Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(isCompleted ? .green : theme.secondary)
+                        .foregroundColor(isCompleted ? theme.primary : theme.secondary)
                         .font(.system(size: 20))
                 }
-                .frame(width: 40, alignment: .center)
+                .frame(width: 50, alignment: .center)
                 
                 // 休息时间显示/倒计时框
                 Button(action: {
@@ -1092,7 +980,7 @@ struct TrainingActionCard: View {
                             .foregroundColor(theme.onPrimary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(.orange)
+                            .background(theme.primary)
                             .cornerRadius(8)
                     } else {
                         // 显示默认休息时间

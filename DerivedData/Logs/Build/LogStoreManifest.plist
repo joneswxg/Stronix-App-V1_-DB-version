@@ -6,7 +6,7 @@
 	<integer>11</integer>
 	<key>logs</key>
 	<dict>
-		<key>88DE4127-8986-4AAC-B9BB-8350F69B52F9</key>
+		<key>A5E4DAA1-C595-46E6-85FD-6D522183B512</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>88DE4127-8986-4AAC-B9BB-8350F69B52F9.xcactivitylog</string>
+			<string>A5E4DAA1-C595-46E6-85FD-6D522183B512.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -38,15 +38,57 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Building project Stronix-App-V1 with scheme Stronix-App-V1</string>
+			<string>Archiving project Stronix-App-V1 with scheme Stronix-App-V1</string>
 			<key>timeStartedRecording</key>
-			<real>776436882.50174403</real>
+			<real>776839705.47736204</real>
 			<key>timeStoppedRecording</key>
-			<real>776436928.11828101</real>
+			<real>776839755.345801</real>
 			<key>title</key>
-			<string>Building project Stronix-App-V1 with scheme Stronix-App-V1</string>
+			<string>Archiving project Stronix-App-V1 with scheme Stronix-App-V1</string>
 			<key>uniqueIdentifier</key>
-			<string>88DE4127-8986-4AAC-B9BB-8350F69B52F9</string>
+			<string>A5E4DAA1-C595-46E6-85FD-6D522183B512</string>
+		</dict>
+		<key>EA7047D8-AB31-4B1A-A1EA-03DF61120F25</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>EA7047D8-AB31-4B1A-A1EA-03DF61120F25.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Stronix-App-V1 project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Stronix-App-V1</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Archiving project Stronix-App-V1 with scheme Stronix-App-V1</string>
+			<key>timeStartedRecording</key>
+			<real>776786098.03852201</real>
+			<key>timeStoppedRecording</key>
+			<real>776786257.24216497</real>
+			<key>title</key>
+			<string>Archiving project Stronix-App-V1 with scheme Stronix-App-V1</string>
+			<key>uniqueIdentifier</key>
+			<string>EA7047D8-AB31-4B1A-A1EA-03DF61120F25</string>
 		</dict>
 	</dict>
 </dict>

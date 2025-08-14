@@ -4,10 +4,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var themeManager: ThemeManager
+    @ObservedObject private var notificationManager = NotificationManager.shared
     @State private var selectedLanguage = "中文"
-    @State private var notificationsEnabled = true
-    @State private var soundEnabled = true
-    @State private var vibrationEnabled = true
     
     let languages = ["中文", "English"]
     
@@ -81,19 +79,19 @@ struct SettingsView: View {
                             SettingToggleRow(
                                 title: "推送通知",
                                 subtitle: "接收训练提醒和更新通知",
-                                isOn: $notificationsEnabled
+                                isOn: $notificationManager.notificationsEnabled
                             )
                             
                             SettingToggleRow(
                                 title: "声音提醒",
                                 subtitle: "训练时的声音提示",
-                                isOn: $soundEnabled
+                                isOn: $notificationManager.soundEnabled
                             )
                             
                             SettingToggleRow(
                                 title: "震动反馈",
                                 subtitle: "操作时的触觉反馈",
-                                isOn: $vibrationEnabled
+                                isOn: $notificationManager.vibrationEnabled
                             )
                         }
                     }

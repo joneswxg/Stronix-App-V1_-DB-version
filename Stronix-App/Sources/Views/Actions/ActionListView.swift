@@ -8,6 +8,7 @@ struct ActionListView: View {
     @State private var searchText = ""
     @State private var selectedEquipmentId: Int = 0 // 0表示"全部"
     @State private var selectedTargetMuscleId: Int = 0 // 修改：0表示"所有动作"
+    @State private var hasInitialized = false // 添加初始化标志
     @StateObject private var viewModel = ActionListViewModel()
     
     // MARK: - 设备过滤视图
@@ -386,13 +387,17 @@ struct ActionListView: View {
             .onAppear {
                 Task {
                     await viewModel.loadFilters()
-                    // 初始化时加载动作，保持当前的 selectedTargetMuscleId 状态
-                    await viewModel.loadActionsByFilters(
-                        targetMuscleId: selectedTargetMuscleId == 0 ? nil : selectedTargetMuscleId,
-                        equipmentId: selectedEquipmentId,
-                        bodyPartId: selectedBodyPartId,
-                        searchText: searchText
-                    )
+                    // 只在首次加载时设置默认选择胸肌
+                    if !hasInitialized {
+                        selectedTargetMuscleId = 5
+                        hasInitialized = true
+                        await viewModel.loadActionsByFilters(
+                            targetMuscleId: 5,
+                            equipmentId: selectedEquipmentId,
+                            bodyPartId: selectedBodyPartId,
+                            searchText: searchText
+                        )
+                    }
                 }
             }
             .onChange(of: viewModel.targetMuscles) { (oldValue: [TargetMuscle], newValue: [TargetMuscle]) in

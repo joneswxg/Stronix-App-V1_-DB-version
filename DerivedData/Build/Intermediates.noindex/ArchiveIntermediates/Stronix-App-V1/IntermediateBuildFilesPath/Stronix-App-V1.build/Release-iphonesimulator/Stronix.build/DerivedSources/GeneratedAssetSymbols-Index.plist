@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>colors</key>
+	<array/>
+	<key>images</key>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Resources/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameStronixLogo</string>
+			<key>relativePath</key>
+			<string>./StronixLogo.imageset</string>
+			<key>swiftSymbol</key>
+			<string>stronixLogo</string>
+		</dict>
+	</array>
+	<key>symbols</key>
+	<array/>
+</dict>
+</plist>

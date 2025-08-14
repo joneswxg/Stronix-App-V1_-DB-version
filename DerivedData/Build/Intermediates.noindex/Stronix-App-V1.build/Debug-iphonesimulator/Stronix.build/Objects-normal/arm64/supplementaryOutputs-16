@@ -1,0 +1,18 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/HistoryView.swift":
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryView.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryView.d"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryView.swiftconstvalues"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryView.o"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryView.swiftdeps"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/EditHistoryDetailView.swift":
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/EditHistoryDetailView.d"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/EditHistoryDetailView.dia"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/EditHistoryDetailView.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/EditHistoryDetailView.swiftdeps"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/EditHistoryDetailView.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/PlanListView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanListView.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanListView.swiftdeps"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanListView.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanListView.o"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/PlanListView.dia"

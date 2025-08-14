@@ -49,10 +49,11 @@ struct LocalTrainingHistoryDetail {
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
+    let note: String?
     
     init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg",
          reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil,
-         right_weight: Double? = nil, is_completed: Bool = false) {
+         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil) {
         self.action_id = action_id
         self.set_number = set_number
         self.weight = weight
@@ -62,6 +63,7 @@ struct LocalTrainingHistoryDetail {
         self.left_weight = left_weight
         self.right_weight = right_weight
         self.is_completed = is_completed
+        self.note = note
     }
     
     /// 从现有的TrainingHistoryDetail转换
@@ -75,6 +77,7 @@ struct LocalTrainingHistoryDetail {
         self.left_weight = detail.left_weight
         self.right_weight = detail.right_weight
         self.is_completed = detail.is_completed
+        self.note = detail.note
     }
 }
 
@@ -145,6 +148,7 @@ struct LocalTrainingHistoryDetailData {
     let right_weight: Double?
     let is_completed: Bool
     let action_name: String?
+    let note: String?
 }
 
 // MARK: - 本地训练历史列表响应模型
@@ -343,10 +347,11 @@ struct TrainingHistoryDetail: Codable {
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
+    let note: String?
     
     init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg", 
          reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil, 
-         right_weight: Double? = nil, is_completed: Bool = false) {
+         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil) {
         self.action_id = action_id
         self.set_number = set_number
         self.weight = weight
@@ -356,6 +361,7 @@ struct TrainingHistoryDetail: Codable {
         self.left_weight = left_weight
         self.right_weight = right_weight
         self.is_completed = is_completed
+        self.note = note
     }
 }
 
@@ -415,4 +421,4 @@ struct SetDetail {
     let reps: Int
     let actualReps: Int
     let isCompleted: Bool
-} 
+}

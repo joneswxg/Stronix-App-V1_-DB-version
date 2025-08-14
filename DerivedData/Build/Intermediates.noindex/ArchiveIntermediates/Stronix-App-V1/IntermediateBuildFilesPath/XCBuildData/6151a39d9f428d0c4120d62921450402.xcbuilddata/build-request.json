@@ -1,0 +1,81 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildOnly"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "b464bdffa51e76626372dbb5756de2f4ebd5c3ff72aac0dfa7fd2b20640a16e5"
+    }
+  ],
+  "containerPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App-V1.xcodeproj",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "install",
+    "activeArchitecture" : "arm64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "platform" : "iphonesimulator",
+      "sdk" : "iphonesimulator18.5",
+      "sdkVariant" : "iphonesimulator",
+      "supportedArchitectures" : [
+        "arm64",
+        "x86_64"
+      ],
+      "targetArchitecture" : "arm64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Products",
+      "derivedDataPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData",
+      "indexDataStoreFolderPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Release",
+    "overrides" : {
+      "commandLine" : {
+        "table" : {
+
+        }
+      },
+      "synthesized" : {
+        "table" : {
+          "ACTION" : "install",
+          "ASSET_PACK_FOLDER_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/InstallationBuildProductsLocation/OnDemandResources",
+          "ASSETCATALOG_COMPILER_FLATTENED_APP_ICON_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/ProductIcon.png",
+          "COLOR_DIAGNOSTICS" : "YES",
+          "DEPLOYMENT_LOCATION" : "YES",
+          "DEPLOYMENT_POSTPROCESSING" : "YES",
+          "diagnostic_message_length" : "67",
+          "DSTROOT" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/InstallationBuildProductsLocation",
+          "EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE" : "NO",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_SIGNATURE_AGGREGATION" : "YES",
+          "ENABLE_XOJIT_PREVIEWS" : "YES",
+          "INDEX_ENABLE_DATA_STORE" : "NO",
+          "MESSAGES_APPLICATION_EXTENSION_SUPPORT_FOLDER_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/MessagesApplicationExtensionSupport",
+          "MESSAGES_APPLICATION_SUPPORT_FOLDER_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/MessagesApplicationSupport",
+          "OBJROOT" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/IntermediateBuildFilesPath",
+          "ONLY_ACTIVE_ARCH" : "YES",
+          "SHARED_PRECOMPS_DIR" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/PrecompiledHeaders",
+          "SIGNATURE_METADATA_FOLDER_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/Signatures",
+          "SWIFT_STDLIB_TOOL_UNSIGNED_DESTINATION_DIR" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/SwiftSupport",
+          "SYMROOT" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath",
+          "WATCHKIT_2_SUPPORT_FOLDER_PATH" : "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Stronix-App-V1/BuildProductsPath/WatchKitSupport2"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "archive",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}

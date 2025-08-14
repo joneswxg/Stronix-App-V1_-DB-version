@@ -1,0 +1,24 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/BodyMeasurementListView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementListView.swiftconstvalues"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementListView.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementListView.d"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementListView.swiftdeps"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementListView.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/QuickStartTrainingView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/QuickStartTrainingView.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/QuickStartTrainingView.swiftdeps"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/QuickStartTrainingView.o"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/QuickStartTrainingView.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/QuickStartTrainingView.d"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/BodyMeasurementChange.swift":
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementChange.o"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementChange.d"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementChange.swiftdeps"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementChange.swiftconstvalues"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementChange.dia"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/HistoryPlaceholderView.swift":
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryPlaceholderView.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryPlaceholderView.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryPlaceholderView.dia"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryPlaceholderView.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/HistoryPlaceholderView.o"

@@ -240,6 +240,7 @@ struct APIPlanSet: Codable {
     let reps: Int
     let left_weight: Double
     let right_weight: Double
+    let notes: String?
     let created_at: String?
     
     // 添加自定义解码器来处理可能的类型问题
@@ -264,11 +265,14 @@ struct APIPlanSet: Codable {
         self.left_weight = (try? container.decode(Double.self, forKey: .left_weight)) ?? 0.0
         self.right_weight = (try? container.decode(Double.self, forKey: .right_weight)) ?? 0.0
         
+        // 处理notes字段
+        self.notes = try? container.decode(String.self, forKey: .notes)
+        
         self.created_at = try? container.decode(String.self, forKey: .created_at)
     }
     
     private enum CodingKeys: String, CodingKey {
-        case id, set_number, weight, reps, left_weight, right_weight, created_at
+        case id, set_number, weight, reps, left_weight, right_weight, notes, created_at
     }
 }
 

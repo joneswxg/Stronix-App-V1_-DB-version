@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 // MARK: - 数据模型
 struct PlanAction: Identifiable {
@@ -104,6 +105,12 @@ struct CreatePlanView: View {
                     if keyboardManager.isShowing {
                         keyboardManager.cancelKeyboard()
                         hideSystemKeyboard()
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                    // 系统键盘即将显示时，隐藏自定义键盘
+                    if keyboardManager.isShowing {
+                        keyboardManager.cancelKeyboard()
                     }
                 }
                 
@@ -250,7 +257,7 @@ struct CreatePlanView: View {
                 Image(systemName: "plus.circle.fill")
                 Text("添加动作")
             }
-            .foregroundColor(.blue)
+            .foregroundColor(theme.primary)
             .padding()
             .frame(maxWidth: .infinity)
             .background(theme.surface)
@@ -635,6 +642,7 @@ struct PlanActionCard: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(theme.secondary)
                         }
+                        .tint(theme.primary)
                         .scaleEffect(0.8)
                         .disabled(isDisabled)
                         .onChange(of: action.isLeftRightMode) { _, newValue in
@@ -728,23 +736,23 @@ struct PlanActionCard: View {
                     Text("右\(weightUnit.displayName)")
                         .frame(width: 60, height: 36, alignment: .center)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.gray)
-                        .background(Color(UIColor.systemGroupedBackground))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
                         .cornerRadius(6)
                 } else {
                     Text(weightUnit.displayName)
                         .frame(width: 60, height: 36, alignment: .center)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.gray)
-                        .background(Color(UIColor.systemGroupedBackground))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
                         .cornerRadius(6)
                 }
                 
                 Text("次数")
                     .frame(width: 60, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
-                    .background(Color(UIColor.systemGroupedBackground))
+                    .foregroundColor(theme.secondary)
+                    .background(theme.surface)
                     .cornerRadius(6)
                 
                 Spacer()
@@ -831,11 +839,11 @@ struct PlanActionCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                             )
                     }
                     .disabled(isDisabled)
@@ -867,11 +875,11 @@ struct PlanActionCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                             )
                     }
                     .disabled(isDisabled)
@@ -903,11 +911,11 @@ struct PlanActionCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                         )
                     }
                     .disabled(isDisabled)
@@ -937,11 +945,11 @@ struct PlanActionCard: View {
                         .font(.system(size: 14))
                         .foregroundColor(isSelected ? .white : .black)
                         .frame(width: 60, height: 36)
-                        .background(isSelected ? Color.blue : Color(UIColor.systemGroupedBackground))
+                        .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                         )
                 }
                 .disabled(isDisabled)
@@ -998,6 +1006,12 @@ struct PlanActionCard: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .font(.system(size: 14))
                             .disabled(isDisabled)
+                            .onTapGesture {
+                                // 当点击备注输入框时，隐藏自定义键盘
+                                if keyboardManager.isShowing {
+                                    keyboardManager.cancelKeyboard()
+                                }
+                            }
                     }
                     
                     Spacer()

@@ -221,7 +221,7 @@ struct PlanListView: View {
                 }
             }
         }
-        .navigationDestination(isPresented: $navigateToCreatePlan) {
+        .fullScreenCover(isPresented: $navigateToCreatePlan) {
             CreatePlanView()
                 .onDisappear {
                     // 创建计划后刷新数据
@@ -234,7 +234,7 @@ struct PlanListView: View {
                         }
                     }
                 }
-        }
+            }
         .sheet(isPresented: $showLogin) {
             LoginView()
                 .onDisappear {

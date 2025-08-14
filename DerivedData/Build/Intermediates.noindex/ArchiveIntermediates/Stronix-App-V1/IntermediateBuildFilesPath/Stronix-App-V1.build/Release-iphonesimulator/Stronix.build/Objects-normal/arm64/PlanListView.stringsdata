@@ -1,0 +1,320 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Plans/PlanListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "错误",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "STRONIX",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "请先登录",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "登录后可以查看和管理您的训练计划",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "立即登录",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "您还没有创建任何训练计划",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "创建计划",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "快速开始",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "计划模版",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "个人计划",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "重试",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "登录",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 256
+        }
+      },
+      {
+        "comment": "",
+        "key": "暂无模板计划",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "系统模板计划正在准备中",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "暂无个人计划",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 371
+        }
+      },
+      {
+        "comment": "",
+        "key": "点击右上角 + 号创建您的第一个训练计划",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "复制模板计划",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 484
+        }
+      },
+      {
+        "comment": "",
+        "key": "...",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "暂无动作",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 428
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ x %lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 416
+        }
+      },
+      {
+        "comment": "",
+        "key": "容量: %lldkg",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 437
+        }
+      },
+      {
+        "comment": "",
+        "key": "查看",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 449
+        }
+      },
+      {
+        "comment": "",
+        "key": "使用",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 485
+        }
+      },
+      {
+        "comment": "",
+        "key": "是",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 486
+        }
+      },
+      {
+        "comment": "",
+        "key": "是否将模板复制到个人计划？",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 494
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除计划",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 673
+        }
+      },
+      {
+        "comment": "",
+        "key": "编辑",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 523
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 529
+        }
+      },
+      {
+        "comment": "",
+        "key": "...",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 554
+        }
+      },
+      {
+        "comment": "",
+        "key": "暂无动作",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 559
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ x %lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 547
+        }
+      },
+      {
+        "comment": "",
+        "key": "容量: %lldkg",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 568
+        }
+      },
+      {
+        "comment": "",
+        "key": "查看",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 580
+        }
+      },
+      {
+        "comment": "",
+        "key": "编辑",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 598
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 674
+        }
+      },
+      {
+        "comment": "",
+        "key": "删除",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 675
+        }
+      },
+      {
+        "comment": "",
+        "key": "确定要删除训练计划 \"%@\" 吗？此操作无法撤销。",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 683
+        }
+      }
+    ]
+  },
+  "version": 1
+}

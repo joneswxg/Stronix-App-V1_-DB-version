@@ -130,22 +130,32 @@ struct LoginView: View {
                             loginWithWechat()
                         }) {
                             HStack(spacing: 12) {
-                                Image(systemName: "message.circle.fill")
-                                    .foregroundColor(theme.success)
-                                    .font(.system(size: 20))
-                                Text("微信登录")
+                                if localUserService.isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: theme.success))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "message.circle.fill")
+                                        .foregroundColor(theme.success)
+                                        .font(.system(size: 20))
+                                }
+                                Text(localUserService.isLoading ? "微信登录中..." : "微信登录")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(theme.onSurface)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(theme.background)
+                            .background(
+                                localUserService.isLoading ? 
+                                    theme.background.opacity(0.7) : theme.background
+                            )
                             .cornerRadius(25)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 25)
                                     .stroke(theme.secondary.opacity(0.3), lineWidth: 1)
                             )
                         }
+                        .disabled(localUserService.isLoading)
                     }
                     .padding(.horizontal, 24)
                     
@@ -250,8 +260,39 @@ struct LoginView: View {
     }
     
     private func loginWithWechat() {
-        // TODO: 实现微信登录逻辑
-        print("微信登录")
+        print("🚀 开始微信登录流程")
+        
+        Task {
+            do {
+                let response = try await localUserService.loginWithWechat()
+                
+                if !response.success {
+                    await MainActor.run {
+                        errorMessage = response.message
+                        showError = true
+                        print("❌ 微信登录失败: \(response.message)")
+                    }
+                } else {
+                    print("✅ 微信登录成功")
+                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
+                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
+                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
+                    
+                    // 微信登录成功后自动关闭登录页面
+                    await MainActor.run {
+                        if localUserService.isLoggedIn {
+                            dismiss()
+                        }
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    showError = true
+                    print("❌ 微信登录异常: \(error)")
+                }
+            }
+        }
     }
 }
 

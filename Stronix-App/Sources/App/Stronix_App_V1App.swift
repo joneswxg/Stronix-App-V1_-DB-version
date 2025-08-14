@@ -9,15 +9,44 @@ import SwiftUI
 
 @main
 struct Stronix_App_V1App: App {
+    @Environment(\.scenePhase) private var scenePhase
+    
     init() {
         // 简化的调试信息
         printSimpleDatabaseInfo()
+        
+        // 请求通知权限
+        NotificationManager.shared.requestPermissionIfNeeded()
     }
     
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .withAppTheme()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            handleScenePhaseChange(from: oldPhase, to: newPhase)
+        }
+    }
+    
+    // 处理应用生命周期变化
+    private func handleScenePhaseChange(from oldPhase: ScenePhase, to newPhase: ScenePhase) {
+        switch newPhase {
+        case .background:
+            print("📱 应用进入后台")
+            // 应用进入后台时，保存计时器状态
+            TrainingSessionManager.shared.handleAppDidEnterBackground()
+            
+        case .active:
+            print("📱 应用变为活跃状态")
+            // 应用回到前台时，恢复计时器状态
+            TrainingSessionManager.shared.handleAppDidBecomeActive()
+            
+        case .inactive:
+            print("📱 应用变为非活跃状态")
+            
+        @unknown default:
+            break
         }
     }
     

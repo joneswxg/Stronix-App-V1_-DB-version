@@ -1,0 +1,18 @@
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/BodyMeasurementDetail.swift":
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementDetail.o"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementDetail.swiftdeps"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementDetail.d"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementDetail.dia"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/BodyMeasurementDetail.swiftconstvalues"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/Profile/ForgotPasswordView.swift":
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/ForgotPasswordView.dia"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/ForgotPasswordView.swiftconstvalues"
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/ForgotPasswordView.swiftdeps"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/ForgotPasswordView.d"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/ForgotPasswordView.o"
+"/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/BodyMeasurement/AddMeasurementSheet.swift":
+  swift-dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/AddMeasurementSheet.swiftdeps"
+  diagnostics: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/AddMeasurementSheet.dia"
+  object: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/AddMeasurementSheet.o"
+  dependencies: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/AddMeasurementSheet.d"
+  const-values: "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/DerivedData/Build/Intermediates.noindex/Stronix-App-V1.build/Debug-iphonesimulator/Stronix.build/Objects-normal/arm64/AddMeasurementSheet.swiftconstvalues"

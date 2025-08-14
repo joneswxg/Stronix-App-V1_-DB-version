@@ -6,8 +6,8 @@
         "comment": "",
         "key": "训练进行中",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 24
+          "startingColumn": 18,
+          "startingLine": 81
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "TrainingFloatingIndicator Preview",
         "location": {
           "startingColumn": 1,
-          "startingLine": 78
+          "startingLine": 156
         }
       }
     ]

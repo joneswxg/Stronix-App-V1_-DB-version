@@ -1,0 +1,32 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/ManageHistoryRecordsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "STRONIX",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "管理历史记录功能开发中...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 46
+        }
+      }
+    ]
+  },
+  "version": 1
+}

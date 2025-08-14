@@ -7,7 +7,7 @@
         "key": "体测",
         "location": {
           "startingColumn": 30,
-          "startingLine": 13
+          "startingLine": 14
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "动作",
         "location": {
           "startingColumn": 30,
-          "startingLine": 19
+          "startingLine": 20
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "训练",
         "location": {
           "startingColumn": 26,
-          "startingLine": 37
+          "startingLine": 38
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "历史",
         "location": {
           "startingColumn": 30,
-          "startingLine": 44
+          "startingLine": 45
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "其他",
         "location": {
           "startingColumn": 30,
-          "startingLine": 50
+          "startingLine": 51
         }
       }
     ]

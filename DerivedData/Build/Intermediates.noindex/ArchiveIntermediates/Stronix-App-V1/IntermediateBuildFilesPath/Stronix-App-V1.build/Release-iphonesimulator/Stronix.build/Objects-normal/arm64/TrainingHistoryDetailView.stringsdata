@@ -1,0 +1,120 @@
+{
+  "source": "/Users/joneswang/Desktop/Project-Dev/Stronix-App-V1/Stronix-App/Sources/Views/History/TrainingHistoryDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "正在加载训练详细数据",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "加载训练详情...",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "加载失败",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "重试",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "没有训练数据",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "STRONIX",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "训练详情",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "编辑",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 256
+        }
+      },
+      {
+        "comment": "",
+        "key": "• %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lldkg 容量",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 329
+        }
+      },
+      {
+        "comment": "",
+        "key": "第%lld组",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 342
+        }
+      },
+      {
+        "comment": "",
+        "key": "+0 kg × %lld",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld kg × %lld",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 346
+        }
+      }
+    ]
+  },
+  "version": 1
+}

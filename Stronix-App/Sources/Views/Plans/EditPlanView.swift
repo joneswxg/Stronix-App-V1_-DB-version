@@ -676,6 +676,7 @@ struct EditingActionCard: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(theme.secondary)
                         }
+                        .tint(theme.primary)
                         .scaleEffect(0.8)
                         .disabled(isDisabled)
                         .onChange(of: action.recordBilateral) { oldValue, newValue in
@@ -748,43 +749,57 @@ struct EditingActionCard: View {
     
     // 表头组件
     private var tableHeader: some View {
-        HStack(spacing: 12) {
-            Text("组")
-                .frame(width: 30, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
-            
-            if action.recordBilateral {
-                Text("左kg")
-                    .frame(width: 40, alignment: .leading)
+        VStack(spacing: 8) {
+            HStack(spacing: 16) {
+                Text("组")
+                    .frame(width: 30, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(theme.secondary)
+                    .background(theme.surface)
+                    .cornerRadius(6)
+
+                if action.recordBilateral {
+                    Text("左kg")
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
+                        .cornerRadius(6)
+                    
+                    Text("右kg")
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
+                        .cornerRadius(6)
+                } else {
+                    Text("kg")
+                        .frame(width: 60, height: 36, alignment: .center)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.secondary)
+                        .background(theme.surface)
+                        .cornerRadius(6)
+                }
                 
-                Text("右kg")
-                    .frame(width: 40, alignment: .leading)
+                Text("次数")
+                    .frame(width: 60, height: 36, alignment: .center)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(theme.secondary)
-            } else {
-                Text("kg")
-                    .frame(width: 40, alignment: .leading)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+                    .background(theme.surface)
+                    .cornerRadius(6)
+                
+                Spacer()
             }
-            
-            Text("次数")
-                .frame(width: 40, alignment: .leading)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.secondary)
-            
-            Spacer()
+            .padding(.leading, 5)
+            .padding(.trailing, 16)
         }
-        .padding(.leading, 16)
+        .padding(.leading, 20)
         .padding(.trailing, 16)
     }
     
     // MARK: - 组数区域
     private var setsSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
             // 组数列表
             ForEach(action.sets, id: \.id) { set in
                 if let index = action.sets.firstIndex(where: { $0.id == set.id }) {
@@ -840,11 +855,14 @@ struct EditingActionCard: View {
         }
         
         return AnyView(
-            HStack(spacing: 12) {
+            VStack(spacing: 8) {
+                HStack(spacing: 16) {
                 // 组数标号
                 Text("\(index + 1)")
                     .font(.system(size: 16, weight: .medium))
-                    .frame(width: 30, alignment: .center)
+                    .frame(width: 30, height: 36, alignment: .center)
+                    .background(Color(UIColor.systemGroupedBackground))
+                    .cornerRadius(6)
                 
                 if action.recordBilateral {
                     // 左侧重量
@@ -872,12 +890,12 @@ struct EditingActionCard: View {
                         }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                             )
                     }
                     .disabled(isDisabled)
@@ -907,12 +925,12 @@ struct EditingActionCard: View {
                         }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                             )
                     }
                     .disabled(isDisabled)
@@ -942,12 +960,12 @@ struct EditingActionCard: View {
                         }())
                             .font(.system(size: 14))
                             .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 40, height: 32)
-                            .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                            .frame(width: 60, height: 36)
+                            .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                             )
                     }
                     .disabled(isDisabled)
@@ -975,12 +993,12 @@ struct EditingActionCard: View {
                     Text("\(action.sets[index].reps)")
                         .font(.system(size: 14))
                         .foregroundColor(isSelected ? .white : .black)
-                        .frame(width: 40, height: 32)
-                        .background(isSelected ? Color.blue : Color(UIColor.systemGray6))
+                        .frame(width: 60, height: 36)
+                        .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isActive && !isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                                .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
                         )
                 }
                 .disabled(isDisabled)
@@ -1007,8 +1025,9 @@ struct EditingActionCard: View {
                 }
                 .disabled(isDisabled)
             }
-            .padding(.leading, 16)
+            .padding(.leading, 40)
             .padding(.trailing, 16)
+        }
         )
     }
 }

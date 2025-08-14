@@ -8,6 +8,11 @@ struct PlanActionSelectView: View {
     @State private var selectedTargetMuscleId: Int = 0
     @State private var selectedEquipmentId: Int = 0
     @State private var searchText = ""
+    @State private var hasInitialized = false
+    
+    // 使用静态变量来保持全局状态
+    private static var globalSelectedTargetMuscleId: Int = 5
+    private static var globalHasInitialized = false
     
     // 添加回调闭包 - 支持单个动作选择
     let onActionSelected: ((ActionInfo) -> Void)?
@@ -52,9 +57,30 @@ struct PlanActionSelectView: View {
                         VStack {
                             ScrollView(.vertical, showsIndicators: false) {
                                 LazyVStack(alignment: .leading, spacing: 8) {
+                                    // 添加"所有动作"按钮
+                                    Button(action: { 
+                                        selectedTargetMuscleId = 0
+                                        Self.globalSelectedTargetMuscleId = 0
+                                        Task {
+                                            await viewModel.loadActions()
+                                        }
+                                    }) {
+                                        Text("所有动作")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(selectedTargetMuscleId == 0 ? theme.onPrimary : theme.onBackground)
+                                            .fontWeight(selectedTargetMuscleId == 0 ? .medium : .regular)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 10)
+                                            .background(selectedTargetMuscleId == 0 ? theme.primary : Color.clear)
+                                            .cornerRadius(8)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
                                     ForEach(viewModel.targetMuscles) { muscle in
                                         Button(action: { 
                                             selectedTargetMuscleId = muscle.id
+                                            Self.globalSelectedTargetMuscleId = muscle.id
                                             Task {
                                                 await viewModel.loadActionsByTargetMuscle(targetMuscleId: muscle.id)
                                             }
@@ -85,41 +111,81 @@ struct PlanActionSelectView: View {
                             if viewModel.isLoading {
                                 ProgressView("加载中...")
                                     .frame(maxWidth: .infinity, minHeight: 200)
+                            } else if filteredActions.isEmpty {
+                                VStack(spacing: 16) {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 48))
+                                        .foregroundColor(theme.secondary)
+                                    
+                                    Text("暂无动作")
+                                        .font(.system(size: 16, weight: .medium))
+                                    
+                                    Text("请尝试切换其他肌肉群或调整筛选条件")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(theme.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 200)
                             } else {
-                                LazyVGrid(columns: [
-                                    GridItem(.flexible()),
-                                    GridItem(.flexible())
-                                ], spacing: 16) {
-                                    ForEach(filteredActions) { action in
-                                        SelectableActionCard(
-                                            action: action,
-                                            isSelected: selectedActions.contains(action.id),
-                                            allowMultipleSelection: allowMultipleSelection,
-                                            isDisabled: existingActionIds.contains(action.id),
-                                            onToggle: {
-                                                // 如果动作已存在于计划中，不允许选择
-                                                if existingActionIds.contains(action.id) {
-                                                    return
+                                // 按器材分组显示动作
+                                LazyVStack(alignment: .leading, spacing: 20) {
+                                    ForEach(groupedActionsByEquipment.keys.sorted(by: { $0 < $1 }), id: \.self) { equipmentName in
+                                        if let actions = groupedActionsByEquipment[equipmentName], !actions.isEmpty {
+                                            VStack(alignment: .leading, spacing: 12) {
+                                                // 器材分类标题
+                                                HStack {
+                                                    Text(equipmentName)
+                                                        .font(.system(size: 18, weight: .semibold))
+                                                        .foregroundColor(theme.onBackground)
+                                                    
+                                                    Spacer()
+                                                    
+                                                    Text("\(actions.count)个动作")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(theme.secondary)
                                                 }
+                                                .padding(.horizontal, 16)
                                                 
-                                                if allowMultipleSelection {
-                                                    // 多选模式
-                                                    if selectedActions.contains(action.id) {
-                                                        selectedActions.remove(action.id)
-                                                    } else {
-                                                        selectedActions.insert(action.id)
+                                                // 该器材下的动作网格
+                                                LazyVGrid(columns: [
+                                                    GridItem(.flexible()),
+                                                    GridItem(.flexible())
+                                                ], spacing: 16) {
+                                                    ForEach(actions) { action in
+                                                        SelectableActionCard(
+                                                            action: action,
+                                                            isSelected: selectedActions.contains(action.id),
+                                                            allowMultipleSelection: allowMultipleSelection,
+                                                            isDisabled: existingActionIds.contains(action.id),
+                                                            onToggle: {
+                                                                // 如果动作已存在于计划中，不允许选择
+                                                                if existingActionIds.contains(action.id) {
+                                                                    return
+                                                                }
+                                                                
+                                                                if allowMultipleSelection {
+                                                                    // 多选模式
+                                                                    if selectedActions.contains(action.id) {
+                                                                        selectedActions.remove(action.id)
+                                                                    } else {
+                                                                        selectedActions.insert(action.id)
+                                                                    }
+                                                                } else {
+                                                                    // 单选模式 - 直接选择并关闭
+                                                                    let actionInfo = ActionInfo(id: action.id, name: action.name, imageUrl: action.gifUrl ?? "")
+                                                                    onActionSelected?(actionInfo)
+                                                                    dismiss()
+                                                                }
+                                                            }
+                                                        )
                                                     }
-                                                } else {
-                                                    // 单选模式 - 直接选择并关闭
-                                                    let actionInfo = ActionInfo(id: action.id, name: action.name, imageUrl: action.gifUrl ?? "")
-                                                    onActionSelected?(actionInfo)
-                                                    dismiss()
                                                 }
+                                                .padding(.horizontal, 16)
                                             }
-                                        )
+                                        }
                                     }
                                 }
-                                .padding()
+                                .padding(.vertical)
                             }
                         }
                         .frame(width: mainGeometry.size.width * 0.75)
@@ -155,14 +221,23 @@ struct PlanActionSelectView: View {
         }
         .onAppear {
             Task {
-                viewModel.loadInitialData()
-                // 初始化完成后，自动选中第一个目标肌群并加载对应的动作
-                if !viewModel.targetMuscles.isEmpty, let firstMuscle = viewModel.targetMuscles.first {
-                    let firstMuscleId = firstMuscle.id
-                    selectedTargetMuscleId = firstMuscleId
-                    print("🔄 PlanActionSelectView: 自动选中第一个目标肌群 ID=\(firstMuscleId), 名称=\(firstMuscle.display_name)")
-                    await viewModel.loadActionsByTargetMuscle(targetMuscleId: firstMuscleId)
-                    print("🔄 PlanActionSelectView: 已加载 \(viewModel.actions.count) 个动作")
+                await viewModel.loadInitialData()
+                
+                // 使用静态变量保持状态
+                selectedTargetMuscleId = Self.globalSelectedTargetMuscleId
+                
+                // 只在全局首次初始化时设置默认胸肌过滤
+                if !Self.globalHasInitialized {
+                    await viewModel.loadActionsByTargetMuscle(targetMuscleId: Self.globalSelectedTargetMuscleId)
+                    Self.globalHasInitialized = true
+                    print("🔄 PlanActionSelectView: 默认选中胸肌，已加载 \(viewModel.actions.count) 个动作")
+                } else {
+                    // 如果不是首次初始化，根据当前选择的肌肉群加载动作
+                    if selectedTargetMuscleId == 0 {
+                        await viewModel.loadActions()
+                    } else {
+                        await viewModel.loadActionsByTargetMuscle(targetMuscleId: selectedTargetMuscleId)
+                    }
                 }
             }
         }
@@ -214,10 +289,35 @@ struct PlanActionSelectView: View {
     // 过滤后的动作列表
     private var filteredActions: [Action] {
         viewModel.actions.filter { action in
+            let matchesTargetMuscle = selectedTargetMuscleId == 0 || action.target_muscle_ids.contains(selectedTargetMuscleId)
             let matchesEquipment = selectedEquipmentId == 0 || (action.equipment_id ?? 0) == selectedEquipmentId
             let matchesSearch = searchText.isEmpty || action.name.localizedCaseInsensitiveContains(searchText)
-            return matchesEquipment && matchesSearch
+            return matchesTargetMuscle && matchesEquipment && matchesSearch
         }
+    }
+    
+    // 按器械分组的动作
+    private var groupedActionsByEquipment: [String: [Action]] {
+        let actions = filteredActions
+        var grouped: [String: [Action]] = [:]
+        
+        for action in actions {
+            // 获取器材名称
+            let equipmentName: String
+            if let equipmentId = action.equipment_id {
+                equipmentName = viewModel.equipments.first { $0.id == equipmentId }?.display_name ?? "未知器材"
+            } else {
+                equipmentName = "无器材"
+            }
+            
+            // 将动作添加到对应器材分组
+            if grouped[equipmentName] == nil {
+                grouped[equipmentName] = []
+            }
+            grouped[equipmentName]?.append(action)
+        }
+        
+        return grouped
     }
 }
 
