@@ -178,6 +178,91 @@ class PlanViewModel: ObservableObject {
         }
     }
     
+    // MARK: - 复制个人计划
+    func copyPersonalPlan(_ plan: TrainingPlan, newName: String) async {
+        do {
+            // 获取计划详情
+            await loadPlanDetail(planId: plan.id)
+            
+            guard let detailedPlan = selectedPlan else {
+                handleError(NSError(domain: "PlanViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法获取计划详情"]), context: "复制计划")
+                return
+            }
+            
+            // 构造新计划数据
+            var newPlanData: [String: Any] = [
+                "name": newName,
+                "description": detailedPlan.description ?? "",
+                "difficulty": detailedPlan.difficulty ?? "",
+                "duration": detailedPlan.duration ?? 0,
+                "actions": []
+            ]
+            
+            // 复制动作数据
+            var actionsArray: [[String: Any]] = []
+            if let actions = detailedPlan.actions {
+                for action in actions {
+                    var actionData: [String: Any] = [
+                        "action_id": action.id,
+                        "rest": action.restTime,
+                        "note": action.notes ?? "",
+                        "record_bilateral": action.recordBilateral,
+                        "sets": []
+                    ]
+                    
+                    // 复制组数据
+                    var setsArray: [[String: Any]] = []
+                    for set in action.sets {
+                        var newSet: [String: Any] = [
+                            "weight": set.weight,
+                            "reps": set.reps
+                        ]
+                        if set.leftWeight != 0 {
+                            newSet["left_weight"] = set.leftWeight
+                        }
+                        if set.rightWeight != 0 {
+                            newSet["right_weight"] = set.rightWeight
+                        }
+                        setsArray.append(newSet)
+                    }
+                    actionData["sets"] = setsArray
+                    actionsArray.append(actionData)
+                }
+            }
+            newPlanData["actions"] = actionsArray
+            
+            // 创建新计划
+            let response = try await planService.createPlan(newPlanData, user_id: getCurrentUserId())
+            print("复制个人计划成功，新计划ID: \(response.plan_id)")
+            
+            // 创建新的计划对象并添加到本地数组
+            let newPlan = TrainingPlan(
+                id: response.plan_id,
+                name: newName,
+                creator: plan.creator,
+                createdDate: Date().ISO8601String(),
+                lastTraining: "未开始",
+                volume: plan.volume,
+                description: plan.description,
+                isTemplate: false,
+                templateId: nil,
+                difficulty: plan.difficulty,
+                duration: plan.duration,
+                actions: plan.actions
+            )
+            
+            // 将新计划添加到列表开头
+            personalPlans.insert(newPlan, at: 0)
+            print("🔄 PlanViewModel.copyPersonalPlan() 本地添加完成，现有 \(personalPlans.count) 个计划")
+            
+            // 显示成功消息
+            showSuccessMessage("计划复制成功")
+            
+        } catch {
+            handleError(error, context: "复制计划")
+        }
+    }
+    
     // MARK: - 删除计划
     func deletePlan(_ plan: TrainingPlan) async {
         do {
@@ -342,4 +427,4 @@ class PlanViewModel: ObservableObject {
     var hasAnyPlans: Bool {
         hasTemplates || hasPersonalPlans
     }
-} 
+}

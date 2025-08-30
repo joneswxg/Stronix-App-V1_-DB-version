@@ -427,7 +427,7 @@ struct EditPlanView: View {
                     creator: plan.creator,
                     createdDate: plan.createdDate,
                     lastTraining: plan.lastTraining,
-                    volume: plan.volume,
+                    volume: Int(totalVolume),
                     description: planDescription.isEmpty ? nil : planDescription,
                     isTemplate: plan.isTemplate,
                     templateId: plan.templateId,
@@ -665,7 +665,7 @@ struct EditingActionCard: View {
                     
                     HStack {
                         Text("\(action.sets.count)组")
-                            .font(.system(size: 14))
+                    .font(.system(size: 16))
                             .foregroundColor(theme.secondary)
                         
                         Spacer()
@@ -753,7 +753,7 @@ struct EditingActionCard: View {
             HStack(spacing: 16) {
                 Text("组")
                     .frame(width: 30, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(theme.secondary)
                     .background(theme.surface)
                     .cornerRadius(6)
@@ -761,21 +761,21 @@ struct EditingActionCard: View {
                 if action.recordBilateral {
                     Text("左kg")
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
                     
                     Text("右kg")
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
                 } else {
                     Text("kg")
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
@@ -783,7 +783,7 @@ struct EditingActionCard: View {
                 
                 Text("次数")
                     .frame(width: 60, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(theme.secondary)
                     .background(theme.surface)
                     .cornerRadius(6)
@@ -888,7 +888,7 @@ struct EditingActionCard: View {
                             let weight = action.sets[index].leftWeight.isNaN || action.sets[index].leftWeight.isInfinite ? 0.0 : action.sets[index].leftWeight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
@@ -923,7 +923,7 @@ struct EditingActionCard: View {
                             let weight = action.sets[index].rightWeight.isNaN || action.sets[index].rightWeight.isInfinite ? 0.0 : action.sets[index].rightWeight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
@@ -958,7 +958,7 @@ struct EditingActionCard: View {
                             let weight = action.sets[index].weight.isNaN || action.sets[index].weight.isInfinite ? 0.0 : action.sets[index].weight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGray6))
@@ -991,7 +991,7 @@ struct EditingActionCard: View {
                     let isSelected = isActive && keyboardManager.isValueSelected
                     
                     Text("\(action.sets[index].reps)")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(isSelected ? .white : .black)
                         .frame(width: 60, height: 36)
                         .background(isSelected ? theme.primary : Color(UIColor.systemGray6))

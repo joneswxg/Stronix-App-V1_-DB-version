@@ -728,21 +728,21 @@ struct PlanActionCard: View {
                 if action.isLeftRightMode {
                     Text("左\(weightUnit.displayName)")
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
                     
                     Text("右\(weightUnit.displayName)")
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
                 } else {
                     Text(weightUnit.displayName)
                         .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.secondary)
                         .background(theme.surface)
                         .cornerRadius(6)
@@ -750,7 +750,7 @@ struct PlanActionCard: View {
                 
                 Text("次数")
                     .frame(width: 60, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(theme.secondary)
                     .background(theme.surface)
                     .cornerRadius(6)
@@ -836,7 +836,7 @@ struct PlanActionCard: View {
                             let weight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
@@ -872,7 +872,7 @@ struct PlanActionCard: View {
                             let weight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
@@ -908,7 +908,7 @@ struct PlanActionCard: View {
                             let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
                             return weight == 0 ? "0" : String(format: "%.1f", weight)
                         }())
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(isSelected ? .white : .black)
                             .frame(width: 60, height: 36)
                             .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
@@ -942,7 +942,7 @@ struct PlanActionCard: View {
                     let isSelected = isActive && keyboardManager.isValueSelected
                     
                     Text("\(set.reps)")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(isSelected ? .white : .black)
                         .frame(width: 60, height: 36)
                         .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))

@@ -34,9 +34,9 @@ enum VersionComparisonResult {
 struct DatabaseVersionConfig {
     // 当前Bundle中数据库的版本信息
     static let currentBundleVersion = DatabaseVersion(
-        version: "1.1.1",
-        buildNumber: 3,
-        description: "更新数据库内容 - 手动更新"
+        version: "1.2.0",
+        buildNumber: 4,
+        description: "添加密码重置功能 - 新增password_reset_codes表"
     )
     
     // 版本控制表名
@@ -66,6 +66,19 @@ struct DatabaseVersionConfig {
         FROM database_version
         ORDER BY build_number DESC, id DESC
         LIMIT 1
+    """
+    
+    // 密码重置验证码表创建SQL
+    static let createPasswordResetTableSQL = """
+        CREATE TABLE IF NOT EXISTS password_reset_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            verification_code TEXT NOT NULL,
+            expires_at DATETIME NOT NULL,
+            is_used INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            used_at DATETIME NULL
+        )
     """
 }
 

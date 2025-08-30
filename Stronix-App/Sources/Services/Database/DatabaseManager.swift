@@ -13,13 +13,23 @@ class DatabaseManager {
     static let shared = DatabaseManager()
     private var db: Connection?
     private let updateService = UpdateService()
+    private var isInitialized = false
+    private let initQueue = DispatchQueue(label: "database.init", qos: .utility)
     
     private init() {
-        setupDatabase()
+        // 延迟初始化，避免阻塞应用启动
     }
     
     // MARK: - 数据库初始化
     private func setupDatabase() {
+        initQueue.async {
+            self.setupDatabaseSync()
+        }
+    }
+    
+    private func setupDatabaseSync() {
+        guard !isInitialized else { return }
+        
         // 1. 首先检查并执行数据库更新
         checkAndUpdateDatabase()
         
@@ -28,6 +38,7 @@ class DatabaseManager {
         
         do {
             db = try Connection(dbPath)
+            isInitialized = true
             print("✅ DatabaseManager: 数据库连接成功: \(dbPath)")
         } catch {
             print("❌ DatabaseManager: 数据库连接失败: \(error)")
@@ -66,6 +77,9 @@ class DatabaseManager {
     // MARK: - 公共数据库连接方法
     /// 获取数据库连接 - 供所有Local服务使用
     func getConnection() -> Connection? {
+        if !isInitialized {
+            setupDatabaseSync()
+        }
         return db
     }
     

@@ -50,10 +50,12 @@ struct LocalTrainingHistoryDetail {
     let right_weight: Double?
     let is_completed: Bool
     let note: String?
+    let history_record_bilateral: Bool
     
     init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg",
          reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil,
-         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil) {
+         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil,
+         history_record_bilateral: Bool = false) {
         self.action_id = action_id
         self.set_number = set_number
         self.weight = weight
@@ -64,6 +66,7 @@ struct LocalTrainingHistoryDetail {
         self.right_weight = right_weight
         self.is_completed = is_completed
         self.note = note
+        self.history_record_bilateral = history_record_bilateral
     }
     
     /// 从现有的TrainingHistoryDetail转换
@@ -78,6 +81,7 @@ struct LocalTrainingHistoryDetail {
         self.right_weight = detail.right_weight
         self.is_completed = detail.is_completed
         self.note = detail.note
+        self.history_record_bilateral = detail.history_record_bilateral
     }
 }
 
@@ -91,7 +95,7 @@ struct LocalSaveTrainingHistoryRequest {
     let plan_description: String?
     let training_date: String // ISO 8601 格式
     let volume: Double
-    let duration: Int // 秒
+    let duration: Int // 分钟
     let note: String?
     let details: [LocalTrainingHistoryDetail]
     
@@ -331,7 +335,7 @@ struct SaveTrainingHistoryRequest: Codable {
     let plan_description: String?
     let training_date: String // ISO 8601 格式
     let volume: Double
-    let duration: Int // 秒
+    let duration: Int // 分钟
     let note: String?
     let details: [TrainingHistoryDetail]
 }
@@ -348,10 +352,12 @@ struct TrainingHistoryDetail: Codable {
     let right_weight: Double?
     let is_completed: Bool
     let note: String?
+    let history_record_bilateral: Bool
     
     init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg", 
          reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil, 
-         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil) {
+         right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil,
+         history_record_bilateral: Bool = false) {
         self.action_id = action_id
         self.set_number = set_number
         self.weight = weight
@@ -362,12 +368,22 @@ struct TrainingHistoryDetail: Codable {
         self.right_weight = right_weight
         self.is_completed = is_completed
         self.note = note
+        self.history_record_bilateral = history_record_bilateral
     }
 }
 
 /// 保存训练历史响应模型（前端兼容层）
 struct SaveTrainingHistoryResponse: Codable {
     let history_id: Int
+}
+
+/// 更新训练历史请求模型（前端兼容层）
+struct UpdateTrainingHistoryRequest: Codable {
+    let training_date: String // ISO 8601 格式
+    let volume: Double?
+    let duration: Int?
+    let note: String?
+    let details: [TrainingHistoryDetail]?
 }
 
 /// 更新计划请求模型（前端兼容层）
@@ -410,6 +426,7 @@ struct TrainingDetailData {
 
 /// 动作详情UI结构
 struct ExerciseDetail {
+    let action_id: Int
     let name: String
     let sets: [SetDetail]
 }
@@ -417,8 +434,23 @@ struct ExerciseDetail {
 /// 组数详情UI结构
 struct SetDetail {
     let number: Int
-    let weight: Int
+    let weight: Double
     let reps: Int
     let actualReps: Int
     let isCompleted: Bool
+    let leftWeight: Double
+    let rightWeight: Double
+    let isBilateral: Bool
+    
+    // 为了保持向后兼容性，提供默认初始化器
+    init(number: Int, weight: Double, reps: Int, actualReps: Int, isCompleted: Bool, leftWeight: Double = 0, rightWeight: Double = 0, isBilateral: Bool = false) {
+        self.number = number
+        self.weight = weight
+        self.reps = reps
+        self.actualReps = actualReps
+        self.isCompleted = isCompleted
+        self.leftWeight = leftWeight
+        self.rightWeight = rightWeight
+        self.isBilateral = isBilateral
+    }
 }

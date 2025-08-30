@@ -35,7 +35,7 @@ struct MainTabView: View {
                     }
                 }
                 .tabItem {
-                    Image(systemName: "bolt.fill")
+                    Image(systemName: "dumbbell.fill")
                     Text("训练")
                 }
                 .tag(2)

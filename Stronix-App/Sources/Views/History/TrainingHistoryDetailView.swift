@@ -64,20 +64,38 @@ struct TrainingHistoryDetailView: View {
         
         var exercises: [ExerciseDetail] = []
         
-        for (_, details) in groupedDetails {
+        for (actionId, details) in groupedDetails {
             let actionName = details.first?.action_name ?? "未知动作"
             
             let sets = details.sorted { $0.set_number < $1.set_number }.map { detail in
-                SetDetail(
-                    number: detail.set_number,
-                    weight: Int(detail.weight ?? 0),
-                    reps: detail.reps ?? 0,
-                    actualReps: detail.reps ?? 0,
-                    isCompleted: detail.is_completed
-                )
+                // 使用 history_record_bilateral 字段判断是否为双侧训练
+                let isBilateral = detail.history_record_bilateral
+                
+                if isBilateral {
+                    // 双侧训练：显示左右重量
+                    return SetDetail(
+                        number: detail.set_number,
+                        weight: 0.0, // 双侧训练不使用统一重量
+                        reps: detail.reps ?? 0,
+                        actualReps: detail.reps ?? 0,
+                        isCompleted: detail.is_completed,
+                        leftWeight: detail.left_weight ?? 0.0,
+                        rightWeight: detail.right_weight ?? 0.0,
+                        isBilateral: true
+                    )
+                } else {
+                    // 普通训练：显示统一重量
+                    return SetDetail(
+                        number: detail.set_number,
+                        weight: detail.weight ?? 0.0,
+                        reps: detail.reps ?? 0,
+                        actualReps: detail.reps ?? 0,
+                        isCompleted: detail.is_completed
+                    )
+                }
             }
             
-            exercises.append(ExerciseDetail(name: actionName, sets: sets))
+            exercises.append(ExerciseDetail(action_id: actionId, name: actionName, sets: sets))
         }
         
         // 格式化时长
@@ -86,23 +104,26 @@ struct TrainingHistoryDetailView: View {
         return TrainingDetailData(
             planName: selectedHistory.history.plan_name,
             duration: durationText,
-            totalVolume: "\(Int(selectedHistory.history.volume)) kg",
+            totalVolume: "\(String(format: "%.1f", selectedHistory.history.volume)) kg",
             exercises: exercises
         )
     }
     
     // 格式化时长
-    private func formatDuration(_ seconds: Int) -> String {
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
+    private func formatDuration(_ duration: Int) -> String {
+        // duration 现在统一为分钟单位
+        let minutes = duration
+        
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
         
         if hours > 0 {
-            return "\(hours)小时\(minutes)分钟"
+            return "\(hours)小时\(remainingMinutes)分钟"
         } else if minutes > 0 {
             return "\(minutes)分钟"
         } else {
-            // 对于不足1分钟的情况，显示为"<1分钟"
-            return "<1分钟"
+            // 对于不足1分钟的情况，显示为"0"
+            return "0"
         }
     }
     
@@ -179,11 +200,12 @@ struct TrainingHistoryDetailView: View {
             print("🎬 TrainingHistoryDetailView 出现，历史ID: \(historyId)")
             loadHistoryDetail()
         }
-        .sheet(isPresented: $showEditView) {
+        .navigationDestination(isPresented: $showEditView) {
             if let detailData = detailData {
                 EditHistoryDetailView(
                     selectedDate: getTrainingDate(),
-                    historyData: detailData
+                    historyData: detailData,
+                    historyId: historyId
                 )
             }
         }
@@ -291,8 +313,8 @@ struct TrainingHistoryDetailView: View {
     }
     
     private func exercisesList(_ data: TrainingDetailData) -> some View {
-        ForEach(data.exercises, id: \.name) { exercise in
-            ExerciseCard(exercise: exercise)
+        ForEach(0..<data.exercises.count, id: \.self) { index in
+            ExerciseCard(exercise: data.exercises[index])
         }
     }
 }
@@ -326,9 +348,6 @@ struct ExerciseCard: View {
                 Text(exercise.name)
                     .font(.headline)
                     .foregroundColor(theme.onSurface)
-                Text("\(calculateVolume())kg 容量")
-                    .font(.caption)
-                    .foregroundColor(theme.secondary)
             }
             
             Spacer()
@@ -337,14 +356,23 @@ struct ExerciseCard: View {
     }
     
     private var exerciseSets: some View {
-        ForEach(Array(exercise.sets.enumerated()), id: \.offset) { index, set in
+        ForEach(0..<exercise.sets.count, id: \.self) { index in
+            let set = exercise.sets[index]
             HStack {
                 Text("第\(set.number)组")
                     .frame(width: 60, alignment: .leading)
                     .font(.subheadline)
                 
-                Text(set.weight == 0 ? "+0 kg × \(set.reps)" : "\(set.weight) kg × \(set.reps)")
-                    .font(.subheadline)
+                // 根据是否为双侧训练显示不同的重量信息
+                if set.isBilateral {
+                    Text("左\(String(format: "%.1f", set.leftWeight))kg 右\(String(format: "%.1f", set.rightWeight))kg × \(set.reps)")
+                        .font(.subheadline)
+                        .foregroundColor(theme.onSurface)
+                } else {
+                    Text(set.weight == 0 ? "+0.0 kg × \(set.reps)" : "\(String(format: "%.1f", set.weight)) kg × \(set.reps)")
+                        .font(.subheadline)
+                        .foregroundColor(theme.onSurface)
+                }
                 
                 Spacer()
                 
@@ -359,7 +387,15 @@ struct ExerciseCard: View {
     }
     
     private func calculateVolume() -> Int {
-        exercise.sets.reduce(0) { $0 + $1.weight * $1.actualReps }
+        return exercise.sets.reduce(0) { total, set in
+            if set.isBilateral {
+                // 双侧训练：左右重量之和乘以次数
+                return total + Int((set.leftWeight + set.rightWeight) * Double(set.reps))
+            } else {
+                // 普通训练：重量乘以次数
+                return total + Int(set.weight * Double(set.reps))
+            }
+        }
     }
 }
 

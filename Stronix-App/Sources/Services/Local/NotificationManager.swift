@@ -43,8 +43,15 @@ class NotificationManager: ObservableObject {
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
         }
         
-        setupAudioSession()
-        requestNotificationPermission()
+        // 异步设置音频会话，避免阻塞初始化
+        DispatchQueue.global(qos: .utility).async {
+            self.setupAudioSession()
+        }
+        
+        // 异步请求通知权限，避免阻塞初始化
+        DispatchQueue.main.async {
+            self.requestNotificationPermission()
+        }
     }
     
     // MARK: - 音频会话设置

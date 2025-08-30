@@ -127,13 +127,13 @@ struct HistoryListView: View {
         return dateString
     }
     
-    // 格式化训练时长（将秒数转换为分钟数）
-    private func formatDuration(_ seconds: Int) -> String {
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
+    // 格式化训练时长（处理分钟数）
+    private func formatDuration(_ minutes: Int) -> String {
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
         
         if hours > 0 {
-            return "\(hours)小时\(minutes)分钟"
+            return "\(hours)小时\(remainingMinutes)分钟"
         } else if minutes > 0 {
             return "\(minutes)分钟"
         } else {

@@ -72,6 +72,9 @@ class TrainingSessionManager: ObservableObject {
         setNotes.removeAll()
         
         stopTrainingTimer()
+        stopAllSetTimers()  // 停止所有组休息计时器
+        stopRestTimer()     // 停止浮动休息计时器
+        showRestTimer = false  // 隐藏浮动休息计时器
     }
     
     /// 完成训练
@@ -364,7 +367,8 @@ class TrainingSessionManager: ObservableObject {
                     difficulty: nil,
                     left_weight: action.recordBilateral ? set.leftWeight : 0.0,
                     right_weight: action.recordBilateral ? set.rightWeight : 0.0,
-                    is_completed: isCompleted
+                    is_completed: isCompleted,
+                    history_record_bilateral: action.recordBilateral  // 添加这一行
                 )
                 details.append(detail)
             }
@@ -380,7 +384,7 @@ class TrainingSessionManager: ObservableObject {
             plan_description: currentPlan.description,
             training_date: trainingDate,
             volume: completedVolume(),
-            duration: Int(totalTrainingTime),
+            duration: Int(totalTrainingTime / 60), // 转换为分钟
             note: nil,
             details: details
         )

@@ -176,7 +176,7 @@ struct LoginView: View {
                     
                     // 测试账户提示
                     VStack(spacing: 8) {
-                        Text("测试账户")
+                        Text("体验账户")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(theme.secondary)
                         
@@ -193,7 +193,7 @@ struct LoginView: View {
                             email = "iostest@example.com"
                             password = "password123"
                         }) {
-                            Text("使用测试账户")
+                            Text("使用体验账户直接登陆")
                                 .font(.system(size: 12))
                                 .foregroundColor(theme.primary)
                         }
@@ -209,7 +209,7 @@ struct LoginView: View {
             RegisterView()
         }
         .sheet(isPresented: $showForgotPassword) {
-            ForgotPasswordView()
+            AuthForgotPasswordView()
         }
         .alert("登录失败", isPresented: $showError) {
             Button("确定", role: .cancel) { }

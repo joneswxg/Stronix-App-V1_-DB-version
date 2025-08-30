@@ -73,15 +73,16 @@ class WechatLoginService: ObservableObject {
         
         // 模拟微信登录成功
         // 在实际应用中，这里会调用微信SDK
-        let mockOpenId = "wx_" + UUID().uuidString.prefix(8)
-        let mockUnionId = "union_" + UUID().uuidString.prefix(8)
+        // 使用固定的openId模拟同一微信用户多次登录的场景
+        let mockOpenId = "wx_test_user_12345678"
+        let mockUnionId = "union_test_user_87654321"
         
         return WechatLoginResponse(
             success: true,
             message: "微信登录成功",
-            openId: String(mockOpenId),
-            unionId: String(mockUnionId),
-            nickname: "微信用户"
+            openId: mockOpenId,
+            unionId: mockUnionId,
+            nickname: "微信测试用户"
         )
     }
     

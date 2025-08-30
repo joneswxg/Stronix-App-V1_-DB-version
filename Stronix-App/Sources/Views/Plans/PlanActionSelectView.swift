@@ -221,7 +221,7 @@ struct PlanActionSelectView: View {
         }
         .onAppear {
             Task {
-                await viewModel.loadInitialData()
+                viewModel.loadInitialData()
                 
                 // 使用静态变量保持状态
                 selectedTargetMuscleId = Self.globalSelectedTargetMuscleId

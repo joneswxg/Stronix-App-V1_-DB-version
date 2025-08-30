@@ -4,6 +4,8 @@ import Charts
 struct BodyMeasurementOverview: View {
     @Environment(\.theme) private var theme
     @StateObject private var viewModel = BodyMeasurementViewModel()
+    @ObservedObject private var authService = LocalUserService.shared
+    @State private var showLogin = false
     
     var body: some View {
         NavigationView {
@@ -21,18 +23,34 @@ struct BodyMeasurementOverview: View {
             await viewModel.refreshData()
         }
         .onAppear {
-            Task {
-                await viewModel.loadMeasurements()
+            if authService.isLoggedIn {
+                Task {
+                    await viewModel.loadMeasurements()
+                }
             }
         }
-        .alert("错误", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("确定") {
-                viewModel.errorMessage = nil
+        .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
+            if isLoggedIn {
+                // 登录成功后刷新数据
+                Task {
+                    await viewModel.loadMeasurements()
+                }
+            } else {
+                // 登出后清空数据
+                viewModel.measurements = []
+                viewModel.selectedDataPoint = nil
             }
-        } message: {
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-            }
+        }
+        .sheet(isPresented: $showLogin) {
+            LoginView()
+                .onDisappear {
+                    // 登录后刷新数据
+                    if authService.isLoggedIn {
+                        Task {
+                            await viewModel.loadMeasurements()
+                        }
+                    }
+                }
         }
     }
     
@@ -41,7 +59,39 @@ struct BodyMeasurementOverview: View {
             VStack(spacing: 20) {
                 headerSection
                 
-                if viewModel.isLoading {
+                if !authService.isLoggedIn {
+                    // 未登录状态视图
+                    VStack(spacing: 20) {
+                        Spacer()
+                        
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 64))
+                            .foregroundColor(theme.secondary.opacity(0.5))
+                        
+                        Text("请先登录")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(theme.onSurface)
+                        
+                        Text("登录后可以查看和管理您的体测数据")
+                            .font(.system(size: 14))
+                            .foregroundColor(theme.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button(action: {
+                            showLogin = true
+                        }) {
+                            Text("立即登录")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(theme.onPrimary)
+                                .frame(width: 120, height: 44)
+                                .background(theme.primary)
+                                .cornerRadius(22)
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.isLoading {
                     ProgressView("加载中...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.top, 100)
@@ -81,11 +131,26 @@ struct BodyMeasurementOverview: View {
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(theme.onSurface)
             Spacer()
-            Button(action: {
-                // 显示项设置功能，暂时不实现
-            }) {
-                Image(systemName: "gearshape")
-                    .foregroundColor(theme.secondary)
+            
+            // 登录状态指示器
+            if authService.isLoggedIn {
+                Button(action: {
+                    Task {
+                        await authService.logout()
+                    }
+                }) {
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(theme.primary)
+                }
+            } else {
+                Button(action: {
+                    showLogin = true
+                }) {
+                    Image(systemName: "person.circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(theme.secondary)
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -238,28 +303,30 @@ struct BodyMeasurementOverview: View {
     private var bottomButtons: some View {
         VStack {
             Spacer()
-            HStack(spacing: 15) {
-                // 查看记录按钮 - 改为NavigationLink
-                if !viewModel.measurements.isEmpty {
-                    NavigationLink(destination: BodyMeasurementListView(viewModel: viewModel)) {
-                        HStack {
-                            Image(systemName: "list.bullet")
-                            Text("查看记录")
+            if authService.isLoggedIn {
+                HStack(spacing: 15) {
+                    // 查看记录按钮 - 改为NavigationLink
+                    if !viewModel.measurements.isEmpty {
+                        NavigationLink(destination: BodyMeasurementListView(viewModel: viewModel)) {
+                            HStack {
+                                Image(systemName: "list.bullet")
+                                Text("查看记录")
+                            }
+                            .foregroundColor(theme.primary)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 25)
+                            .frame(height: 70)
+                            .background(theme.surface)
+                            .cornerRadius(25)
+                            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
                         }
-                        .foregroundColor(theme.primary)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 25)
-                        .frame(height: 70)
-                        .background(theme.surface)
-                        .cornerRadius(25)
-                        .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
                     }
+                    
+                    addButton
+                    shareButton
                 }
-                
-                addButton
-                shareButton
+                .padding(.bottom, 30)
             }
-            .padding(.bottom, 30)
         }
     }
     

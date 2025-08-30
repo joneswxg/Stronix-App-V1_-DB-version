@@ -19,6 +19,8 @@ struct TrainingView: View {
     @State private var isCompleting = false
     @State private var completionError: String?
     @State private var showCompletionError = false
+    @State private var showActionHistory = false
+    @State private var selectedActionForHistory: (id: Int, name: String)?
     
     // 计时器状态现在由TrainingSessionManager管理
     
@@ -91,6 +93,14 @@ struct TrainingView: View {
         .sheet(isPresented: $showActionSelect) {
             PlanActionSelectView { selectedAction in
                 addAction(selectedAction)
+            }
+        }
+        .sheet(isPresented: $showActionHistory) {
+            if let selectedAction = selectedActionForHistory {
+                ActionHistoryView(
+                    actionId: selectedAction.id,
+                    actionName: selectedAction.name
+                )
             }
         }
         .overlay(restTimerOverlay)
@@ -291,12 +301,12 @@ struct TrainingView: View {
     private var topInfoBar: some View {
         HStack {
             Text("\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
             
             Spacer()
             
             Text(trainingManager.formattedTrainingTime())
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.primary)
         }
         .padding(12)
@@ -308,7 +318,7 @@ struct TrainingView: View {
     private var planNameSection: some View {
         HStack {
             Text(trainingManager.planName)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.onSurface)
             
             Spacer()
@@ -346,6 +356,10 @@ struct TrainingView: View {
                         },
                         onRestTimerTapped: { setId, restTime in
                             handleRestTimerTapped(setId: setId, restTime: restTime)
+                        },
+                        onShowActionHistory: { actionId, actionName in
+                            selectedActionForHistory = (id: actionId, name: actionName)
+                            showActionHistory = true
                         },
                         canDelete: canDeleteAction,
                         keyboardManager: keyboardManager
@@ -467,6 +481,7 @@ struct TrainingActionCardWrapper: View {
     let onUpdate: (MutableTrainingAction) -> Void
     let onSetCompleted: (String, Int) -> Void
     let onRestTimerTapped: (String, Int) -> Void
+    let onShowActionHistory: (Int, String) -> Void
     let canDelete: Bool
     let keyboardManager: CustomKeyboardManager
     
@@ -494,6 +509,7 @@ struct TrainingActionCardWrapper: View {
             onUpdate: onUpdate,
             onSetCompleted: onSetCompleted,
             onRestTimerTapped: onRestTimerTapped,
+            onShowActionHistory: onShowActionHistory,
             canDelete: canDelete,
             keyboardManager: keyboardManager
         )
@@ -513,6 +529,7 @@ struct TrainingActionCard: View {
     let onUpdate: (MutableTrainingAction) -> Void
     let onSetCompleted: (String, Int) -> Void
     let onRestTimerTapped: (String, Int) -> Void
+    let onShowActionHistory: (Int, String) -> Void
     let canDelete: Bool
     let keyboardManager: CustomKeyboardManager
     
@@ -588,8 +605,8 @@ struct TrainingActionCard: View {
                 }
             })
             }
-            .padding(.leading, 16)
-            .padding(.trailing, 16)
+            .padding(.leading, 4)
+            .padding(.trailing, 4)
     }
     
     // MARK: - 动作头部
@@ -709,44 +726,44 @@ struct TrainingActionCard: View {
     
     // 表头组件
     private var tableHeader: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: action.recordBilateral ? 3 : 6) {
             Text("组")
                 .frame(width: 30, height: 36, alignment: .center)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(theme.onSurface)
-            
+                .foregroundColor(theme.secondary)
+
             if action.recordBilateral {
                 Text("左kg")
                     .frame(width: 50, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.onSurface)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(theme.secondary)
                 
                 Text("右kg")
                     .frame(width: 50, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.onSurface)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(theme.secondary)
             } else {
                 Text("kg")
                     .frame(width: 50, height: 36, alignment: .center)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.onSurface)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(theme.secondary)
             }
-            
+
             Text("次数")
                 .frame(width: 50, height: 36, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.onSurface)
-            
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(theme.secondary)
+
             Text("完成")
                 .frame(width: 50, height: 36, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.onSurface)
-            
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(theme.secondary)
+
             Text("休息")
-                .frame(width: 50, height: 36, alignment: .center)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.onSurface)
-            
+                .frame(width: 60, height: 36, alignment: .center)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(theme.secondary)
+
             Spacer()
         }
         .padding(.leading, 0)
@@ -786,17 +803,17 @@ struct TrainingActionCard: View {
                     onUpdate(action)
                 }) {
                     Text("新增一组")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(theme.primary)
                 }
                 
                 Spacer()
                 
                 Button(action: {
-                    // TODO: 显示动作历史
+                    onShowActionHistory(action.id, action.name)
                 }) {
                     Text("动作历史")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(theme.primary)
                 }
             }
@@ -815,12 +832,14 @@ struct TrainingActionCard: View {
             let isCompleted = completedSets.contains(setId)
             let restTimeRemaining = setRestTimers[setId]
             
-            HStack(spacing: 6) {
+            HStack(spacing: action.recordBilateral ? 3 : 6) {
                 // 组数标号
                 Text("\(index + 1)")
                     .font(.system(size: 16, weight: .medium))
-                    .frame(width: 30, alignment: .center)
-                    .foregroundColor(isCompleted ? theme.primary : theme.onSurface)
+                    .frame(width: 30, height: 36, alignment: .center)
+                    .foregroundColor(isCompleted ? theme.onPrimary : theme.onSurface)
+                    .background(isCompleted ? theme.primary : Color.clear)
+                    .cornerRadius(6)
                 
                 if action.recordBilateral {
                     // 左侧重量
@@ -844,10 +863,10 @@ struct TrainingActionCard: View {
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
                         Text(currentSet.leftWeight == 0 ? "0" : String(format: "%.1f", currentSet.leftWeight))
-                            .font(.system(size: 14))
-                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
+                            .font(.system(size: 16))
+                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.onPrimary : theme.onSurface))
                             .frame(width: 50, height: 36)
-                            .background(isSelected ? theme.primary : theme.background)
+                            .background(isSelected ? theme.primary : (isCompleted ? theme.primary : theme.background))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
@@ -876,10 +895,10 @@ struct TrainingActionCard: View {
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
                         Text(currentSet.rightWeight == 0 ? "0" : String(format: "%.1f", currentSet.rightWeight))
-                            .font(.system(size: 14))
-                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
+                            .font(.system(size: 16))
+                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.onPrimary : theme.onSurface))
                              .frame(width: 50, height: 36)
-                             .background(isSelected ? theme.primary : theme.background)
+                             .background(isSelected ? theme.primary : (isCompleted ? theme.primary : theme.background))
                              .cornerRadius(6)
                              .overlay(
                                  RoundedRectangle(cornerRadius: 6)
@@ -908,10 +927,10 @@ struct TrainingActionCard: View {
                         let isSelected = isActive && keyboardManager.isValueSelected
                         
                         Text(currentSet.weight == 0 ? "0" : String(format: "%.1f", currentSet.weight))
-                            .font(.system(size: 14))
-                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
+                            .font(.system(size: 16))        
+                            .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.onPrimary : theme.onSurface))
                             .frame(width: 50, height: 36)
-                            .background(isSelected ? theme.primary : theme.background)
+                            .background(isSelected ? theme.primary : (isCompleted ? theme.primary : theme.background))
                             .cornerRadius(6)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
@@ -941,10 +960,10 @@ struct TrainingActionCard: View {
                     let isSelected = isActive && keyboardManager.isValueSelected
                     
                     Text("\(currentSet.reps)")
-                        .font(.system(size: 14))
-                        .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.primary : theme.onSurface))
+                        .font(.system(size: 16))
+                        .foregroundColor(isSelected ? theme.onPrimary : (isCompleted ? theme.onPrimary : theme.onSurface))
                         .frame(width: 50, height: 36)
-                        .background(isSelected ? theme.primary : theme.background)
+                        .background(isSelected ? theme.primary : (isCompleted ? theme.primary : theme.background))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
@@ -976,7 +995,7 @@ struct TrainingActionCard: View {
                     if let remainingTime = restTimeRemaining, remainingTime > 0 {
                         // 显示倒计时
                         Text(formatRestTime(remainingTime))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(theme.onPrimary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -985,7 +1004,7 @@ struct TrainingActionCard: View {
                     } else {
                         // 显示默认休息时间
                         Text("\(action.restTime)s")
-                            .font(.system(size: 12))
+                            .font(.system(size: 16))
                             .foregroundColor(theme.primary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -993,7 +1012,7 @@ struct TrainingActionCard: View {
                             .cornerRadius(8)
                     }
                 }
-                .frame(width: 50, alignment: .center)
+                .frame(width: 60, alignment: .center)
                 
                 Spacer()
                 
@@ -1243,7 +1262,8 @@ struct RestTimerOverlay: View {
             .background(theme.surface)
             .cornerRadius(20)
             .shadow(radius: 10)
-            .padding(.horizontal, 40)
+            .frame(maxWidth: 320)
+            .padding(.horizontal, 20)
         }
     }
     

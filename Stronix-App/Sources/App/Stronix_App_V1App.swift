@@ -12,11 +12,15 @@ struct Stronix_App_V1App: App {
     @Environment(\.scenePhase) private var scenePhase
     
     init() {
-        // 简化的调试信息
-        printSimpleDatabaseInfo()
+        // 异步执行数据库信息打印，避免阻塞主线程
+        DispatchQueue.global(qos: .background).async {
+            Stronix_App_V1App.printSimpleDatabaseInfo()
+        }
         
-        // 请求通知权限
-        NotificationManager.shared.requestPermissionIfNeeded()
+        // 异步请求通知权限，避免阻塞应用启动
+        DispatchQueue.main.async {
+            NotificationManager.shared.requestPermissionIfNeeded()
+        }
     }
     
     var body: some Scene {
@@ -51,7 +55,7 @@ struct Stronix_App_V1App: App {
     }
     
     // 简化的数据库信息
-    private func printSimpleDatabaseInfo() {
+    private static func printSimpleDatabaseInfo() {
         let versionService = VersionService()
         if let count = try? countActionRecords() {
             print("🗄️ 数据库状态: 版本 \(versionService.getCurrentVersion() ?? "未知"), Action表记录数: \(count)")
@@ -59,7 +63,7 @@ struct Stronix_App_V1App: App {
     }
     
     // 计算action表记录数
-    private func countActionRecords() throws -> Int {
+    private static func countActionRecords() throws -> Int {
         guard let db = DatabaseManager.shared.getConnection() else {
             throw NSError(domain: "AppError", code: 1, userInfo: [NSLocalizedDescriptionKey: "无法获取数据库连接"])
         }

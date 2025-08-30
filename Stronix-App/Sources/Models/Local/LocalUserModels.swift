@@ -16,10 +16,22 @@ struct User: Codable, Identifiable {
     let isAdmin: Bool
     let createdAt: String
     
+    // 新增：多种登录方式支持字段
+    let accountType: String?        // 账户类型：'email', 'wechat', 'apple'
+    let externalId: String?         // 外部ID（统一存储第三方平台ID）
+    let wechatOpenId: String?       // 微信OpenID
+    let wechatUnionId: String?      // 微信UnionID
+    let appleId: String?            // Apple ID
+    
     enum CodingKeys: String, CodingKey {
         case id, username, email, gender, height, weight, role
         case isAdmin = "is_admin"
         case createdAt = "created_at"
+        case accountType = "account_type"
+        case externalId = "external_id"
+        case wechatOpenId = "wechat_open_id"
+        case wechatUnionId = "wechat_union_id"
+        case appleId = "apple_id"
     }
 }
 
@@ -88,6 +100,38 @@ enum LocalUserError: Error {
             return "数据库查询失败: \(error.localizedDescription)"
         }
     }
+}
+
+// MARK: - 密码重置验证码模型
+struct PasswordResetCode: Codable, Identifiable {
+    let id: Int
+    let email: String
+    let verificationCode: String
+    let expiresAt: Date
+    let isUsed: Bool
+    let createdAt: Date
+    let usedAt: Date?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, email
+        case verificationCode = "verification_code"
+        case expiresAt = "expires_at"
+        case isUsed = "is_used"
+        case createdAt = "created_at"
+        case usedAt = "used_at"
+    }
+}
+
+// MARK: - 密码重置请求模型
+struct PasswordResetRequest {
+    let email: String
+}
+
+// MARK: - 密码重置验证模型
+struct PasswordResetVerification {
+    let email: String
+    let verificationCode: String
+    let newPassword: String
 }
 
 // TODO: 迁移User、UserProfile等模型

@@ -108,38 +108,6 @@ struct PlanListView: View {
                 .background(theme.background)
             } else {
                 VStack(spacing: 0) {
-                    // 快速开始按钮
-                    NavigationLink(destination: QuickStartTrainingView()) {
-                        HStack {
-                            Image(systemName: "play.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(theme.onPrimary)
-                            
-                            Text("快速开始")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(theme.onPrimary)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(theme.onPrimary.opacity(0.8))
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [theme.primary, theme.primary.opacity(0.8)]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(10)
-                        .shadow(color: theme.primary.opacity(0.3), radius: 6, x: 0, y: 3)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(theme.background)
                     
                     // 标签页切换器
                     HStack(spacing: 0) {
@@ -303,6 +271,26 @@ struct PlanListView: View {
                 hasInitiallyLoaded = false
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdatedFromDetail"))) { notification in
+            // 接收来自TrainingPlanDetailView的计划更新通知
+            if let updatedPlan = notification.userInfo?["updatedPlan"] as? TrainingPlan {
+                print("🔄 PlanListView 收到计划更新通知: \(updatedPlan.name)")
+                
+                // 更新personalPlans列表中的对应计划
+                if let index = viewModel.personalPlans.firstIndex(where: { $0.id == updatedPlan.id }) {
+                    var updatedPlans = viewModel.personalPlans
+                    updatedPlans[index] = updatedPlan
+                    viewModel.personalPlans = updatedPlans
+                    print("✅ PlanListView 已更新列表中的计划项: \(updatedPlan.name)")
+                }
+                
+                // 同时更新selectedPlan
+                if viewModel.selectedPlan?.id == updatedPlan.id {
+                    viewModel.selectedPlan = updatedPlan
+                    print("✅ PlanListView 已更新 selectedPlan 数据")
+                }
+            }
+        }
     }
 }
 
@@ -402,85 +390,73 @@ struct TemplatePlanCard: View {
     @State private var isUsing = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(plan.name)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(theme.onSurface)
-                    .lineLimit(1)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                // 显示动作信息 - 固定高度区域，只显示两行
-                VStack(alignment: .leading, spacing: 1) {
-                    if let actions = plan.actions, !actions.isEmpty {
-                        ForEach(actions.prefix(2), id: \.id) { action in
-                            Text("\(action.name) x \(action.totalSets)")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.secondary)
-                                .lineLimit(1)
-                        }
-                        
-                        if actions.count > 2 {
-                            Text("...")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.secondary)
-                        }
-                    } else {
-                        Text("暂无动作")
-                            .font(.system(size: 11))
-                            .foregroundColor(theme.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(height: 35, alignment: .top) // 减小固定高度
-                
+        NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("容量: \(plan.calculatedVolume)kg")
-                        .font(.system(size: 10))
-                        .foregroundColor(theme.secondary.opacity(0.8))
+                    Text(plan.name)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(theme.onSurface)
+                        .lineLimit(1)
                     
                     Spacer()
-                }
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 8) {
-                NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
-                    Text("查看")
+                    
+                    // 移动"使用"按钮到右上角
+                    Button(action: {
+                        showCopyConfirmation = true
+                    }) {
+                        HStack(spacing: 4) {
+                            if isUsing {
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                            } else {
+                                Text("使用")
+                            }
+                        }
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(theme.primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(theme.primary.opacity(0.1))
-                        .cornerRadius(10)
+                        .cornerRadius(8)
+                    }
+                    .disabled(isUsing)
                 }
                 
-                Button(action: {
-                    showCopyConfirmation = true
-                }) {
-                    HStack(spacing: 4) {
-                        if isUsing {
-                            ProgressView()
-                                .scaleEffect(0.7)
+                VStack(alignment: .leading, spacing: 2) {
+                    // 显示动作信息 - 固定高度区域，最多显示五行
+                    VStack(alignment: .leading, spacing: 1) {
+                        if let actions = plan.actions, !actions.isEmpty {
+                            ForEach(actions.prefix(5), id: \.id) { action in
+                                Text("\(action.name) x \(action.totalSets)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(theme.onSurface)
+                                    .lineLimit(1)
+                            }
+                            
+                            if actions.count > 5 {
+                                Text("....")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(theme.secondary)
+                            }
                         } else {
-                            Text("使用")
+                            Text("暂无动作")
+                                .font(.system(size: 11))
+                                .foregroundColor(theme.onSurface)
+                                .lineLimit(1)
                         }
                     }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(theme.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(theme.primary.opacity(0.1))
-                    .cornerRadius(10)
+                    .frame(height: 70, alignment: .top) // 增加固定高度以容纳更多动作
                 }
-                .disabled(isUsing)
+                
+                Spacer()
             }
+            .padding(10)
+            .frame(height: 120)
+            .background(theme.surface)
+            .cornerRadius(12)
+            .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
         }
-        .padding(10)
-        .frame(height: 120)
-        .background(theme.surface)
-        .cornerRadius(12)
-        .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
+        .buttonStyle(PlainButtonStyle())
         .alert("复制模板计划", isPresented: $showCopyConfirmation) {
             Button("取消", role: .cancel) { }
             Button("是") {
@@ -504,112 +480,93 @@ struct PersonalPlanCard: View {
     @State private var showEditPlan = false
     @State private var showDeleteAlert = false
     @State private var isDeleting = false
+    @State private var showCopyDialog = false
+    @State private var copyPlanName = ""
+    @State private var isCopying = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(plan.name)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(theme.onSurface)
-                    .lineLimit(1)
-                
-                Spacer()
-                
-                // 工具菜单
-                Menu {
-                    Button(action: {
-                        showEditPlan = true
-                    }) {
-                        Label("编辑", systemImage: "pencil")
-                    }
-                    
-                    Button(role: .destructive, action: {
-                        showDeleteAlert = true
-                    }) {
-                        Label("删除", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(theme.secondary)
-                        .frame(width: 20, height: 20)
-                        .background(theme.surface)
-                        .cornerRadius(10)
-                        .shadow(color: theme.onSurface.opacity(0.1), radius: 2, x: 0, y: 1)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                // 显示动作信息 - 固定高度区域，只显示两行
-                VStack(alignment: .leading, spacing: 1) {
-                    if let actions = plan.actions, !actions.isEmpty {
-                        ForEach(actions.prefix(2), id: \.id) { action in
-                            Text("\(action.name) x \(action.totalSets)")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.secondary)
-                                .lineLimit(1)
-                        }
-                        
-                        if actions.count > 2 {
-                            Text("...")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.secondary)
-                        }
-                    } else {
-                        Text("暂无动作")
-                            .font(.system(size: 11))
-                            .foregroundColor(theme.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(height: 35, alignment: .top) // 减小固定高度
-                
+        NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("容量: \(plan.calculatedVolume)kg")
-                        .font(.system(size: 10))
-                        .foregroundColor(theme.secondary.opacity(0.8))
+                    Text(plan.name)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(theme.onSurface)
+                        .lineLimit(1)
                     
                     Spacer()
-                }
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 6) {
-                NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
-                    Text("查看")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(theme.primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(theme.primary.opacity(0.1))
-                        .cornerRadius(10)
+                    
+                    // 工具菜单
+                    Menu {
+                        Button(action: {
+                            Task {
+                                await viewModel.loadPlanDetail(planId: plan.id)
+                                
+                                if viewModel.selectedPlan != nil {
+                                    showEditPlan = true
+                                }
+                            }
+                        }) {
+                            Label("编辑", systemImage: "pencil")
+                        }
+                        
+                        Button(action: {
+                            copyPlanName = "\(plan.name)-v1"
+                            showCopyDialog = true
+                        }) {
+                            Label("复制计划", systemImage: "doc.on.doc")
+                        }
+                        
+                        Button(role: .destructive, action: {
+                            showDeleteAlert = true
+                        }) {
+                            Label("删除", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(theme.secondary)
+                            .frame(width: 20, height: 20)
+                            .background(theme.surface)
+                            .cornerRadius(10)
+                            .shadow(color: theme.onSurface.opacity(0.1), radius: 2, x: 0, y: 1)
+                    }
                 }
                 
-                Button(action: {
-                    Task {
-                        await viewModel.loadPlanDetail(planId: plan.id)
-                        
-                        if viewModel.selectedPlan != nil {
-                            showEditPlan = true
+                VStack(alignment: .leading, spacing: 2) {
+                    // 显示动作信息 - 固定高度区域，最多显示五行
+                    VStack(alignment: .leading, spacing: 1) {
+                        if let actions = plan.actions, !actions.isEmpty {
+                            ForEach(actions.prefix(5), id: \.id) { action in
+                                Text("\(action.name) x \(action.totalSets)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(theme.onSurface)
+                                    .lineLimit(1)
+                            }
+                            
+                            if actions.count > 5 {
+                                Text("....")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(theme.secondary)
+                            }
+                        } else {
+                            Text("暂无动作")
+                                .font(.system(size: 11))
+                                .foregroundColor(theme.onSurface)
+                                .lineLimit(1)
                         }
                     }
-                }) {
-                    Text("编辑")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(theme.primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(theme.primary.opacity(0.1))
-                        .cornerRadius(10)
+                    .frame(height: 70, alignment: .top) // 增加固定高度以容纳更多动作
                 }
+                
+                Spacer()
             }
+            .padding(10)
+            .frame(height: 120)
+            .background(theme.surface)
+            .cornerRadius(12)
+            .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
         }
-        .padding(10)
-        .frame(height: 120)
-        .background(theme.surface)
-        .cornerRadius(12)
-        .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
+        .buttonStyle(PlainButtonStyle())
         .fullScreenCover(isPresented: $showEditPlan) {
             if let selectedPlan = viewModel.selectedPlan {
                 EditPlanView(plan: selectedPlan, onSaveSuccess: { updatedPlan in
@@ -680,7 +637,25 @@ struct PersonalPlanCard: View {
                 }
             }
         } message: {
-            Text("确定要删除训练计划 \"\(plan.name)\" 吗？此操作无法撤销。")
+            Text("确定要删除计划 \"\(plan.name)\" 吗？此操作无法撤销。")
+        }
+        .alert("复制计划", isPresented: $showCopyDialog) {
+            TextField("计划名称", text: $copyPlanName)
+            Button("取消", role: .cancel) {
+                copyPlanName = ""
+            }
+            Button("确认") {
+                if !copyPlanName.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Task {
+                        isCopying = true
+                        await viewModel.copyPersonalPlan(plan, newName: copyPlanName)
+                        isCopying = false
+                        copyPlanName = ""
+                    }
+                }
+            }
+        } message: {
+            Text("请输入新计划的名称")
         }
         .overlay(
             // 删除中的加载指示器

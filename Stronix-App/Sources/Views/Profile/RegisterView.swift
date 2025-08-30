@@ -87,6 +87,7 @@ struct RegisterView: View {
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 SecureField("请输入密码（至少6位）", text: $password)
+                                    .textContentType(.none)
                             }
                             .padding()
                             .background(theme.background)
@@ -104,6 +105,7 @@ struct RegisterView: View {
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
                                 SecureField("请再次输入密码", text: $confirmPassword)
+                                    .textContentType(.none)
                             }
                             .padding()
                             .background(theme.background)

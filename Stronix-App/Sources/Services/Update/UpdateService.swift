@@ -159,6 +159,8 @@ class UpdateService {
         databaseManager?.reinitializeConnection()
     }
     
+
+    
     // MARK: - 更新版本信息
     private func updateVersionInfo() -> Bool {
         let currentVersion = DatabaseVersionConfig.currentBundleVersion

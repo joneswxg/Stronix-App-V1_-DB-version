@@ -42,6 +42,7 @@ class LocalTrainingHistoryService {
     private let thd_left_weight = Expression<Double?>("left_weight")
     private let thd_right_weight = Expression<Double?>("right_weight")
     private let thd_is_completed = Expression<Bool>("is_completed")
+    private let thd_history_record_bilateral = Expression<Bool>("history_record_bilateral")
     
     // training_plans 表字段（用于验证）
     private let tp_id = Expression<Int>("id")
@@ -147,7 +148,8 @@ class LocalTrainingHistoryService {
                         thd_difficulty <- detail.difficulty,
                         thd_left_weight <- detail.left_weight,
                         thd_right_weight <- detail.right_weight,
-                        thd_is_completed <- detail.is_completed
+                        thd_is_completed <- detail.is_completed,
+                        thd_history_record_bilateral <- detail.history_record_bilateral
                     ))
                 }
                 
@@ -528,7 +530,7 @@ class LocalTrainingHistoryService {
             let detailQuery = """
                 SELECT thd.action_id, thd.set_number, thd.weight, thd.weight_unit,
                        thd.reps, thd.difficulty, thd.left_weight, thd.right_weight,
-                       thd.is_completed, a.name as action_name
+                       thd.is_completed, a.name as action_name, thd.history_record_bilateral
                 FROM training_history_details thd
                 LEFT JOIN action a ON thd.action_id = a.id
                 WHERE thd.history_id = ?
@@ -540,7 +542,7 @@ class LocalTrainingHistoryService {
             let detailRows = try db.prepare(detailQuery, [historyId])
             for row in detailRows {
                 // 安全检查：确保行数据包含足够的列
-                guard row.count >= 10 else {
+                guard row.count >= 11 else {
                     print("⚠️ LocalTrainingHistoryService: 跳过不完整的详情行数据，列数: \(row.count)")
                     continue
                 }
@@ -555,10 +557,10 @@ class LocalTrainingHistoryService {
                     left_weight: row[6] as? Double,
                     right_weight: row[7] as? Double,
                     is_completed: (row[8] as? Int64 ?? 0) == 1,
-                    action_name: row[9] as? String
+                    action_name: row[9] as? String,
+                    history_record_bilateral: (row[10] as? Int64 ?? 0) == 1
                 )
                 details.append(detail)
-                print("📝 详情记录: 动作ID=\(detail.action_id), 组数=\(detail.set_number), 重量=\(detail.weight ?? 0), 次数=\(detail.reps ?? 0)")
             }
             
             print("✅ 获取训练历史详情成功")
@@ -569,6 +571,76 @@ class LocalTrainingHistoryService {
         } catch {
             print("❌ 数据库错误: \(error)")
             throw LocalTrainingHistoryError.serverError("获取训练历史详情失败: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - 更新训练历史
+    /// 更新训练历史
+    func updateTrainingHistory(historyId: Int, request: UpdateTrainingHistoryRequest, user_id: Int? = nil, language: String = "zh_CN") async throws {
+        print("🔄 LocalTrainingHistoryService.updateTrainingHistory，ID: \(historyId)")
+        
+        guard let db = dbManager.getConnection() else {
+            throw LocalTrainingHistoryError.databaseNotInitialized
+        }
+        
+        // 获取当前用户ID
+        let currentUserId: Int
+        if let providedUserId = user_id {
+            currentUserId = providedUserId
+        } else {
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            currentUserId = currentUser.id
+        }
+        
+        do {
+            try db.transaction {
+                // 验证训练历史是否存在且属于用户
+                let historyExists = try db.scalar(training_history.filter(th_id == historyId && th_user_id == currentUserId).count) > 0
+                if !historyExists {
+                    throw LocalTrainingHistoryError.historyNotFound("训练历史不存在或不属于当前用户")
+                }
+                
+                // 更新训练历史基本信息
+                try db.run(training_history.filter(th_id == historyId && th_user_id == currentUserId).update(
+                    th_training_date <- request.training_date,
+                    th_volume <- request.volume ?? 0.0,
+                    th_duration <- request.duration ?? 0,
+                    th_note <- request.note
+                ))
+                
+                // 如果有训练详情数据，更新训练详情
+                if let details = request.details, !details.isEmpty {
+                    // 删除现有的训练详情
+                    try db.run(training_history_details.filter(thd_history_id == historyId).delete())
+                    
+                    // 插入新的训练详情
+                    for detail in details {
+                        try db.run(training_history_details.insert(
+                            thd_history_id <- historyId,
+                            thd_action_id <- detail.action_id,
+                            thd_set_number <- detail.set_number,
+                            thd_weight <- detail.weight,
+                            thd_weight_unit <- detail.weight_unit,
+                            thd_reps <- detail.reps,
+                            thd_difficulty <- detail.difficulty,
+                            thd_left_weight <- detail.left_weight,
+                            thd_right_weight <- detail.right_weight,
+                            thd_is_completed <- detail.is_completed,
+                            thd_history_record_bilateral <- detail.history_record_bilateral
+                        ))
+                    }
+                    print("✅ 训练详情更新成功，共 \(details.count) 条记录")
+                }
+                
+                print("✅ 训练历史更新成功，ID: \(historyId)")
+            }
+        } catch let error as LocalTrainingHistoryError {
+            throw error
+        } catch {
+            print("❌ 数据库错误: \(error)")
+            throw LocalTrainingHistoryError.serverError("更新训练历史失败: \(error.localizedDescription)")
         }
     }
     
@@ -639,38 +711,97 @@ class LocalTrainingHistoryService {
         }
         
         do {
-            // 根据时间范围确定日期过滤条件
-            let dateFilter: String
+            // 根据时间范围构建完整的SQL查询
+            let coreStatsQuery: String
+            
             switch timeRange {
             case "week":
-                dateFilter = "DATE(training_date) >= DATE('now', '-7 days')"
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId) AND DATE(training_date) >= DATE('now', '-7 days')
+                """
             case "month":
-                dateFilter = "DATE(training_date) >= DATE('now', '-30 days')"
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId) AND DATE(training_date) >= DATE('now', '-30 days')
+                """
             case "year":
-                dateFilter = "DATE(training_date) >= DATE('now', '-365 days')"
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId) AND DATE(training_date) >= DATE('now', '-365 days')
+                """
+            case "current_month":
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId) AND DATE(training_date) >= DATE('now', 'start of month')
+                """
+            case "current_year":
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId) AND DATE(training_date) >= DATE('now', 'start of year')
+                """
             default:
-                dateFilter = "1=1" // 所有时间
+                coreStatsQuery = """
+                    SELECT 
+                        COUNT(*) as training_count,
+                        COALESCE(SUM(volume), 0) as total_volume,
+                        COALESCE(SUM(duration), 0) as total_duration
+                    FROM training_history 
+                    WHERE user_id = \(currentUserId)
+                """
             }
-            
-            // 获取核心统计指标
-            let coreStatsQuery = """
-                SELECT 
-                    COUNT(*) as training_count,
-                    COALESCE(SUM(volume), 0) as total_volume,
-                    COALESCE(SUM(duration), 0) as total_duration
-                FROM training_history 
-                WHERE user_id = ? AND \(dateFilter)
-            """
             
             let statement = try db.prepare(coreStatsQuery)
             var trainingCount = 0
             var totalVolume = 0.0
             var totalDuration = 0
             
-            for row in try statement.run([currentUserId]) {
-                trainingCount = row[0] as? Int ?? 0
+            for row in try statement.run() {
+                // SQLite.swift可能返回Int64类型，需要转换
+                if let count = row[0] as? Int64 {
+                    trainingCount = Int(count)
+                } else if let count = row[0] as? Int {
+                    trainingCount = count
+                } else {
+                    trainingCount = 0
+                }
+                
                 totalVolume = row[1] as? Double ?? 0.0
-                totalDuration = row[2] as? Int ?? 0
+                
+                let rawTotalDuration: Int
+                if let duration = row[2] as? Int64 {
+                    rawTotalDuration = Int(duration)
+                } else if let duration = row[2] as? Int {
+                    rawTotalDuration = duration
+                } else {
+                    rawTotalDuration = 0
+                }
+                
+                // duration字段已经是分钟单位，直接使用
+                totalDuration = rawTotalDuration
+                print("📊 总时长: \(totalDuration)分钟")
+                
+
                 break // 只取第一行
             }
             
@@ -680,21 +811,25 @@ class LocalTrainingHistoryService {
             // 获取训练容量趋势数据
             let volumeTrend = try getVolumeTrend(db: db, userId: currentUserId, timeRange: timeRange)
             
+            // 获取训练时长趋势数据
+            let durationTrend = try getDurationTrend(db: db, userId: currentUserId, timeRange: timeRange)
+            
             // 获取最常用训练计划
             let planUsage = try getPlanUsage(db: db, userId: currentUserId, timeRange: timeRange)
             
             let coreMetrics = CoreMetrics(
                 training_count: trainingCount,
                 total_volume: totalVolume,
-                total_duration: totalDuration / 60, // 秒转分钟
+                total_duration: totalDuration, // 已在SQL中转换为分钟
                 streak_days: streakDays
             )
             
-            print("✅ 统计数据获取成功: 训练次数=\(trainingCount), 总容量=\(totalVolume)kg, 总时长=\(totalDuration/60)分钟")
+            print("✅ 统计数据获取成功: 训练次数=\(trainingCount), 总容量=\(totalVolume)kg, 总时长=\(totalDuration)分钟")
             
             return TrainingStatisticsResponse(
                 core_metrics: coreMetrics,
                 volume_trend: volumeTrend,
+                duration_trend: durationTrend,
                 plan_usage: planUsage,
                 time_range: timeRange
             )
@@ -758,10 +893,11 @@ class LocalTrainingHistoryService {
     /// 获取训练容量趋势数据
     private func getVolumeTrend(db: Connection, userId: Int, timeRange: String) throws -> [VolumeTrendData] {
         let query: String
+        let queryParams: [Int]
         
         switch timeRange {
         case "week":
-            // 按天分组，最近7天
+            // 按天分组，基于当前日期的最近7天
             query = """
                 SELECT 
                     DATE(training_date) as date,
@@ -771,8 +907,9 @@ class LocalTrainingHistoryService {
                 GROUP BY DATE(training_date)
                 ORDER BY date
             """
+            queryParams = [userId]
         case "month":
-            // 按周分组，最近4周
+            // 按周分组，基于当前日期的最近30天
             query = """
                 SELECT 
                     DATE(training_date, 'weekday 0', '-6 days') as week_start,
@@ -782,8 +919,9 @@ class LocalTrainingHistoryService {
                 GROUP BY week_start
                 ORDER BY week_start
             """
-        default: // year
-            // 按月分组，最近12个月
+            queryParams = [userId]
+        case "year":
+            // 按月分组，基于当前日期的最近365天
             query = """
                 SELECT 
                     DATE(training_date, 'start of month') as month_start,
@@ -793,15 +931,151 @@ class LocalTrainingHistoryService {
                 GROUP BY month_start
                 ORDER BY month_start
             """
+            queryParams = [userId]
+        case "current_month":
+            // 按天分组，基于当前自然月
+            query = """
+                SELECT 
+                    DATE(training_date) as date,
+                    COALESCE(SUM(volume), 0) as volume
+                FROM training_history 
+                WHERE user_id = ? AND DATE(training_date) >= DATE('now', 'start of month')
+                GROUP BY DATE(training_date)
+                ORDER BY date
+            """
+            queryParams = [userId]
+        case "current_year":
+            // 按月分组，基于当前自然年
+            query = """
+                SELECT 
+                    DATE(training_date, 'start of month') as month_start,
+                    COALESCE(SUM(volume), 0) as volume
+                FROM training_history 
+                WHERE user_id = ? AND DATE(training_date) >= DATE('now', 'start of year')
+                GROUP BY month_start
+                ORDER BY month_start
+            """
+            queryParams = [userId]
+        default:
+            // 按月分组，基于当前日期的最近365天
+            query = """
+                SELECT 
+                    DATE(training_date, 'start of month') as month_start,
+                    COALESCE(SUM(volume), 0) as volume
+                FROM training_history 
+                WHERE user_id = ? AND DATE(training_date) >= DATE('now', '-365 days')
+                GROUP BY month_start
+                ORDER BY month_start
+            """
+            queryParams = [userId]
         }
         
         let statement = try db.prepare(query)
         var trendData: [VolumeTrendData] = []
         
-        for row in try statement.run([userId]) {
+        for row in try statement.run(queryParams) {
             let trend = VolumeTrendData(
                 date: row[0] as? String ?? "",
                 volume: row[1] as? Double ?? 0.0
+            )
+            trendData.append(trend)
+        }
+        
+        return trendData
+    }
+    
+    /// 获取训练时长趋势数据
+    private func getDurationTrend(db: Connection, userId: Int, timeRange: String) throws -> [DurationTrendData] {
+        
+        let query: String
+        
+        switch timeRange {
+        case "week":
+            // 直接查询原始数据，不使用GROUP BY
+            query = """
+                SELECT 
+                    DATE(training_date) as date,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', '-7 days')
+                ORDER BY date
+            """
+        case "month":
+            query = """
+                SELECT 
+                    DATE(training_date) as date,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', '-30 days')
+                ORDER BY date
+            """
+        case "year":
+            query = """
+                SELECT 
+                    DATE(training_date, 'start of month') as month_start,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', '-365 days')
+                ORDER BY month_start
+            """
+        case "current_month":
+            query = """
+                SELECT 
+                    DATE(training_date) as date,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', 'start of month')
+                ORDER BY date
+            """
+        case "current_year":
+            query = """
+                SELECT 
+                    DATE(training_date, 'start of month') as month_start,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', 'start of year')
+                ORDER BY month_start
+            """
+        default:
+            query = """
+                SELECT 
+                    DATE(training_date, 'start of month') as month_start,
+                    duration
+                FROM training_history 
+                WHERE user_id = \(userId) AND DATE(training_date) >= DATE('now', '-365 days')
+                ORDER BY month_start
+            """
+        }
+        
+        let statement = try db.prepare(query)
+        var dateToTotalDuration: [String: Int] = [:]
+        
+        for row in try statement.run() {
+            let date = row[0] as? String ?? ""
+            
+            // 优化的类型转换逻辑
+            var rawDuration: Int = 0
+            if let intValue = row[1] as? Int {
+                rawDuration = intValue
+            } else if let int64Value = row[1] as? Int64 {
+                rawDuration = Int(int64Value)
+            } else if let stringValue = row[1] as? String, let intValue = Int(stringValue) {
+                rawDuration = intValue
+            }
+            
+            // duration字段已经是分钟单位，直接使用
+            let duration = rawDuration
+            
+            // 在Swift中进行聚合
+            dateToTotalDuration[date, default: 0] += duration
+        }
+        
+        // 转换为DurationTrendData数组
+        var trendData: [DurationTrendData] = []
+        for (date, totalDuration) in dateToTotalDuration.sorted(by: { $0.key < $1.key }) {
+            let trend = DurationTrendData(
+                date: date,
+                duration: totalDuration
             )
             trendData.append(trend)
         }
@@ -819,6 +1093,10 @@ class LocalTrainingHistoryService {
             dateFilter = "DATE(training_date) >= DATE('now', '-30 days')"
         case "year":
             dateFilter = "DATE(training_date) >= DATE('now', '-365 days')"
+        case "current_month":
+            dateFilter = "DATE(training_date) >= DATE('now', 'start of month')"
+        case "current_year":
+            dateFilter = "DATE(training_date) >= DATE('now', 'start of year')"
         default:
             dateFilter = "1=1"
         }
@@ -848,6 +1126,260 @@ class LocalTrainingHistoryService {
         }
         
         return planUsageData
+    }
+    
+    /// 获取按身体部位和周统计的训练容量数据
+    func getWeeklyVolumeByBodyPart(bodyPart: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> [VolumeTrendData] {
+        guard let db = dbManager.getConnection() else {
+            throw LocalTrainingHistoryError.databaseNotInitialized
+        }
+        
+        // 获取当前用户ID
+        let currentUserId: Int
+        if let providedUserId = user_id {
+            currentUserId = providedUserId
+        } else {
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            currentUserId = currentUser.id
+        }
+        
+        do {
+            // 按周分组，获取过去10周的数据，按身体部位筛选
+            let query = """
+                SELECT 
+                    DATE(th.training_date, 'weekday 0', '-6 days') as week_start,
+                    COALESCE(SUM(th.volume), 0) as volume
+                FROM training_history th
+                JOIN training_history_details thd ON th.id = thd.history_id
+                JOIN action a ON thd.action_id = a.id
+                JOIN body_part bp ON a.bodypart_id = bp.id
+                WHERE th.user_id = ? 
+                    AND DATE(th.training_date) >= DATE('now', '-70 days')
+                    AND bp.display_name = ?
+                GROUP BY week_start
+                ORDER BY week_start
+            """
+            
+            let statement = try db.prepare(query)
+            var trendData: [VolumeTrendData] = []
+            
+            for row in try statement.run([currentUserId, bodyPart]) {
+                let trend = VolumeTrendData(
+                    date: row[0] as? String ?? "",
+                    volume: row[1] as? Double ?? 0.0
+                )
+                trendData.append(trend)
+            }
+            
+            return trendData
+        } catch {
+            print("❌ 获取周训练容量数据失败: \(error)")
+            throw LocalTrainingHistoryError.serverError("获取周训练容量数据失败: \(error.localizedDescription)")
+        }
+    }
+    
+    /// 获取按身体部位和周统计的训练时长数据
+    func getWeeklyDurationByBodyPart(bodyPart: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> [DurationTrendData] {
+        guard let db = dbManager.getConnection() else {
+            throw LocalTrainingHistoryError.databaseNotInitialized
+        }
+        
+        // 获取当前用户ID
+        let currentUserId: Int
+        if let providedUserId = user_id {
+            currentUserId = providedUserId
+        } else {
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            currentUserId = currentUser.id
+        }
+        
+        do {
+            // 按周分组，获取过去10周的数据，按身体部位筛选
+            let query = """
+                SELECT 
+                    DATE(th.training_date, 'weekday 0', '-6 days') as week_start,
+                    COALESCE(SUM(th.duration), 0) as duration
+                FROM training_history th
+                JOIN training_history_details thd ON th.id = thd.history_id
+                JOIN action a ON thd.action_id = a.id
+                JOIN body_part bp ON a.bodypart_id = bp.id
+                WHERE th.user_id = ? 
+                    AND DATE(th.training_date) >= DATE('now', '-70 days')
+                    AND bp.display_name = ?
+                GROUP BY week_start
+                ORDER BY week_start
+            """
+            
+            let statement = try db.prepare(query)
+            var trendData: [DurationTrendData] = []
+            
+            for row in try statement.run([currentUserId, bodyPart]) {
+                let trend = DurationTrendData(
+                    date: row[0] as? String ?? "",
+                    duration: row[1] as? Int ?? 0
+                )
+                trendData.append(trend)
+            }
+            
+            return trendData
+        } catch {
+            print("❌ 获取周训练时长数据失败: \(error)")
+            throw LocalTrainingHistoryError.serverError("获取周训练时长数据失败: \(error.localizedDescription)")
+        }
+    }
+    
+    /// 获取按身体部位和月统计的训练容量数据
+    func getMonthlyVolumeByBodyPart(bodyPart: String, year: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> [VolumeTrendData] {
+        print("📊 LocalTrainingHistoryService.getMonthlyVolumeByBodyPart: \(bodyPart), year: \(year)")
+        
+        guard let db = dbManager.getConnection() else {
+            throw LocalTrainingHistoryError.databaseNotInitialized
+        }
+        
+        // 获取当前用户ID
+        let currentUserId: Int
+        if let providedUserId = user_id {
+            currentUserId = providedUserId
+        } else {
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            currentUserId = currentUser.id
+        }
+        
+        do {
+            // 构建SQL查询，按月统计指定年份的训练容量
+            let query = """
+                SELECT 
+                    strftime('%m', th.training_date) as month,
+                    SUM(thd.weight * thd.reps) as total_volume
+                FROM training_history th
+                JOIN training_history_details thd ON th.id = thd.history_id
+                JOIN action a ON thd.action_id = a.id
+                JOIN body_part bp ON a.body_part_id = bp.id
+                WHERE th.user_id = ? 
+                    AND bp.name = ? 
+                    AND strftime('%Y', th.training_date) = ?
+                    AND thd.is_completed = 1
+                    AND thd.weight IS NOT NULL 
+                    AND thd.reps IS NOT NULL
+                GROUP BY strftime('%m', th.training_date)
+                ORDER BY month
+            """
+            
+            let statement = try db.prepare(query)
+            var trendData: [VolumeTrendData] = []
+            
+            // 创建一个包含所有月份的字典，初始值为0
+            var monthlyData: [String: Double] = [:]
+            for month in 1...12 {
+                let monthStr = String(format: "%02d", month)
+                monthlyData[monthStr] = 0.0
+            }
+            
+            // 填充实际数据
+            for row in try statement.run([currentUserId, bodyPart, String(year)]) {
+                let month = row[0] as? String ?? ""
+                let volume = row[1] as? Double ?? 0.0
+                monthlyData[month] = volume
+            }
+            
+            // 转换为TrendData格式
+            for month in 1...12 {
+                let monthStr = String(format: "%02d", month)
+                let dateStr = "\(year)-\(monthStr)-01"
+                let volume = monthlyData[monthStr] ?? 0.0
+                
+                let trend = VolumeTrendData(
+                    date: dateStr,
+                    volume: volume
+                )
+                trendData.append(trend)
+            }
+            
+            return trendData
+        } catch {
+            print("❌ 获取月训练容量数据失败: \(error)")
+            throw LocalTrainingHistoryError.serverError("获取月训练容量数据失败: \(error.localizedDescription)")
+        }
+    }
+    
+    /// 获取按身体部位和月统计的训练时长数据
+    func getMonthlyDurationByBodyPart(bodyPart: String, year: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> [DurationTrendData] {
+        print("📊 LocalTrainingHistoryService.getMonthlyDurationByBodyPart: \(bodyPart), year: \(year)")
+        
+        guard let db = dbManager.getConnection() else {
+            throw LocalTrainingHistoryError.databaseNotInitialized
+        }
+        
+        // 获取当前用户ID
+        let currentUserId: Int
+        if let providedUserId = user_id {
+            currentUserId = providedUserId
+        } else {
+            guard let currentUser = LocalUserService.shared.currentUser else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            currentUserId = currentUser.id
+        }
+        
+        do {
+            // 构建SQL查询，按月统计指定年份的训练时长
+            let query = """
+                SELECT 
+                    strftime('%m', th.training_date) as month,
+                    SUM(th.duration) as total_duration
+                FROM training_history th
+                JOIN training_history_details thd ON th.id = thd.history_id
+                JOIN action a ON thd.action_id = a.id
+                JOIN body_part bp ON a.body_part_id = bp.id
+                WHERE th.user_id = ? 
+                    AND bp.name = ? 
+                    AND strftime('%Y', th.training_date) = ?
+                    AND thd.is_completed = 1
+                GROUP BY strftime('%m', th.training_date)
+                ORDER BY month
+            """
+            
+            let statement = try db.prepare(query)
+            var trendData: [DurationTrendData] = []
+            
+            // 创建一个包含所有月份的字典，初始值为0
+            var monthlyData: [String: Int] = [:]
+            for month in 1...12 {
+                let monthStr = String(format: "%02d", month)
+                monthlyData[monthStr] = 0
+            }
+            
+            // 填充实际数据
+            for row in try statement.run([currentUserId, bodyPart, String(year)]) {
+                let month = row[0] as? String ?? ""
+                let duration = row[1] as? Int ?? 0
+                monthlyData[month] = duration
+            }
+            
+            // 转换为TrendData格式
+            for month in 1...12 {
+                let monthStr = String(format: "%02d", month)
+                let dateStr = "\(year)-\(monthStr)-01"
+                let duration = monthlyData[monthStr] ?? 0
+                
+                let trend = DurationTrendData(
+                    date: dateStr,
+                    duration: duration
+                )
+                trendData.append(trend)
+            }
+            
+            return trendData
+        } catch {
+            print("❌ 获取月训练时长数据失败: \(error)")
+            throw LocalTrainingHistoryError.serverError("获取月训练时长数据失败: \(error.localizedDescription)")
+        }
     }
     
     // MARK: - 获取动作进步数据（可选实现）

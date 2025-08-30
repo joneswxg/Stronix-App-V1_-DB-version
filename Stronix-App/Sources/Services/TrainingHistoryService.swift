@@ -34,6 +34,11 @@ class TrainingHistoryService: ObservableObject {
         return try await localService.getTrainingHistoryDetail(historyId: historyId)
     }
     
+    /// 更新训练历史（本地化）
+    func updateTrainingHistory(historyId: Int, request: UpdateTrainingHistoryRequest) async throws {
+        try await localService.updateTrainingHistory(historyId: historyId, request: request)
+    }
+    
     /// 删除训练历史（本地化）
     func deleteTrainingHistory(historyId: Int) async throws {
         try await localService.deleteTrainingHistory(historyId: historyId)
@@ -47,6 +52,26 @@ class TrainingHistoryService: ObservableObject {
     /// 获取动作进步数据（本地化）
     func getActionProgress(actionName: String) async throws -> ActionProgressResponse {
         return try await localService.getActionProgress(actionName: actionName)
+    }
+    
+    /// 获取按身体部位和周统计的训练容量数据（本地化）
+    func getWeeklyVolumeByBodyPart(bodyPart: String) async throws -> [VolumeTrendData] {
+        return try await localService.getWeeklyVolumeByBodyPart(bodyPart: bodyPart)
+    }
+    
+    /// 获取按身体部位和周统计的训练时长数据（本地化）
+    func getWeeklyDurationByBodyPart(bodyPart: String) async throws -> [DurationTrendData] {
+        return try await localService.getWeeklyDurationByBodyPart(bodyPart: bodyPart)
+    }
+    
+    /// 获取按身体部位和月统计的训练容量数据（本地化）
+    func getMonthlyVolumeByBodyPart(bodyPart: String, year: Int) async throws -> [VolumeTrendData] {
+        return try await localService.getMonthlyVolumeByBodyPart(bodyPart: bodyPart, year: year)
+    }
+    
+    /// 获取按身体部位和月统计的训练时长数据（本地化）
+    func getMonthlyDurationByBodyPart(bodyPart: String, year: Int) async throws -> [DurationTrendData] {
+        return try await localService.getMonthlyDurationByBodyPart(bodyPart: bodyPart, year: year)
     }
 }
 
@@ -150,12 +175,14 @@ struct TrainingHistoryDetailItem: Codable {
     let right_weight: Double?
     let is_completed: Bool
     let action_name: String?
+    let history_record_bilateral: Bool
 }
 
 /// 训练统计响应
 struct TrainingStatisticsResponse: Codable {
     let core_metrics: CoreMetrics
     let volume_trend: [VolumeTrendData]
+    let duration_trend: [DurationTrendData]
     let plan_usage: [PlanUsageDataAPI]
     let time_range: String
 }
@@ -172,6 +199,12 @@ struct CoreMetrics: Codable {
 struct VolumeTrendData: Codable {
     let date: String
     let volume: Double
+}
+
+/// 训练时长趋势数据
+struct DurationTrendData: Codable {
+    let date: String
+    let duration: Int
 }
 
 /// 计划使用数据（API响应）
@@ -226,4 +259,4 @@ enum NetworkError: Error, LocalizedError {
             return message
         }
     }
-} 
+}

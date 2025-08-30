@@ -79,7 +79,8 @@ class LocalUserService: ObservableObject {
         do {
             // 先查询用户和密码哈希
             let query = """
-                SELECT id, username, email, role, gender, height, weight, created_at, is_admin, password_hash
+                SELECT id, username, email, role, gender, height, weight, created_at, is_admin, password_hash,
+                       account_type, external_id, wechat_open_id, wechat_union_id, apple_id
                 FROM user 
                 WHERE email = ?
             """
@@ -87,8 +88,8 @@ class LocalUserService: ObservableObject {
             let rows = try db.prepare(query, [email])
             
             if let row = rows.makeIterator().next() {
-                // 安全检查：确保行数据包含足够的列
-                guard row.count >= 10 else {
+                // 安全检查：确保行数据包含足够的列（增加到15列以支持新字段）
+                guard row.count >= 15 else {
                     print("⚠️ LocalUserService: 跳过不完整的用户行数据，列数: \(row.count)")
                     throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
                 }
@@ -134,7 +135,12 @@ class LocalUserService: ObservableObject {
                         weight: weight,
                         role: role,
                         isAdmin: isAdmin,
-                        createdAt: createdAt
+                        createdAt: createdAt,
+                        accountType: row[10] as? String,
+                        externalId: row[11] as? String,
+                        wechatOpenId: row[12] as? String,
+                        wechatUnionId: row[13] as? String,
+                        appleId: row[14] as? String
                     )
                     
                     print("✅ 登录成功: 用户ID=\(user.id), 用户名=\(user.username)")
@@ -212,36 +218,41 @@ class LocalUserService: ObservableObject {
             print("  体重: \(weightValue?.description ?? "未指定")")
             
             let insertQuery = """
-                INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'regular', 0, datetime('now'))
+                INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at, account_type, external_id)
+                VALUES (?, ?, ?, ?, ?, ?, 'regular', 0, datetime('now'), ?, ?)
             """
             
-            try db.run(insertQuery, [username, email, passwordHash, genderValue, heightValue, weightValue])
+            try db.run(insertQuery, [username, email, passwordHash, genderValue, heightValue, weightValue, "email", email])
             
             print("✅ 用户数据已插入数据库")
             
-            // 获取新创建的用户
-            let newUserQuery = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin FROM user WHERE email = ?"
+            // 获取新创建的用户 - 包含所有字段
+            let newUserQuery = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin, account_type, external_id, wechat_open_id, wechat_union_id, apple_id FROM user WHERE email = ?"
             let newUserRows = try db.prepare(newUserQuery, [email])
             
             if let row = newUserRows.makeIterator().next() {
                 // 安全检查：确保行数据包含足够的列
-                guard row.count >= 9 else {
+                guard row.count >= 14 else {
                     print("⚠️ LocalUserService: 新用户行数据不完整，列数: \(row.count)")
                     throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "新用户数据行不完整"]))
                 }
                 
                 let user = User(
-                    id: Int(row[0] as? Int64 ?? 0),
-                    username: row[1] as? String ?? "",
-                    email: row[2] as? String ?? "",
-                    gender: row[4] as? String,
-                    height: row[5] as? Double,
-                    weight: row[6] as? Double,
-                    role: row[3] as? String ?? "regular",
-                    isAdmin: (row[8] as? Int64 ?? 0) == 1,
-                    createdAt: row[7] as? String ?? ""
-                )
+                        id: Int(row[0] as? Int64 ?? 0),
+                        username: row[1] as? String ?? "",
+                        email: row[2] as? String ?? "",
+                        gender: row[4] as? String,
+                        height: row[5] as? Double,
+                        weight: row[6] as? Double,
+                        role: row[3] as? String ?? "regular",
+                        isAdmin: (row[8] as? Int64 ?? 0) == 1,
+                        createdAt: row[7] as? String ?? "",
+                        accountType: row[9] as? String,
+                        externalId: row[10] as? String,
+                        wechatOpenId: row[11] as? String,
+                        wechatUnionId: row[12] as? String,
+                        appleId: row[13] as? String
+                    )
                 
                 await MainActor.run {
                     self.currentUser = user
@@ -321,7 +332,12 @@ class LocalUserService: ObservableObject {
                     weight: row[6] as? Double,
                     role: row[3] as? String ?? "regular",
                     isAdmin: (row[8] as? Int64 ?? 0) == 1,
-                    createdAt: row[7] as? String ?? ""
+                    createdAt: row[7] as? String ?? "",
+                    accountType: nil,
+                    externalId: nil,
+                    wechatOpenId: nil,
+                    wechatUnionId: nil,
+                    appleId: nil
                 )
                 
                 DispatchQueue.main.async {
@@ -532,11 +548,8 @@ class LocalUserService: ObservableObject {
             let wechatResponse = try await wechatService.simulateWechatLogin()
             
             if wechatResponse.success, let openId = wechatResponse.openId, let nickname = wechatResponse.nickname {
-                // 使用微信openId作为邮箱标识
-                let wechatEmail = "wechat_\(openId)"
-                
-                // 检查用户是否已存在
-                if let existingUser = try await getUserByEmail(wechatEmail) {
+                // 优先通过wechat_open_id查找用户
+                if let existingUser = try await findUserByWechatOpenId(openId) {
                     // 用户已存在，直接登录
                     await MainActor.run {
                         self.currentUser = existingUser
@@ -575,8 +588,39 @@ class LocalUserService: ObservableObject {
     /// 检查用户是否通过微信登录
     func isWechatUser() -> Bool {
         guard let user = currentUser else { return false }
-        // 检查邮箱是否以wechat_开头
-        return user.email.hasPrefix("wechat_")
+        return user.accountType == "wechat" || user.email.hasPrefix("wechat_")
+    }
+    
+    /// 检查是否为邮箱用户
+    func isEmailUser() -> Bool {
+        guard let user = currentUser else { return false }
+        return user.accountType == "email" || (!user.email.hasPrefix("wechat_") && user.accountType == nil)
+    }
+    
+    /// 检查是否为Apple用户
+    func isAppleUser() -> Bool {
+        guard let user = currentUser else { return false }
+        return user.accountType == "apple"
+    }
+    
+    /// 根据账户类型获取用户显示名称
+    func getUserDisplayName() -> String {
+        guard let user = currentUser else { return "未知用户" }
+        
+        if !user.username.isEmpty {
+            return user.username
+        }
+        
+        switch user.accountType {
+        case "wechat":
+            return "微信用户"
+        case "apple":
+            return "Apple用户"
+        case "email":
+            return user.email
+        default:
+            return user.email.isEmpty ? "用户" : user.email
+        }
     }
     
     /// 根据邮箱获取用户
@@ -586,11 +630,11 @@ class LocalUserService: ObservableObject {
         }
         
         do {
-            let query = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin FROM user WHERE email = ?"
+            let query = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin, account_type, external_id, wechat_open_id, wechat_union_id, apple_id FROM user WHERE email = ?"
         let rows = try db.prepare(query, [email])
         
         if let row = rows.makeIterator().next() {
-            guard row.count >= 9 else {
+            guard row.count >= 14 else {
                 throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
             }
             
@@ -603,11 +647,56 @@ class LocalUserService: ObservableObject {
                 weight: row[6] as? Double,
                 role: row[3] as? String ?? "regular",
                 isAdmin: (row[8] as? Int64 ?? 0) == 1,
-                createdAt: row[7] as? String ?? ""
+                createdAt: row[7] as? String ?? "",
+                accountType: row[9] as? String,
+                externalId: row[10] as? String,
+                wechatOpenId: row[11] as? String,
+                wechatUnionId: row[12] as? String,
+                appleId: row[13] as? String
             )
             }
             return nil
         } catch {
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 根据微信OpenId查找用户
+    private func findUserByWechatOpenId(_ openId: String) async throws -> User? {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let query = "SELECT id, username, email, role, gender, height, weight, created_at, is_admin, account_type, external_id, wechat_open_id, wechat_union_id, apple_id FROM user WHERE wechat_open_id = ?"
+            let rows = try db.prepare(query, [openId])
+            
+            if let row = rows.makeIterator().next() {
+                guard row.count >= 14 else {
+                    throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "数据行不完整"]))
+                }
+                
+                return User(
+                    id: Int(row[0] as? Int64 ?? 0),
+                    username: row[1] as? String ?? "",
+                    email: row[2] as? String ?? "",
+                    gender: row[4] as? String,
+                    height: row[5] as? Double,
+                    weight: row[6] as? Double,
+                    role: row[3] as? String ?? "regular",
+                    isAdmin: (row[8] as? Int64 ?? 0) == 1,
+                    createdAt: row[7] as? String ?? "",
+                    accountType: row[9] as? String,
+                    externalId: row[10] as? String,
+                    wechatOpenId: row[11] as? String,
+                    wechatUnionId: row[12] as? String,
+                    appleId: row[13] as? String
+                )
+            }
+            
+            return nil
+        } catch {
+            print("❌ 通过微信OpenId查询用户失败: \(error)")
             throw UserServiceError.queryFailed(error)
         }
     }
@@ -626,11 +715,11 @@ class LocalUserService: ObservableObject {
             let uniqueUsername = try await generateUniqueUsername(baseName: nickname)
             
             let insertQuery = """
-                INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at, account_type, external_id, wechat_open_id, wechat_union_id, apple_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
-            try db.run(insertQuery, [uniqueUsername, wechatEmail, "", nil, nil, nil, "regular", 0, currentTime])
+            try db.run(insertQuery, [uniqueUsername, wechatEmail, "", nil, nil, nil, "regular", 0, currentTime, "wechat", openId, openId, nil, nil])
             
             // 获取新创建的用户ID
             let getUserQuery = "SELECT id FROM user WHERE email = ?"
@@ -648,7 +737,12 @@ class LocalUserService: ObservableObject {
                     weight: nil,
                     role: "regular",
                     isAdmin: false,
-                    createdAt: currentTime
+                    createdAt: currentTime,
+                    accountType: "wechat",
+                    externalId: openId,
+                    wechatOpenId: openId,
+                    wechatUnionId: nil,
+                    appleId: nil
                 )
             } else {
                 throw UserServiceError.queryFailed(NSError(domain: "LocalUserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法获取新创建的用户ID"]))
@@ -701,6 +795,220 @@ class LocalUserService: ObservableObject {
             
             return false
         } catch {
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    // MARK: - 密码重置功能
+    
+    /// 发送密码重置验证码
+    func sendPasswordResetCode(email: String) async throws -> AuthResponse {
+        // 1. 验证邮箱格式
+        let emailService = EmailService.shared
+        guard emailService.isValidEmail(email) else {
+            return AuthResponse(success: false, message: "邮箱格式不正确", user: nil)
+        }
+        
+        // 2. 检查用户是否存在
+        guard let user = try await getUserByEmail(email) else {
+            return AuthResponse(success: false, message: "该邮箱未注册", user: nil)
+        }
+        
+        // 3. 检查是否为邮箱注册用户
+        guard user.accountType == "email" || user.accountType == nil else {
+            return AuthResponse(success: false, message: "该账户不支持邮箱密码重置", user: nil)
+        }
+        
+        // 4. 检查发送频率限制（1分钟内只能发送一次）
+        if let lastSentTime = try await getLastPasswordResetCodeTime(email: email) {
+            let timeSinceLastSent = Date().timeIntervalSince(lastSentTime)
+            if timeSinceLastSent < 60 { // 60秒限制
+                let remainingTime = Int(60 - timeSinceLastSent)
+                return AuthResponse(success: false, message: "请等待 \(remainingTime) 秒后再重新发送", user: nil)
+            }
+        }
+        
+        // 5. 生成验证码
+        let verificationCode = emailService.generateVerificationCode()
+        
+        // 6. 保存验证码到数据库
+        try await savePasswordResetCode(email: email, code: verificationCode)
+        
+        // 7. 发送邮件
+        let emailSent = await emailService.sendPasswordResetEmail(to: email, verificationCode: verificationCode)
+        
+        if emailSent {
+            return AuthResponse(success: true, message: "验证码已发送到您的邮箱", user: nil)
+        } else {
+            return AuthResponse(success: false, message: "邮件发送失败，请稍后重试", user: nil)
+        }
+    }
+    
+    /// 验证密码重置验证码并重置密码
+    func resetPassword(email: String, verificationCode: String, newPassword: String) async throws -> AuthResponse {
+        // 1. 验证验证码
+        guard let resetCode = try await getValidPasswordResetCode(email: email, code: verificationCode) else {
+            return AuthResponse(success: false, message: "验证码无效或已过期", user: nil)
+        }
+        
+        // 2. 检查验证码是否已使用
+        if resetCode.isUsed {
+            return AuthResponse(success: false, message: "验证码已被使用", user: nil)
+        }
+        
+        // 3. 检查验证码是否过期
+        if resetCode.expiresAt < Date() {
+            return AuthResponse(success: false, message: "验证码已过期", user: nil)
+        }
+        
+        // 4. 更新用户密码
+        try await updateUserPassword(email: email, newPassword: newPassword)
+        
+        // 5. 标记验证码为已使用
+        try await markPasswordResetCodeAsUsed(resetCode.id)
+        
+        return AuthResponse(success: true, message: "密码重置成功", user: nil)
+    }
+    
+    /// 保存密码重置验证码
+    private func savePasswordResetCode(email: String, code: String) async throws {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            // 设置验证码15分钟后过期
+            let expiresAt = Date().addingTimeInterval(15 * 60)
+            let dateFormatter = ISO8601DateFormatter()
+            
+            let insertSQL = """
+                INSERT INTO password_reset_codes (email, verification_code, expires_at, is_used, created_at)
+                VALUES (?, ?, ?, 0, ?)
+            """
+            
+            let stmt = try db.prepare(insertSQL)
+            try stmt.run([
+                email,
+                code,
+                dateFormatter.string(from: expiresAt),
+                dateFormatter.string(from: Date())
+            ])
+            
+            print("✅ LocalUserService: 密码重置验证码已保存")
+        } catch {
+            print("❌ LocalUserService: 保存密码重置验证码失败: \(error)")
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 获取有效的密码重置验证码
+    private func getValidPasswordResetCode(email: String, code: String) async throws -> PasswordResetCode? {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let query = """
+                SELECT id, email, verification_code, expires_at, is_used, created_at, used_at
+                FROM password_reset_codes
+                WHERE email = ? AND verification_code = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            """
+            
+            let rows = try db.prepare(query, [email, code])
+            
+            if let row = rows.makeIterator().next() {
+                let dateFormatter = ISO8601DateFormatter()
+                
+                return PasswordResetCode(
+                    id: Int(row[0] as? Int64 ?? 0),
+                    email: row[1] as? String ?? "",
+                    verificationCode: row[2] as? String ?? "",
+                    expiresAt: dateFormatter.date(from: row[3] as? String ?? "") ?? Date(),
+                    isUsed: (row[4] as? Int64 ?? 0) == 1,
+                    createdAt: dateFormatter.date(from: row[5] as? String ?? "") ?? Date(),
+                    usedAt: {
+                        if let usedAtString = row[6] as? String {
+                            return dateFormatter.date(from: usedAtString)
+                        }
+                        return nil
+                    }()
+                )
+            }
+            
+            return nil
+        } catch {
+            print("❌ LocalUserService: 获取密码重置验证码失败: \(error)")
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 更新用户密码
+    private func updateUserPassword(email: String, newPassword: String) async throws {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            // 对新密码进行哈希处理
+            let passwordHash = hashPassword(newPassword)
+            let updateSQL = "UPDATE user SET password_hash = ? WHERE email = ?"
+            let stmt = try db.prepare(updateSQL)
+            try stmt.run([passwordHash, email])
+            
+            print("✅ LocalUserService: 用户密码已更新")
+        } catch {
+            print("❌ LocalUserService: 更新用户密码失败: \(error)")
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 标记密码重置验证码为已使用
+    private func markPasswordResetCodeAsUsed(_ codeId: Int) async throws {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let dateFormatter = ISO8601DateFormatter()
+            let updateSQL = "UPDATE password_reset_codes SET is_used = 1, used_at = ? WHERE id = ?"
+            let stmt = try db.prepare(updateSQL)
+            try stmt.run([dateFormatter.string(from: Date()), codeId])
+            
+            print("✅ LocalUserService: 密码重置验证码已标记为已使用")
+        } catch {
+            print("❌ LocalUserService: 标记验证码为已使用失败: \(error)")
+            throw UserServiceError.queryFailed(error)
+        }
+    }
+    
+    /// 获取最后一次发送密码重置验证码的时间
+    private func getLastPasswordResetCodeTime(email: String) async throws -> Date? {
+        guard let db = databaseManager.getConnection() else {
+            throw UserServiceError.databaseNotInitialized
+        }
+        
+        do {
+            let query = """
+                SELECT created_at FROM password_reset_codes 
+                WHERE email = ? 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """
+            
+            let rows = try db.prepare(query, [email])
+            
+            if let row = rows.makeIterator().next() {
+                let dateFormatter = ISO8601DateFormatter()
+                if let createdAtString = row[0] as? String {
+                    return dateFormatter.date(from: createdAtString)
+                }
+            }
+            
+            return nil
+        } catch {
+            print("❌ LocalUserService: 获取最后发送时间失败: \(error)")
             throw UserServiceError.queryFailed(error)
         }
     }

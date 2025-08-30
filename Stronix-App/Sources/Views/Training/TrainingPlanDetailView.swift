@@ -1,12 +1,18 @@
 import SwiftUI
 
 struct TrainingPlanDetailView: View {
-    let plan: TrainingPlan
+    @State private var plan: TrainingPlan
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     @State private var showEditPlan = false
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @State private var showTrainingConflictAlert = false
+    @State private var isLoadingPlan = false
+    private let planService = LocalPlanService.shared
+    
+    init(plan: TrainingPlan) {
+        self._plan = State(initialValue: plan)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -19,7 +25,7 @@ struct TrainingPlanDetailView: View {
                         
                         Spacer()
                         
-                        Text("\(plan.calculatedVolume) kg")
+                        Text("\(String(format: "%.1f", Double(plan.calculatedVolume))) kg")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(theme.primary)
                     }
@@ -133,18 +139,15 @@ struct TrainingPlanDetailView: View {
                 }
             }
         .fullScreenCover(isPresented: $showEditPlan) {
-            // 传递回调，保存成功后直接关闭详情页
+            // 传递回调，保存成功后重新加载数据但保持在详情页
             EditPlanView(plan: plan, onSaveSuccess: { updatedPlan in
                 print("🔄 TrainingPlanDetailView EditPlanView onSaveSuccess 回调被触发")
                 
                 // 关闭编辑页面
                 showEditPlan = false
                 
-                // 延迟关闭详情页，直接返回到 PlanListView
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    print("🔄 TrainingPlanDetailView 关闭详情页，返回到 PlanListView")
-                    dismiss()
-                }
+                // 重新加载计划数据
+                reloadPlanData()
             })
         }
         .alert("训练冲突", isPresented: $showTrainingConflictAlert) {
@@ -156,6 +159,41 @@ struct TrainingPlanDetailView: View {
             }
         } message: {
             Text("每次只能执行一个训练计划。当前正在进行「\(trainingManager.planName)」训练，是否停止当前训练并开始新的训练？")
+        }
+        .onAppear {
+            print("📋 TrainingPlanDetailView 页面加载")
+            print("📋 计划名称: \(plan.name)")
+            print("📋 计划ID: \(plan.id)")
+            print("📋 计划描述: \(plan.description ?? "无描述")")
+            print("📋 是否为模板: \(plan.isTemplate)")
+            print("📋 创建日期: \(plan.createdDate)")
+            print("📋 计算容量: \(plan.calculatedVolume) kg")
+            
+            if let actions = plan.actions {
+                print("📋 动作数量: \(actions.count)")
+                for (index, action) in actions.enumerated() {
+                    print("📋 动作\(index + 1): \(action.name) (ID: \(action.id))")
+                    print("📋   - 总容量: \(action.totalVolume) kg")
+                    print("📋   - 总组数: \(action.totalSets)")
+                    print("📋   - 图片URL: \(action.imageUrl)")
+                    print("📋   - 备注: \(action.notes ?? "无备注")")
+                    print("📋   - 休息时间: \(action.restTime)秒")
+                    print("📋   - 双侧记录: \(action.recordBilateral)")
+                    
+                    if !action.sets.isEmpty {
+                        print("📋   - 组数详情:")
+                        for (setIndex, set) in action.sets.enumerated() {
+                            if action.recordBilateral {
+                                print("📋     第\(setIndex + 1)组: 左\(set.leftWeight)kg, 右\(set.rightWeight)kg, \(set.reps)次")
+                            } else {
+                                print("📋     第\(setIndex + 1)组: \(set.weight)kg × \(set.reps)次")
+                            }
+                        }
+                    }
+                }
+            } else {
+                print("📋 无训练动作")
+            }
         }
     }
     
@@ -169,6 +207,33 @@ struct TrainingPlanDetailView: View {
             // 没有训练在进行，直接开始新训练
             trainingManager.startTraining(with: plan)
             dismiss()
+        }
+    }
+    
+    private func reloadPlanData() {
+        isLoadingPlan = true
+        
+        Task {
+            do {
+                let updatedPlan = try await planService.getPlanDetail(planId: plan.id)
+                await MainActor.run {
+                    self.plan = updatedPlan
+                    isLoadingPlan = false
+                    print("✅ 计划数据重新加载成功: \(updatedPlan.name), 动作数量: \(updatedPlan.actions?.count ?? 0)")
+                    
+                    // 发送通知给PlanListView，让它也更新对应的计划数据
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("PlanUpdatedFromDetail"),
+                        object: nil,
+                        userInfo: ["updatedPlan": updatedPlan]
+                    )
+                }
+            } catch {
+                await MainActor.run {
+                    isLoadingPlan = false
+                }
+                print("❌ 重新加载计划数据失败: \(error)")
+            }
         }
     }
 }
@@ -207,7 +272,7 @@ struct DetailActionCard: View {
                     
                     if let notes = action.notes, !notes.isEmpty {
                         Text(notes)
-                            .font(.system(size: 12))
+                            .font(.system(size: 16))
                             .foregroundColor(theme.secondary)
                             .lineLimit(2)
                     }
@@ -216,12 +281,12 @@ struct DetailActionCard: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("\(action.totalVolume) kg")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("\(String(format: "%.1f", Double(action.totalVolume))) kg")
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(theme.primary)
                     
                     Text("\(action.totalSets) 组")
-                        .font(.system(size: 12))
+                        .font(.system(size: 16))
                         .foregroundColor(theme.secondary)
                 }
             }
@@ -230,58 +295,58 @@ struct DetailActionCard: View {
             if !action.sets.isEmpty {
                 VStack(spacing: 4) {
                     HStack {
-                        Text("组数详情")
-                            .font(.system(size: 12, weight: .medium))
+                        Text("组数")
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(theme.secondary)
                         Spacer()
                     }
                     
                     ForEach(Array(action.sets.enumerated()), id: \.offset) { index, set in
                         HStack {
-                            Text("第\(index + 1)组")
-                                .font(.system(size: 12))
+                            Text("\(index + 1)")
+                                .font(.system(size: 14))
                                 .foregroundColor(theme.secondary)
-                                .frame(width: 50, alignment: .leading)
+                                .frame(width: 20, alignment: .leading)
                             
                             if action.recordBilateral {
                                 // 双侧训练显示左右重量
-                                Text("左\(Int(set.leftWeight))kg")
-                                    .font(.system(size: 12))
+                                Text("左\(String(format: "%.1f", set.leftWeight))kg")
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.onSurface)
-                                    .frame(width: 60, alignment: .leading)
+                                    .frame(width: 65, alignment: .leading)
                                 
-                                Text("右\(Int(set.rightWeight))kg")
-                                    .font(.system(size: 12))
+                                Text("右\(String(format: "%.1f", set.rightWeight))kg")
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.onSurface)
-                                    .frame(width: 60, alignment: .leading)
+                                    .frame(width: 65, alignment: .leading)
                             } else {
                                 // 普通训练显示单一重量
-                                Text("\(Int(set.weight))kg")
-                                    .font(.system(size: 12))
+                                Text("\(String(format: "%.1f", set.weight))kg")
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.onSurface)
-                                    .frame(width: 50, alignment: .leading)
+                                    .frame(width: 55, alignment: .leading)
                                 
                                 Text("×")
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.secondary)
                             }
                             
                             Text("\(set.reps)次")
-                                .font(.system(size: 12))
+                                .font(.system(size: 14))
                                 .foregroundColor(theme.onSurface)
-                                .frame(width: 50, alignment: .leading)
+                                .frame(width: 40, alignment: .leading)
                             
                             Spacer()
                             
                             // 容量计算也要考虑双侧训练
                             if action.recordBilateral {
                                 let totalWeight = set.leftWeight + set.rightWeight
-                                Text("\(Int(totalWeight * Double(set.reps)))kg")
-                                    .font(.system(size: 12))
+                                Text("\(String(format: "%.1f", totalWeight * Double(set.reps)))kg")
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.primary)
                             } else {
-                                Text("\(Int(set.weight * Double(set.reps)))kg")
-                                    .font(.system(size: 12))
+                                Text("\(String(format: "%.1f", set.weight * Double(set.reps)))kg")
+                                    .font(.system(size: 14))
                                     .foregroundColor(theme.primary)
                             }
                         }
@@ -297,7 +362,7 @@ struct DetailActionCard: View {
             // 休息时间
             HStack {
                 Text("休息时间: \(action.restTime)秒")
-                    .font(.system(size: 12))
+                    .font(.system(size: 16))
                     .foregroundColor(theme.secondary)
                 Spacer()
             }
