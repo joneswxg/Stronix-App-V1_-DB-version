@@ -462,6 +462,8 @@ struct EditingExerciseCardWrapper: View {
     
     var body: some View {
         EditingExerciseCard(
+            
+            
             exercise: exerciseBinding,
             onDelete: onDelete,
             onUpdate: onUpdate,
