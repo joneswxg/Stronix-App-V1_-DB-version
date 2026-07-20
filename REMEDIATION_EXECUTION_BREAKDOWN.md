@@ -38,6 +38,8 @@
 
 ### Ticket 0.1：创建整改基线
 
+**状态**：Completed 2026-07-20
+
 **背景**：后续整改跨度大，需要可回退起点。
 
 **范围**：Git tag、当前提交记录、阶段起点说明。
@@ -66,6 +68,8 @@
 
 ### Ticket 0.2：导出 SQLite 基线
 
+**状态**：Completed 2026-07-20
+
 **背景**：阶段 1 会处理 schema、外键、迁移，需要先固定旧库事实。
 
 **范围**：schema dump、表列表、外键检查、关键表行数。
@@ -93,6 +97,8 @@
 **风险**：只看 Bundle DB 可能遗漏 Documents DB 用户数据场景；后续测试要补真实用户库样本。
 
 ### Ticket 0.3：建立手动回归清单
+
+**状态**：Completed 2026-07-20；Checklist created and app startup manually verified
 
 **背景**：当前自动化测试不足，阶段早期必须靠稳定手动回归兜底。
 
@@ -1181,4 +1187,3 @@
 - Ticket 2.1：修复 MainTabView ViewModel 生命周期
 - Ticket 2.2：移除 ActionHistroyView 直连 DB
 - Ticket 7.1：清理 `.DS_Store` 与文件权限噪音
-
