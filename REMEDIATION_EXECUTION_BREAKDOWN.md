@@ -16,6 +16,12 @@
 
 在不整体重写 App 的前提下，分阶段完成本地 SQLite 数据安全、架构边界、业务域收敛、UI 设计系统、资源治理、安全隐私、测试与 CI 的整体整改。
 
+### 当前数据库数据处置决策
+
+- 当前整改前项目数据库中的全部既有数据均可删除，无需保留账号、User Plan、训练历史、体测或其他现有业务行。
+- Phase 1 可以直接重建干净目标 schema，并从受版本控制的来源重新生成内置动作和 Template Plan 等必要种子数据。
+- 该授权不适用于整改完成后产生的真实用户数据；未来正式升级仍必须使用安全 migration，禁止自动整库覆盖 Documents DB。
+
 ### 总体验收
 
 - 本地 SQLite 升级不覆盖用户数据。
@@ -127,168 +133,135 @@
 
 ## Phase 1：本地 SQLite 数据安全与升级策略
 
-### Ticket 1.1：加固 SQLite 连接配置
+本阶段的详细 Spec 与执行 tickets 已发布：父 Spec 为 GitHub Issue #1，实施单元为 #2 至 #8。当前整改前数据库中的全部既有数据均可删除；主线采用“当前一次性重建，未来安全 migration”。
 
-**背景**：当前数据库连接未明确开启外键约束，`foreign_keys` 查询为 `0`。
+### Ticket 1.1：建立统一数据库生命周期接缝与测试夹具（GitHub #2）
 
-**范围**：连接建立后的 PRAGMA 配置和启动诊断日志。
+**背景**：数据库初始化、版本检查、更新和连接开放分散在多个模块中，且缺少自动化数据库测试入口。
 
-**不做事项**：不修复 schema，不启用整套 migration。
+**范围**：单一数据库启动准备入口、结构化结果、连接 readiness、首次准备串行化、隔离测试目录和最小 XCTest target。
 
-**重点文件**：`DatabaseManager.swift`。
-
-**实施步骤**：
-
-1. 在 `Connection` 创建后执行 `PRAGMA foreign_keys = ON`。
-2. 设置 `busy_timeout = 5000`。
-3. 评估 `journal_mode = WAL`，如启用需记录原因和影响。
-4. 增加启动诊断日志：foreign keys、journal mode、database path。
+**不做事项**：不在本 ticket 建立最终 baseline schema、完整 Migration Runner 或 Template Plan/User Plan 分离。
 
 **验收标准**：
 
-- App 初始化后 foreign keys 状态为开启。
-- 数据库连接失败时错误上下文清楚。
-- 现有业务路径仍可启动。
-
-**测试要求**：
-
-- 单元或集成测试验证连接配置。
-- 手动启动 App 验证数据库可用。
+- App 和业务 Service 只能获得准备完成的连接。
+- 准备入口返回结构化 ready/failed 状态。
+- 并发调用不会重复复制、重建或迁移数据库。
+- 测试不访问真实 Documents DB，并能完成一次基本读写。
+- App 启动冒烟验证通过。
 
 **依赖**：Phase 0。
 
-**风险**：开启外键后旧脏数据可能导致写入失败；需要与 Ticket 1.4 协同。
+### Ticket 1.2：停止正式启动整库覆盖并隔离破坏性重建（GitHub #3）
 
-### Ticket 1.2：停止整库覆盖式升级
+**背景**：当前升级逻辑会删除 Documents DB 并复制 Bundle DB，未来可能覆盖真实用户数据。
 
-**背景**：当前升级逻辑会删除 Documents DB 并复制 Bundle DB，有覆盖用户数据风险。
+**范围**：移除 Release 正常启动中的整库覆盖，将当前整改期允许的数据删除重建隔离为显式 remediation 或 DEBUG 能力。
 
-**范围**：`UpdateService` 的更新策略保护。
-
-**不做事项**：不立即实现全部 migration。
-
-**重点文件**：`UpdateService.swift`、`VersionService.swift`。
-
-**实施步骤**：
-
-1. 禁止默认路径删除 Documents DB。
-2. 将强制覆盖逻辑降级为开发调试能力，并加明显保护。
-3. 为正式升级入口预留 migration runner 调用点。
-4. 保留备份逻辑，但失败必须阻止升级继续执行。
+**不做事项**：不在普通启动路径自动删除数据库。
 
 **验收标准**：
 
-- App 更新路径不会自动覆盖用户数据库。
-- 强制覆盖只能在明确调试入口触发。
-- 失败时不会留下半替换数据库。
+- 已有 Documents DB 在普通启动后保持不变。
+- Release 正常路径不存在自动整库重置。
+- 显式重建不会被版本检查或首次数据库访问自动调用。
+- 启动失败不会留下半替换数据库。
 
-**测试要求**：
+**依赖**：Ticket 1.1。
 
-- 模拟旧 Documents DB 存在时，升级不删除用户数据。
-- 模拟备份失败时，升级停止。
+### Ticket 1.3：生成干净 baseline 数据库与确定性种子数据（GitHub #4）
 
-**依赖**：Ticket 1.1 可并行，但应在 migration 前完成。
+**背景**：当前数据已确认可全部删除，无需为错误外键、`user_id = 0`、孤儿关系和其他脏数据编写兼容 migration。
 
-**风险**：版本检查逻辑依赖旧复制路径，修改后可能导致升级状态显示变化。
+**范围**：干净目标 schema、当前数据删除、受版本控制的种子来源、首次安装与显式重建。
 
-### Ticket 1.3：建立本地 SQLite Migration Runner
-
-**背景**：需要用事务化增量迁移替代整库替换。
-
-**范围**：migration 表、runner、事务执行、版本更新。
-
-**不做事项**：不在本 ticket 完成所有 schema 修复。
-
-**重点文件**：数据库服务、版本模型、新增 migration 目录。
-
-**实施步骤**：
-
-1. 定义 schema version 来源。
-2. 建立 migrations 存放方式。
-3. Runner 按版本排序执行 migration。
-4. 每个 migration 在事务中执行。
-5. 失败回滚并保留原数据库。
+**不做事项**：不保留当前账号、User Plan、训练历史、体测或其他现有业务行；不逐条修复当前 44 条外键检查结果。
 
 **验收标准**：
 
-- 空迁移和单个迁移都能正确执行。
-- 重复启动不会重复执行已完成 migration。
-- 迁移失败不会更新版本号。
+- baseline 不包含已知错误外键、`user_id = 0` 或孤儿关系。
+- 内置动作等静态产品内容从受版本控制的种子来源生成。
+- 种子具有稳定标识，重复生成不会重复或漂移。
+- 首次安装与显式重建产生相同 schema 和种子结果。
+- integrity check 通过，foreign key check 无违规。
+- 新安装后 App 能启动、注册/登录并浏览内置动作。
 
-**测试要求**：
+**依赖**：Ticket 1.1、Ticket 1.2。
 
-- migration runner 单元测试。
-- 失败回滚测试。
-- 重复执行幂等测试。
+### Ticket 1.4：建立有序、幂等的 Migration Runner（GitHub #5）
 
-**依赖**：Ticket 1.2。
+**背景**：整改完成后的真实用户数据需要安全增量演进，不能继续依赖整库复制。
 
-**风险**：版本表设计不当会导致未来迁移困难；这个 ticket 适合先用 `$to-spec` 明确设计。
+**范围**：独立 schema ledger、有序不可变 migration、事务执行、幂等启动、schema 过新拒绝和迁移后验证。
 
-### Ticket 1.4：修复外键与历史脏数据
-
-**背景**：当前 `foreign_key_check` 存在 `users/actions` 引用错误、`user_id = 0`、孤儿 `action_id` 等问题。
-
-**范围**：首批数据修复 migration。
-
-**不做事项**：不完成模板计划长期分表的全部迁移。
-
-**重点文件**：SQLite migration、计划相关表、动作相关表。
-
-**实施步骤**：
-
-1. 明确每类违规数据处理策略：修正、迁移、删除或隔离。
-2. 修复错误外键引用。
-3. 清理或迁移 `user_id = 0` 数据。
-4. 处理孤儿 `action_id`。
-5. 运行 `foreign_key_check` 验证。
+**不做事项**：不迁移当前已授权删除的旧数据；不提供 down migration。
 
 **验收标准**：
 
-- 目标库 `foreign_key_check` 无违规。
-- 用户计划和模板计划语义不再依赖假用户。
-- 迁移后关键业务路径可读。
+- ledger 独立于 App 营销版本和构建号。
+- 只执行尚未完成的 migration，事务成功后才登记。
+- 重复启动不重复执行 migration。
+- 合成 baseline 可升级到下一测试 schema，合成用户数据保持可读。
+- schema 过新时不覆盖数据库并返回明确状态。
+- 验证失败不能返回 ready。
 
-**测试要求**：
+**依赖**：Ticket 1.1、Ticket 1.2、Ticket 1.3。
 
-- 基于旧库样本执行 migration。
-- 验证计划读取、模板复制、训练入口。
+### Ticket 1.5：为未来 migration 建立 WAL 一致性备份与失败恢复（GitHub #6）
 
-**依赖**：Ticket 1.3。
+**背景**：未来 migration 必须在 WAL 场景下提供可验证的数据保护和恢复保证。
 
-**风险**：错误清理可能丢弃仍被 UI 依赖的数据；修复策略必须先写清。
-
-### Ticket 1.5：设计模板计划与用户计划分表迁移
-
-**背景**：已确认长期模型中 Template Plan 和 User Plan 分表。
-
-**范围**：目标 schema、迁移路线、兼容读取策略。
-
-**不做事项**：不一定在本 ticket 完成全量实现，可先产出设计和最小迁移。
-
-**重点文件**：计划模型、计划服务、migration。
-
-**实施步骤**：
-
-1. 定义 `template_plans` 与 `training_plans` 的职责边界。
-2. 设计模板动作、模板组数与用户动作、用户组数的关系。
-3. 明确模板复制为用户计划时的数据复制规则。
-4. 设计兼容旧数据的迁移路径。
+**范围**：一致性备份、备份失败阻断、migration/验证失败恢复、恢复失败状态和 sidecar 清理。
 
 **验收标准**：
 
-- 模板计划和用户计划边界明确。
-- 不再使用 `user_id = 0` 表达模板。
-- 后续计划域重构可基于该模型执行。
+- migration 前备份成功才可继续。
+- WAL 模式备份不遗漏已提交的合成用户数据。
+- migration 中途失败不提交事务或 ledger。
+- 迁移或验证失败后恢复原数据库并验证可读。
+- 恢复失败时阻止正常业务写入。
+- 自动化测试覆盖所有成功和失败分支。
 
-**测试要求**：
+**依赖**：Ticket 1.4。
 
-- 模板复制测试。
-- 用户编辑不影响模板测试。
+### Ticket 1.6：分离 Template Plan 与 User Plan，并打通模板复制（GitHub #7）
 
-**依赖**：Ticket 1.3、Ticket 1.4。
+**背景**：Template Plan 与 User Plan 长期模型必须分离，模板不能继续依赖虚构用户。
 
-**风险**：这是跨阶段设计点，建议用 `$to-spec` 单独固化。
+**范围**：独立模板结构、真实用户所有权、受版本控制的模板种子、模板深复制、编辑隔离和训练入口。
+
+**不做事项**：不在本 ticket 机械重命名所有无关旧高频表；只要求新结构遵循 Plural Table Names。
+
+**验收标准**：
+
+- Template Plan 不包含 `user_id = 0` 语义。
+- User Plan 只归属于真实用户。
+- 模板可以深复制为 User Plan，并保留当前支持的计划内容。
+- 编辑用户副本不影响模板。
+- 用户可以从复制后的 User Plan 进入训练。
+- 计划列表统计与详情一致。
+- schema 变化通过正式 migration 机制交付。
+
+**依赖**：Ticket 1.3、Ticket 1.4、Ticket 1.5。
+
+### Ticket 1.7：完成数据库 readiness、诊断与端到端验收（GitHub #8）
+
+**背景**：Phase 1 需要统一发布门槛，证明新数据库底座、未来 migration 和核心业务流程共同可用。
+
+**范围**：连接 PRAGMA、readiness 验证、结构化诊断、自动化生命周期矩阵和完整手动回归。
+
+**验收标准**：
+
+- 所有业务连接启用 `foreign_keys = ON`、`busy_timeout = 5000` 和目标 journal mode。
+- ready 前验证数据库可打开、migration ledger、必要表/索引、种子、integrity 和 foreign keys。
+- 诊断包含数据库位置、schema version、PRAGMA、migration 和恢复摘要，且不记录敏感数据。
+- 自动化测试覆盖首次安装、重复启动、未来升级、schema 过新和失败恢复。
+- 手动回归覆盖启动、注册/登录、模板浏览与复制、User Plan 创建/编辑、训练、历史和体测。
+- Release 路径不存在自动破坏性重建或整库覆盖。
+- 失败项被记录为后续 ticket。
+
+**依赖**：Ticket 1.3、Ticket 1.4、Ticket 1.5、Ticket 1.6。
 
 ## Phase 2：架构边界、依赖注入与状态生命周期
 
@@ -570,9 +543,9 @@
 - 模板复制测试。
 - 用户编辑隔离测试。
 
-**依赖**：Ticket 1.5、Ticket 3.1。
+**依赖**：Ticket 1.6、Ticket 3.1。
 
-**风险**：旧模板和用户计划混在一张表时，过渡期查询要兼容。
+**风险**：Phase 1 已建立模板与用户计划的数据库模型；本 ticket 应复用该边界，避免在 UseCase 层重新引入两套复制语义。
 
 ## Phase 4：训练域与历史域整改
 
@@ -703,9 +676,9 @@
 
 **背景**：需要确认本地密码是否明文或弱 hash，并制定安全策略。
 
-**范围**：本地用户凭证、登录校验、兼容旧数据。
+**范围**：本地用户凭证、登录校验，以及干净 baseline 发布后未来凭证格式的兼容升级。
 
-**不做事项**：不引入完整远端账号系统。
+**不做事项**：不引入完整远端账号系统；不保留当前整改前账号数据。
 
 **重点文件**：`LocalUserService.swift`。
 
@@ -713,21 +686,21 @@
 
 1. 审查现有密码存储。
 2. 选择 Keychain、salted hash 或本地-only 策略。
-3. 设计旧凭证迁移。
-4. 登录成功后升级旧凭证格式。
+3. 为干净 baseline 发布后产生的真实用户设计未来凭证格式迁移。
+4. 登录成功后按需升级未来旧凭证格式。
 
 **验收标准**：
 
 - 不再明文存储新密码。
-- 旧用户有兼容登录路径。
+- 干净 baseline 发布后的既有用户具有安全兼容登录路径。
 
 **测试要求**：
 
-- 注册、登录、旧凭证升级、错误密码测试。
+- 注册、登录、合成未来旧凭证升级、错误密码测试。
 
-**依赖**：Ticket 1.3。
+**依赖**：Ticket 1.4。
 
-**风险**：凭证迁移失败会影响用户登录。
+**风险**：未来凭证迁移失败会影响干净 baseline 发布后的真实用户登录；当前整改前账号数据不构成兼容要求。
 
 ### Ticket 5.2：处理客户端邮件服务密钥风险
 
@@ -1089,7 +1062,7 @@
 
 **测试要求**：测试 target 自测通过。
 
-**依赖**：Ticket 1.3、Ticket 2.3。
+**依赖**：Ticket 1.4、Ticket 2.3。
 
 **风险**：Xcode project 修改易产生噪音；单独提交。
 
@@ -1156,21 +1129,23 @@
 1. Ticket 0.1：创建整改基线
 2. Ticket 0.2：导出 SQLite 基线
 3. Ticket 0.3：建立手动回归清单
-4. Ticket 1.1：加固 SQLite 连接配置
-5. Ticket 1.2：停止整库覆盖式升级
-6. Ticket 1.3：建立本地 SQLite Migration Runner
-7. Ticket 2.1：修复 MainTabView ViewModel 生命周期
-8. Ticket 2.2：移除 ActionHistroyView 直连 DB
-9. Ticket 2.3：建立 Repository Protocol 与 Adapter 样板
-10. Ticket 3.1：定义 PlanDraft 强类型模型
+4. Ticket 1.1 / GitHub #2：建立统一数据库生命周期接缝与测试夹具
+5. Ticket 1.2 / GitHub #3：停止正式启动整库覆盖并隔离破坏性重建
+6. Ticket 1.3 / GitHub #4：生成干净 baseline 数据库与确定性种子数据
+7. Ticket 1.4 / GitHub #5：建立有序、幂等的 Migration Runner
+8. Ticket 1.5 / GitHub #6：建立 WAL 一致性备份与失败恢复
+9. Ticket 1.6 / GitHub #7：分离 Template Plan 与 User Plan，并打通模板复制
+10. Ticket 1.7 / GitHub #8：完成数据库 readiness、诊断与端到端验收
+11. Ticket 2.1：修复 MainTabView ViewModel 生命周期
+12. Ticket 2.2：移除 ActionHistroyView 直连 DB
+13. Ticket 2.3：建立 Repository Protocol 与 Adapter 样板
+14. Ticket 3.1：定义 PlanDraft 强类型模型
 
 ## 建议使用 `$to-spec` 的 ticket
 
 以下 ticket 影响范围大或设计决策重，建议实现前先生成 spec：
 
-- Ticket 1.3：建立本地 SQLite Migration Runner
-- Ticket 1.4：修复外键与历史脏数据
-- Ticket 1.5：设计模板计划与用户计划分表迁移
+- Phase 1 已由 GitHub Issue #1 的阶段级 Spec 覆盖，实施按 #2 至 #8 执行，无需为各子 ticket 重复生成 spec。
 - Ticket 2.3：建立 Repository Protocol 与 Adapter 样板
 - Ticket 3.2：抽出 CreatePlanViewModel 和保存 UseCase
 - Ticket 4.3：建立 CompleteTrainingUseCase
@@ -1183,7 +1158,7 @@
 - Ticket 0.1：创建整改基线
 - Ticket 0.2：导出 SQLite 基线
 - Ticket 0.3：建立手动回归清单
-- Ticket 1.1：加固 SQLite 连接配置
+- Phase 1 子 tickets #2 至 #8：按 GitHub 原生 blocker frontier 逐个使用 `$implement`
 - Ticket 2.1：修复 MainTabView ViewModel 生命周期
 - Ticket 2.2：移除 ActionHistroyView 直连 DB
 - Ticket 7.1：清理 `.DS_Store` 与文件权限噪音

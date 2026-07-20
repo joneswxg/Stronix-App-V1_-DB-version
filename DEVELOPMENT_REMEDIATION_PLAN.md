@@ -4,6 +4,8 @@
 
 ## 已确认原则
 
+- 当前整改前项目数据库中的全部既有数据均可删除，无需保留或兼容迁移；Phase 1 可以直接重建干净目标 schema 和种子数据。
+- 该数据删除授权仅适用于本次整改前的现有数据；整改完成后的正式数据库升级仍必须保护真实用户数据，禁止整库覆盖 Documents DB。
 - 不整体重写 App，采用渐进式整体整改。
 - 整改覆盖数据安全、架构边界、状态管理、业务域拆分、UI 设计系统、资源治理、安全隐私、测试和 CI。
 - 阶段排序按技术风险优先，不按页面逐个清理。
@@ -65,15 +67,19 @@
 
 ### 目标
 
-优先消除数据丢失、外键错误、升级覆盖和 SQLite 运行配置风险。
+利用当前整改前数据可全部删除的窗口建立干净数据库底座，同时消除未来真实用户数据被整库覆盖、无序升级或失败迁移损坏的风险。
 
 ### 范围
 
-- 本地 SQLite 初始化
-- Documents DB 与 Bundle DB 升级策略
-- 外键与脏数据修复
-- schema 版本管理
-- 数据库索引
+- 统一的本地数据库生命周期入口
+- 当前数据库一次性清理与干净 baseline 重建
+- 受版本控制的确定性种子数据
+- Documents DB 与 Bundle DB 的长期安全边界
+- SQLite 连接配置与 readiness 验证
+- schema migration ledger 与 Migration Runner
+- WAL 一致性备份和失败恢复
+- Template Plan 与 User Plan 分离
+- 数据库索引与启动诊断
 
 ### 重点文件
 
@@ -81,43 +87,57 @@
 - `Stronix-App/Sources/Services/Update/UpdateService.swift`
 - `Stronix-App/Sources/Services/Update/VersionService.swift`
 - `Stronix-App/Sources/Models/Database/VersionControl.swift`
+- `Stronix-App/Sources/Services/Local/LocalPlanService.swift`
 - `Stronix-App/Resources/Database/database_stronix.db`
+- Xcode test target 与数据库测试夹具
 
 ### 具体任务
 
-- 在数据库连接建立后配置 `PRAGMA foreign_keys = ON`、`PRAGMA busy_timeout = 5000`，并评估启用 `WAL`。
-- 禁止升级流程删除 Documents DB 后整库复制 Bundle DB。
-- 设计本地 SQLite migration 入口，按版本事务化执行。
-- 建立 schema 版本表或统一版本读取逻辑。
-- 输出首批 migration：修复 `users/actions` 外键引用错误，清理 `user_id = 0` 和孤儿 `action_id`。
-- 设计模板计划与用户计划分表的迁移路线。
-- 补充训练历史、历史详情、动作肌肉关联等高频查询索引。
-- 增加数据库启动诊断日志：schema version、foreign key 状态、journal mode、foreign key check 摘要。
+- 建立唯一的数据库启动准备入口和结构化 ready/failed 结果，业务代码只获取准备完成的连接。
+- 建立使用临时隔离目录的最小 XCTest 数据库生命周期测试夹具。
+- 禁止正式启动删除 Documents DB 后整库复制 Bundle DB；破坏性重建仅保留为显式 remediation 或 DEBUG 能力。
+- 删除当前整改前数据库中的全部既有行和不合格结构，不为当前账号、User Plan、训练历史、体测、`user_id = 0` 或孤儿关系编写兼容 migration。
+- 定义干净 baseline schema，并从受版本控制、可审查、可重复生成的种子来源导入内置动作和 Template Plan 等静态产品内容。
+- 建立独立于 App 版本的 `schema_migrations` ledger，以及有序、事务化、幂等的 Migration Runner。
+- 为未来真实用户数据 migration 建立 WAL 一致性备份、失败恢复、schema 过新拒绝和迁移后验证。
+- 从目标模型第一版开始分离 Template Plan 与 User Plan，禁止使用 `user_id = 0` 表达模板语义，并打通模板深复制为用户计划的流程。
+- 所有正常业务连接配置 `PRAGMA foreign_keys = ON`、`PRAGMA busy_timeout = 5000`，并采用与备份恢复策略一致的目标 journal mode。
+- 增加 readiness 门槛和结构化诊断：schema version、foreign key 状态、journal mode、migration 摘要、integrity check、foreign key check、必要表/索引和种子验证。
 
 ### 验收标准
 
-- App 启动后 SQLite 外键检查开启。
-- 数据库升级不会覆盖已有用户数据。
-- `PRAGMA foreign_key_check` 对目标迁移库无违规记录。
-- 用户计划、训练历史、体测数据在升级后保留。
+- 当前整改前数据可通过显式重建全部清除，干净 baseline 不包含已知错误外键、`user_id = 0` 或孤儿关系。
+- 首次安装和显式 remediation 重建产生相同 schema 与确定性种子数据。
+- App 启动后 SQLite 外键约束开启，busy timeout 和目标 journal mode 配置正确。
+- Release 正常启动不会自动删除或覆盖已有 Documents DB。
+- 合成 baseline 数据库可以通过 migration 升级，合成 User Plan、训练历史和体测数据在未来升级后仍可读取。
+- migration 重复执行幂等；备份、事务、恢复和 schema 过新拒绝行为明确。
+- `PRAGMA integrity_check` 通过，`PRAGMA foreign_key_check` 无违规。
+- Template Plan 与 User Plan 使用独立结构；模板复制后用户编辑不影响模板。
 - Supabase 迁移不进入本阶段范围。
 
 ### 测试要求
 
-- migration 单元测试：旧库升级到新 schema。
-- 用户数据保留测试：升级前创建用户计划、训练历史、体测记录，升级后可读取。
-- 外键测试：违规数据应被 migration 修复或阻止。
-- 数据库重复启动测试：多次初始化不会重复迁移或破坏数据。
+- 数据库生命周期集成测试：首次安装、当前版本重复启动、显式重建、未来合成 schema 升级和 schema 过新。
+- 当前数据删除测试：显式重建后当前旧账号、User Plan、训练历史和体测记录均不保留。
+- 确定性种子测试：重复生成不产生重复内容或标识漂移。
+- 未来用户数据保留测试：在干净 baseline 上创建合成 User Plan、训练历史和体测记录，migration 后仍可通过公共读取能力访问。
+- 外键、busy timeout、journal mode、integrity 和 readiness 验证测试。
+- WAL 备份失败、migration 中途失败、验证失败、恢复成功和恢复失败测试。
+- Template Plan 浏览、深复制、真实用户所有权和编辑隔离测试。
+- 数据库重复启动测试：多次初始化不会重复 migration、重复种子或破坏合成用户数据。
 
 ### 风险与回滚策略
 
-- 风险：外键修复可能暴露历史脏数据，导致写入失败。
-- 风险：WAL 改动可能影响备份/复制策略。
-- 回滚：升级前保留用户 DB 备份；migration 失败必须事务回滚；保留旧 schema 兼容读取路径直到迁移验证通过。
+- 风险：种子来源不完整会造成内置动作、Template Plan 或 UI 依赖内容缺失。
+- 风险：破坏性 remediation 重建若误入 Release 正常路径，会在未来删除真实用户数据。
+- 风险：WAL 配置与备份实现不一致会造成恢复数据不完整。
+- 回滚：当前整改重建前保留 Phase 0 基线用于比较；未来 migration 必须先创建一致性备份，在事务失败或迁移后验证失败时恢复原数据库并阻止业务连接进入 ready。
+- 不为当前整改前脏 schema 保留兼容读取路径；未来兼容性使用合成 fixture 和正式 migration 验证。
 
 ### 依赖顺序
 
-依赖阶段 0。该阶段应先于大规模 Service 和 ViewModel 重构。
+依赖阶段 0。该阶段按 GitHub Issue #2 至 #8 的原生阻塞关系执行，并应先于大规模 Service 和 ViewModel 重构。
 
 ## 阶段 2：架构边界、依赖注入与状态生命周期
 
@@ -347,8 +367,8 @@
 
 ### 风险与回滚策略
 
-- 风险：账号数据迁移可能影响已有本地用户登录。
-- 回滚：凭证迁移需兼容旧数据一次性升级；失败时保留用户可重新登录路径。
+- 风险：整改完成后的账号凭证格式迁移可能影响未来已有本地用户登录。
+- 回滚：仅对干净 baseline 发布后产生的真实用户数据提供凭证兼容升级；失败时保留用户可重新登录路径。当前整改前账号数据不要求保留。
 
 ### 依赖顺序
 
