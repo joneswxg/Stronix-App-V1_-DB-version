@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 		9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */ = {isa = PBXBuildFile; fileRef = 9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */; };
+		A10000000000000000000001 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -29,6 +30,7 @@
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stronix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Stronix-App/Resources/Images"; sourceTree = "<group>"; };
+		A10000000000000000000002 /* StronixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StronixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -53,6 +55,7 @@
 				Models/Local/LocalTrainingHistoryModels.swift,
 				Models/Local/LocalTrainingModels.swift,
 				Models/Local/LocalUserModels.swift,
+				Services/Database/DatabaseLifecycle.swift,
 				Services/Database/DatabaseManager.swift,
 				Services/Email/AliCloudEmailService.swift,
 				Services/Email/EmailConfig.swift,
@@ -152,6 +155,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* SQLite in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -177,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				9D70A7C62DDD84590085BAAF /* Stronix.app */,
+				A10000000000000000000002 /* StronixTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -215,6 +227,30 @@
 			productReference = 9D70A7C62DDD84590085BAAF /* Stronix.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A10000000000000000000004 /* StronixTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000009 /* Build configuration list for PBXNativeTarget "StronixTests" */;
+			buildPhases = (
+				A10000000000000000000005 /* Sources */,
+				A10000000000000000000003 /* Frameworks */,
+				A10000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A10000000000000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9D70A7E72DDDC24C0085BAAF /* Tests */,
+			);
+			name = StronixTests;
+			packageProductDependencies = (
+				9D42BE9C2E029EC9008121CD /* SQLite */,
+			);
+			productName = StronixTests;
+			productReference = A10000000000000000000002 /* StronixTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -227,6 +263,10 @@
 				TargetAttributes = {
 					9D70A7C52DDD84580085BAAF = {
 						CreatedOnToolsVersion = 16.3;
+					};
+					A10000000000000000000004 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 9D70A7C52DDD84580085BAAF;
 					};
 				};
 			};
@@ -248,12 +288,20 @@
 			projectRoot = "";
 			targets = (
 				9D70A7C52DDD84580085BAAF /* Stronix */,
+				A10000000000000000000004 /* StronixTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		9D70A7C42DDD84580085BAAF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -270,7 +318,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9D70A7BE2DDD84580085BAAF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D70A7C52DDD84580085BAAF;
+			remoteInfo = Stronix;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D70A7C52DDD84580085BAAF /* Stronix */;
+			targetProxy = A10000000000000000000007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		9D70A7D02DDD84590085BAAF /* Debug */ = {
@@ -459,6 +532,52 @@
 			};
 			name = Release;
 		};
+		A1000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M3985G54RA;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "JonesW.Stronix-App-V1Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stronix.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stronix";
+			};
+			name = Debug;
+		};
+		A1000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M3985G54RA;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "JonesW.Stronix-App-V1Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stronix.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stronix";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -476,6 +595,15 @@
 			buildConfigurations = (
 				9D70A7D32DDD84590085BAAF /* Debug */,
 				9D70A7D42DDD84590085BAAF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000009 /* Build configuration list for PBXNativeTarget "StronixTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000000000000000000000A /* Debug */,
+				A1000000000000000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
