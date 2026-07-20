@@ -113,6 +113,7 @@ final class DatabaseLifecycle {
         do {
             let preparation = try prepareDatabaseFile()
             let connection = try Connection(environment.databaseURL.path)
+            try configureAndValidate(connection)
             let database = ReadyDatabase(
                 connection: connection,
                 databaseURL: environment.databaseURL,
@@ -129,6 +130,18 @@ final class DatabaseLifecycle {
             )
             self.failure = failure
             return .failed(failure)
+        }
+    }
+
+    private func configureAndValidate(_ connection: Connection) throws {
+        try connection.execute("PRAGMA foreign_keys = ON")
+        try connection.execute("PRAGMA busy_timeout = 5000")
+
+        let integrityResult = try connection.scalar("PRAGMA quick_check") as? String
+        guard integrityResult == "ok" else {
+            throw DatabasePreparationFailure(
+                message: "数据库完整性检查失败"
+            )
         }
     }
 

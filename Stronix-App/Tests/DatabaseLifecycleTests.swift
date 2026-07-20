@@ -55,6 +55,14 @@ final class DatabaseLifecycleTests: XCTestCase {
         ) as? String
 
         XCTAssertEqual(storedValue, "ready")
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar("PRAGMA foreign_keys") as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar("PRAGMA busy_timeout") as? Int64,
+            5000
+        )
     }
 
     func testConcurrentPreparationInitializesDatabaseOnce() throws {
@@ -85,6 +93,32 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(preparations.count, 8)
         XCTAssertEqual(preparations.filter { $0 == .initialized }.count, 1)
         XCTAssertEqual(preparations.filter { $0 == .alreadyReady }.count, 7)
+    }
+
+    func testInvalidExistingDatabaseIsNotMarkedReady() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        try Data("not a sqlite database".utf8).write(to: databaseURL)
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: documentsURL,
+                databaseFilename: "fixture.db",
+                sourceDatabaseURL: nil
+            )
+        )
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected invalid database preparation to fail")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
     }
 
     func testPreparationFailureDoesNotExposeAConnection() {
