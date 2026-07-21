@@ -46,7 +46,9 @@ struct Stronix_App_V1App: App {
 
     private func prepareDatabase() {
         runDatabasePreparation {
-            DatabaseManager.shared.prepare()
+            DatabaseManager.shared.prepareForStartup(
+                arguments: ProcessInfo.processInfo.arguments
+            )
         }
     }
 

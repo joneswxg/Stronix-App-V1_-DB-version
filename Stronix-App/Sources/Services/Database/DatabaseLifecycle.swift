@@ -31,6 +31,7 @@ struct DatabaseEnvironment {
 enum DatabasePreparation: Equatable {
     case initialized
     case alreadyReady
+    case rebuilt
 }
 
 struct ReadyDatabase {
@@ -89,6 +90,12 @@ final class DatabaseLifecycle {
         }
     }
 
+    func rebuildFromSource() -> DatabasePreparationResult {
+        preparationQueue.sync {
+            rebuildFromSourceLocked()
+        }
+    }
+
     func readyConnection() -> Connection? {
         preparationQueue.sync {
             readyDatabase?.connection
@@ -110,27 +117,81 @@ final class DatabaseLifecycle {
             return .failed(failure)
         }
 
+        var preparation: DatabasePreparation?
         do {
-            let preparation = try prepareDatabaseFile()
-            let connection = try Connection(environment.databaseURL.path)
-            try configureAndValidate(connection)
-            let database = ReadyDatabase(
-                connection: connection,
-                databaseURL: environment.databaseURL,
-                preparation: preparation
+            preparation = try prepareDatabaseFile()
+            let database = try openReadyDatabase(
+                preparation: preparation ?? .alreadyReady
             )
             readyDatabase = database
             return .ready(database)
-        } catch let failure as DatabasePreparationFailure {
-            self.failure = failure
-            return .failed(failure)
+        } catch let preparationFailure as DatabasePreparationFailure {
+            if preparation == .initialized {
+                removeDatabaseArtifacts(at: environment.databaseURL)
+            }
+            failure = preparationFailure
+            return .failed(preparationFailure)
         } catch {
-            let failure = DatabasePreparationFailure(
+            if preparation == .initialized {
+                removeDatabaseArtifacts(at: environment.databaseURL)
+            }
+            let preparationFailure = DatabasePreparationFailure(
                 message: error.localizedDescription
             )
-            self.failure = failure
-            return .failed(failure)
+            failure = preparationFailure
+            return .failed(preparationFailure)
         }
+    }
+
+    private func rebuildFromSourceLocked() -> DatabasePreparationResult {
+        guard readyDatabase == nil else {
+            return .failed(
+                DatabasePreparationFailure(
+                    message: "数据库已在使用中，无法执行整改重建"
+                )
+            )
+        }
+
+        do {
+            try fileManager.createDirectory(
+                at: environment.documentsDirectory,
+                withIntermediateDirectories: true
+            )
+            let stagingURL = try makeValidatedStagingDatabase()
+            defer {
+                removeDatabaseArtifacts(at: stagingURL)
+            }
+            try promoteStagingDatabase(
+                at: stagingURL,
+                replacingDatabaseAt: environment.databaseURL
+            )
+
+            let database = try openReadyDatabase(preparation: .rebuilt)
+            failure = nil
+            readyDatabase = database
+            return .ready(database)
+        } catch let rebuildFailure as DatabasePreparationFailure {
+            failure = rebuildFailure
+            return .failed(rebuildFailure)
+        } catch {
+            let rebuildFailure = DatabasePreparationFailure(
+                message: error.localizedDescription
+            )
+            failure = rebuildFailure
+            return .failed(rebuildFailure)
+        }
+    }
+
+    private func openReadyDatabase(
+        preparation: DatabasePreparation
+    ) throws -> ReadyDatabase {
+        let connection = try Connection(environment.databaseURL.path)
+        try configureAndValidate(connection)
+        return ReadyDatabase(
+            connection: connection,
+            databaseURL: environment.databaseURL,
+            preparation: preparation
+        )
     }
 
     private func configureAndValidate(_ connection: Connection) throws {
@@ -155,16 +216,100 @@ final class DatabaseLifecycle {
             return .alreadyReady
         }
 
+        let stagingURL = try makeValidatedStagingDatabase()
+        defer {
+            removeDatabaseArtifacts(at: stagingURL)
+        }
+
+        try fileManager.moveItem(at: stagingURL, to: environment.databaseURL)
+        return .initialized
+    }
+
+    private func makeValidatedStagingDatabase() throws -> URL {
         guard let sourceDatabaseURL = environment.sourceDatabaseURL else {
             throw DatabasePreparationFailure(
                 message: "找不到数据库初始化源文件"
             )
         }
 
-        try fileManager.copyItem(
-            at: sourceDatabaseURL,
-            to: environment.databaseURL
+        let stagingURL = environment.documentsDirectory.appendingPathComponent(
+            ".\(environment.databaseFilename).staging-\(UUID().uuidString)"
         )
-        return .initialized
+        do {
+            try fileManager.copyItem(at: sourceDatabaseURL, to: stagingURL)
+            try validateDatabase(at: stagingURL)
+            return stagingURL
+        } catch {
+            removeDatabaseArtifacts(at: stagingURL)
+            throw error
+        }
+    }
+
+    private func promoteStagingDatabase(
+        at stagingURL: URL,
+        replacingDatabaseAt databaseURL: URL
+    ) throws {
+        guard fileManager.fileExists(atPath: databaseURL.path) else {
+            try fileManager.moveItem(at: stagingURL, to: databaseURL)
+            return
+        }
+
+        let backupName = ".\(environment.databaseFilename).backup-\(UUID().uuidString)"
+        try checkpointDatabaseIfNeeded(at: databaseURL)
+        try removeSidecars(for: databaseURL)
+        _ = try fileManager.replaceItemAt(
+            databaseURL,
+            withItemAt: stagingURL,
+            backupItemName: backupName,
+            options: []
+        )
+
+        let backupURL = environment.documentsDirectory.appendingPathComponent(backupName)
+        do {
+            try validateDatabase(at: databaseURL)
+            removeDatabaseArtifacts(at: backupURL)
+        } catch {
+            removeDatabaseArtifacts(at: databaseURL)
+            if fileManager.fileExists(atPath: backupURL.path) {
+                try fileManager.moveItem(at: backupURL, to: databaseURL)
+            }
+            throw error
+        }
+    }
+
+    private func validateDatabase(at databaseURL: URL) throws {
+        let connection = try Connection(databaseURL.path)
+        try configureAndValidate(connection)
+    }
+
+    private func checkpointDatabaseIfNeeded(at databaseURL: URL) throws {
+        let connection = try Connection(databaseURL.path)
+        let journalMode = try connection.scalar("PRAGMA journal_mode") as? String
+        if journalMode?.lowercased() == "wal" {
+            try connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        }
+    }
+
+    private func removeDatabaseArtifacts(at databaseURL: URL) {
+        for url in databaseArtifactURLs(for: databaseURL) {
+            guard fileManager.fileExists(atPath: url.path) else { continue }
+            try? fileManager.removeItem(at: url)
+        }
+    }
+
+    private func removeSidecars(for databaseURL: URL) throws {
+        for url in databaseArtifactURLs(for: databaseURL).dropFirst() {
+            guard fileManager.fileExists(atPath: url.path) else { continue }
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    private func databaseArtifactURLs(for databaseURL: URL) -> [URL] {
+        [
+            databaseURL,
+            URL(fileURLWithPath: databaseURL.path + "-wal"),
+            URL(fileURLWithPath: databaseURL.path + "-shm"),
+            URL(fileURLWithPath: databaseURL.path + "-journal")
+        ]
     }
 }

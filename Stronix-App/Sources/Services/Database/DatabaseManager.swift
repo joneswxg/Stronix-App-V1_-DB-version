@@ -18,6 +18,15 @@ final class DatabaseManager {
         lifecycle.prepare()
     }
 
+    func prepareForStartup(arguments: [String]) -> DatabasePreparationResult {
+#if DEBUG
+        if arguments.contains("-StronixRebuildLocalDatabase") {
+            return lifecycle.rebuildFromSource()
+        }
+#endif
+        return lifecycle.prepare()
+    }
+
     func retryPreparation() -> DatabasePreparationResult {
         lifecycle.retry()
     }
