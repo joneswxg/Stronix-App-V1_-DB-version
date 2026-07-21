@@ -5,6 +5,18 @@ CREATE TABLE schema_migrations (
     applied_at TEXT NOT NULL
 ) WITHOUT ROWID;
 
+CREATE TRIGGER schema_migrations_prevent_update
+BEFORE UPDATE ON schema_migrations
+BEGIN
+    SELECT RAISE(ABORT, 'schema_migrations is append-only');
+END;
+
+CREATE TRIGGER schema_migrations_prevent_delete
+BEFORE DELETE ON schema_migrations
+BEGIN
+    SELECT RAISE(ABORT, 'schema_migrations is append-only');
+END;
+
 CREATE TABLE body_part (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,

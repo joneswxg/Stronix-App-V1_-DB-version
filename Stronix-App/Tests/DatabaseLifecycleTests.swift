@@ -43,6 +43,10 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         XCTAssertEqual(readyDatabase.preparation, .initialized)
         XCTAssertEqual(
+            readyDatabase.appliedMigrationIDs,
+            ["20260721_0002_protect_schema_ledger"]
+        )
+        XCTAssertEqual(
             try readyDatabase.connection.scalar("PRAGMA integrity_check") as? String,
             "ok"
         )
@@ -50,6 +54,12 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(
             try readyDatabase.connection.scalar(
                 "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260721_0001_baseline'"
+            ) as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260721_0002_protect_schema_ledger'"
             ) as? Int64,
             1
         )
@@ -89,6 +99,40 @@ final class DatabaseLifecycleTests: XCTestCase {
                 "Expected \(table) to start empty"
             )
         }
+    }
+
+    func testBundledBaselineLedgerRejectsMutation() throws {
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: temporaryRoot.appendingPathComponent(
+                    "Documents",
+                    isDirectory: true
+                ),
+                databaseFilename: "baseline.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            )
+        )
+
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected the baseline database to be ready")
+        }
+
+        XCTAssertThrowsError(
+            try readyDatabase.connection.run(
+                "UPDATE schema_migrations SET applied_at = 'changed' WHERE migration_id = '20260721_0001_baseline'"
+            )
+        )
+        XCTAssertThrowsError(
+            try readyDatabase.connection.run(
+                "DELETE FROM schema_migrations WHERE migration_id = '20260721_0001_baseline'"
+            )
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260721_0001_baseline'"
+            ) as? Int64,
+            1
+        )
     }
 
     func testFreshInstallAndExplicitRebuildProduceSameBaselineState() throws {
@@ -245,6 +289,399 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(
             try readyDatabase.connection.scalar("PRAGMA busy_timeout") as? Int64,
             5000
+        )
+    }
+
+    func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let existingConnection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try insertRepresentativeBusinessRows(in: existingConnection)
+
+        let migrationID = "20260722_0001_fixture_upgrade"
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: migrationID) { connection in
+                try connection.run(
+                    "CREATE TABLE migration_fixture (id INTEGER PRIMARY KEY, value TEXT NOT NULL)"
+                )
+                try connection.run(
+                    "INSERT INTO migration_fixture (id, value) VALUES (1, 'upgraded')"
+                )
+            }
+        ])
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: documentsURL,
+                databaseFilename: "fixture.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            ),
+            migrationCatalog: catalog
+        )
+
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected the baseline database to upgrade successfully")
+        }
+
+        XCTAssertEqual(readyDatabase.appliedMigrationIDs, [migrationID])
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT value FROM migration_fixture WHERE id = 1"
+            ) as? String,
+            "upgraded"
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                migrationID
+            ) as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT username FROM user WHERE id = 9001"
+            ) as? String,
+            "legacy-user"
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT name FROM training_plans WHERE id = 9001"
+            ) as? String,
+            "Legacy Plan"
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT plan_name FROM training_history WHERE id = 9001"
+            ) as? String,
+            "Legacy Plan"
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT weight_kg FROM body_measurements WHERE id = 9001"
+            ) as? Double,
+            70
+        )
+    }
+
+    func testPrepareDoesNotReplayAppliedMigrationAfterRestart() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let catalog = fixtureMigrationCatalog { connection in
+            try connection.run(
+                "CREATE TABLE migration_fixture (id INTEGER PRIMARY KEY, value TEXT NOT NULL)"
+            )
+            try connection.run(
+                "INSERT INTO migration_fixture (id, value) VALUES (1, 'upgraded')"
+            )
+        }
+
+        let firstLifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: catalog
+        )
+        guard case .ready(let firstDatabase) = firstLifecycle.prepare() else {
+            return XCTFail("Expected the first preparation to apply the migration")
+        }
+        XCTAssertEqual(firstDatabase.appliedMigrationIDs, [fixtureMigrationID])
+
+        let restartedLifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: catalog
+        )
+        guard case .ready(let restartedDatabase) = restartedLifecycle.prepare() else {
+            return XCTFail("Expected the upgraded database to be ready after restart")
+        }
+
+        XCTAssertEqual(restartedDatabase.appliedMigrationIDs, [])
+        XCTAssertEqual(
+            try restartedDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM migration_fixture"
+            ) as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try restartedDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            1
+        )
+    }
+
+    func testPrepareRollsBackFailedMigrationAndDoesNotRecordIt() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let catalog = fixtureMigrationCatalog { connection in
+            try connection.run(
+                "CREATE TABLE failed_migration_fixture (id INTEGER PRIMARY KEY)"
+            )
+            throw DatabasePreparationFailure(message: "injected migration failure")
+        }
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected the failing migration to prevent readiness")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
+        let connection = try Connection(databaseURL.path)
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = 'failed_migration_fixture'"
+            ) as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testPrepareRollsBackMigrationThatFailsValidation() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(
+                id: fixtureMigrationID,
+                apply: { connection in
+                    try connection.run(
+                        "CREATE TABLE validation_failure_fixture (id INTEGER PRIMARY KEY)"
+                    )
+                },
+                validate: { _ in
+                    throw DatabasePreparationFailure(message: "injected validation failure")
+                }
+            )
+        ])
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected a failed migration validation to prevent readiness")
+        }
+
+        let connection = try Connection(databaseURL.path)
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = 'validation_failure_fixture'"
+            ) as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testPrepareRunsMultiplePendingMigrationsInCatalogOrder() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let firstMigrationID = "20260722_0001_create_order_fixture"
+        let secondMigrationID = "20260722_0002_populate_order_fixture"
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: firstMigrationID) { connection in
+                try connection.run(
+                    "CREATE TABLE migration_order_fixture (step INTEGER PRIMARY KEY, value TEXT NOT NULL)"
+                )
+                try connection.run(
+                    "INSERT INTO migration_order_fixture (step, value) VALUES (1, 'created')"
+                )
+            },
+            DatabaseMigration(id: secondMigrationID) { connection in
+                try connection.run(
+                    "INSERT INTO migration_order_fixture (step, value) VALUES (2, 'populated')"
+                )
+            }
+        ])
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected pending migrations to complete in order")
+        }
+
+        XCTAssertEqual(
+            readyDatabase.appliedMigrationIDs,
+            [firstMigrationID, secondMigrationID]
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT GROUP_CONCAT(value, '|') FROM (SELECT value FROM migration_order_fixture ORDER BY step)"
+            ) as? String,
+            "created|populated"
+        )
+    }
+
+    func testPrepareRejectsInvalidMigrationCatalogBeforeChangingDatabase() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try connection.run(
+            "INSERT INTO fixture_values (id, value) VALUES (1, 'preserve-me')"
+        )
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: "20260722_0002_later") { _ in },
+            DatabaseMigration(id: "20260722_0001_earlier") { _ in }
+        ])
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected an unordered migration catalog to fail")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT value FROM fixture_values WHERE id = 1"
+            ) as? String,
+            "preserve-me"
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT COUNT(*) FROM schema_migrations") as? Int64,
+            1
+        )
+    }
+
+    func testPrepareRejectsGappedKnownMigrationLedger() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let firstMigrationID = "20260722_0001_first_fixture"
+        let secondMigrationID = "20260722_0002_second_fixture"
+        try connection.run(
+            "INSERT INTO schema_migrations (migration_id, applied_at) VALUES (?, datetime('now'))",
+            secondMigrationID
+        )
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: firstMigrationID) { _ in
+                XCTFail("A gapped migration must not be applied")
+            },
+            DatabaseMigration(id: secondMigrationID) { _ in }
+        ])
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected a gapped migration ledger to fail")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                firstMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testPrepareRejectsNewerSchemaWithoutModifyingDatabase() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try connection.run(
+            "INSERT INTO fixture_values (id, value) VALUES (1, 'preserve-me')"
+        )
+        try connection.run(
+            "INSERT INTO schema_migrations (migration_id, applied_at) VALUES (?, datetime('now'))",
+            "20260723_0001_future_schema"
+        )
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: documentsURL,
+                databaseFilename: "fixture.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            )
+        )
+
+        guard case .incompatible(let incompatibility) = lifecycle.prepare() else {
+            return XCTFail("Expected a newer schema to be reported as incompatible")
+        }
+
+        XCTAssertEqual(
+            incompatibility.supportedMigrationID,
+            "20260721_0002_protect_schema_ledger"
+        )
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT value FROM fixture_values WHERE id = 1"
+            ) as? String,
+            "preserve-me"
+        )
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260723_0001_future_schema'"
+            ) as? Int64,
+            1
         )
     }
 
@@ -657,6 +1094,31 @@ final class DatabaseLifecycleTests: XCTestCase {
         }
 
         XCTAssertEqual(readyDatabase.preparation, .initialized)
+    }
+
+    private let fixtureMigrationID = "20260722_0001_fixture_upgrade"
+
+    private func fixtureMigrationCatalog(
+        apply: @escaping (Connection) throws -> Void
+    ) -> DatabaseMigrationCatalog {
+        DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: fixtureMigrationID, apply: apply)
+        ])
+    }
+
+    private func makeLifecycle(
+        documentsURL: URL,
+        catalog: DatabaseMigrationCatalog
+    ) throws -> DatabaseLifecycle {
+        DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: documentsURL,
+                databaseFilename: "fixture.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            ),
+            migrationCatalog: catalog
+        )
     }
 
     private func rowCount(_ query: String, in connection: Connection) throws -> Int {
