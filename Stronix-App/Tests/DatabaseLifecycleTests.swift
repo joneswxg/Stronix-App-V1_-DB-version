@@ -558,6 +558,42 @@ final class DatabaseLifecycleTests: XCTestCase {
         )
     }
 
+    func testMissingBaselineLedgerPreventsMigrationExecution() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try connection.run("DROP TRIGGER schema_migrations_prevent_update")
+        try connection.run("DROP TRIGGER schema_migrations_prevent_delete")
+        try connection.run(
+            "DELETE FROM schema_migrations WHERE migration_id = '20260721_0001_baseline'"
+        )
+        let catalog = fixtureMigrationCatalog { connection in
+            try connection.run(
+                "INSERT INTO fixture_values (id, value) VALUES (2, 'must-not-run')"
+            )
+        }
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected a missing baseline ledger record to fail")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM fixture_values WHERE id = 2"
+            ) as? Int64,
+            0
+        )
+    }
+
     func testPrepareRejectsInvalidMigrationCatalogBeforeChangingDatabase() throws {
         let documentsURL = temporaryRoot.appendingPathComponent(
             "Documents",
@@ -683,6 +719,33 @@ final class DatabaseLifecycleTests: XCTestCase {
             ) as? Int64,
             1
         )
+    }
+
+    func testMissingRequiredIndexPreventsDatabaseReadiness() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
+        )
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try connection.run("DROP INDEX idx_training_history_user_date")
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: documentsURL,
+                databaseFilename: "fixture.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            )
+        )
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected a missing required index to prevent readiness")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
     }
 
     func testPreparePreservesExistingDocumentsDatabase() throws {
