@@ -22,7 +22,6 @@ class LocalUserService: ObservableObject {
     private let currentUserKey = "current_user_id"
     
     private init() {
-        initializeTestData()
         loadUserFromStorage()
     }
     
@@ -349,47 +348,6 @@ class LocalUserService: ObservableObject {
             }
         } catch {
             print("❌ 从本地存储加载用户失败: \(error)")
-        }
-    }
-    
-    // MARK: - 初始化测试数据
-    private func initializeTestData() {
-        // 创建测试用户
-        createTestUsersIfNeeded()
-    }
-    
-    private func createTestUsersIfNeeded() {
-        guard let db = databaseManager.getConnection() else { return }
-        
-        do {
-            // 检查是否已有用户数据
-            let checkQuery = "SELECT COUNT(*) FROM user"
-            let rows = try db.prepare(checkQuery)
-            
-            if let row = rows.makeIterator().next(),
-               let count = row[0] as? Int, count == 0 {
-                
-                // 创建测试用户
-                let testUsers = [
-                    ("iostest", "iostest@example.com", "password123", "male", 175.0, 70.0),
-                    ("admin", "admin@stronix.com", "admin123", "male", 180.0, 75.0)
-                ]
-                
-                for (username, email, password, gender, height, weight) in testUsers {
-                    let passwordHash = hashPassword(password)
-                    let isAdmin = username == "admin" ? 1 : 0
-                    
-                    let insertQuery = """
-                        INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, 'regular', ?, datetime('now'))
-                    """
-                    
-                    try db.run(insertQuery, [username, email, passwordHash, gender, height, weight, isAdmin])
-                    print("✅ 创建测试用户: \(username)")
-                }
-            }
-        } catch {
-            print("❌ 创建测试用户失败: \(error)")
         }
     }
     

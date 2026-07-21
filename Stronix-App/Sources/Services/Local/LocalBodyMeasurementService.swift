@@ -34,7 +34,6 @@ class LocalBodyMeasurementService: ObservableObject {
     
     private init() {
         initializeDatabase()
-        initializeTestData()
     }
     
     // MARK: - 数据库初始化
@@ -439,51 +438,6 @@ class LocalBodyMeasurementService: ObservableObject {
         return formatter
     }
     
-    // MARK: - 初始化测试数据
-    private func initializeTestData() {
-        // 检查是否已有测试数据
-        guard let db = databaseManager.getConnection() else { return }
-        
-        do {
-            let count = try db.scalar(bodyMeasurementsTable.count)
-            if count == 0 {
-                // 创建一些测试数据
-                createTestMeasurements()
-            }
-        } catch {
-            print("❌ LocalBodyMeasurementService: 检查测试数据失败: \(error)")
-        }
-    }
-    
-    private func createTestMeasurements() {
-        // 为测试用户创建一些示例数据
-        let testMeasurements = [
-            (Date().addingTimeInterval(-7*24*3600), 70.5, 175.0, 15.2, 32.1, 8),  // 7天前
-            (Date().addingTimeInterval(-14*24*3600), 71.2, 175.0, 15.8, 31.9, 9), // 14天前
-            (Date().addingTimeInterval(-21*24*3600), 72.0, 175.0, 16.1, 31.5, 9), // 21天前
-        ]
-        
-        Task {
-            for (date, weight, height, bodyFat, muscle, visceral) in testMeasurements {
-                let request = CreateBodyMeasurementRequest(
-                    userId: 1, // 假设用户ID为1
-                    measurementTimestamp: date,
-                    weightKg: weight,
-                    heightCm: height,
-                    bodyFatPercentage: bodyFat,
-                    skeletalMuscleMassKg: muscle,
-                    visceralFatLevel: visceral
-                )
-                
-                do {
-                    _ = try await createMeasurement(request)
-                } catch {
-                    print("❌ LocalBodyMeasurementService: 创建测试数据失败: \(error)")
-                }
-            }
-            print("✅ LocalBodyMeasurementService: 测试数据创建完成")
-        }
-    }
 }
 
 // MARK: - 错误定义
