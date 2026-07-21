@@ -53,6 +53,7 @@ struct DatabaseMigration {
 struct DatabaseMigrationCatalog {
     let migrations: [DatabaseMigration]
 
+    // Existing entries must remain unchanged; future schema changes append a migration.
     static let production = DatabaseMigrationCatalog(migrations: [
         DatabaseMigration(id: "20260721_0001_baseline") { _ in },
         DatabaseMigration(id: "20260721_0002_protect_schema_ledger") { connection in
@@ -133,6 +134,31 @@ final class DatabaseLifecycle {
         "training_history_details",
         "body_measurements",
         "password_reset_codes"
+    ]
+    private static let requiredIndexNames = [
+        "idx_action_bodypart_id",
+        "idx_action_equipment_id",
+        "idx_action_target_muscle_target",
+        "idx_user_account_type",
+        "idx_user_external_id",
+        "idx_user_wechat_open_id",
+        "idx_user_apple_id",
+        "idx_training_plans_user_template",
+        "idx_plan_actions_user_plan",
+        "idx_plan_actions_plan_order",
+        "idx_plan_sets_plan_action",
+        "idx_training_sessions_plan_id",
+        "idx_training_sessions_user_id",
+        "idx_training_plan_executions_plan_id",
+        "idx_execution_actions_execution_order",
+        "idx_execution_sets_action_set",
+        "idx_training_history_user_date",
+        "idx_training_history_plan_id",
+        "idx_training_history_session_id",
+        "idx_training_history_details_history",
+        "idx_training_history_details_action",
+        "idx_body_measurements_user_timestamp",
+        "idx_password_reset_codes_email_created"
     ]
     private static let expectedSeedCounts = [
         "body_part": 10,
@@ -303,6 +329,9 @@ final class DatabaseLifecycle {
     private func runPendingMigrations(on connection: Connection) throws -> [String] {
         let migrations = try validatedMigrations()
         let completedMigrationIDs = try recordedMigrationIDs(from: connection)
+        guard completedMigrationIDs.first == Self.baselineMigrationID else {
+            throw DatabasePreparationFailure(message: "数据库缺少 baseline migration 记录")
+        }
         try validateRecordedMigrationIDs(completedMigrationIDs, against: migrations)
 
         let pendingMigrations = migrations.dropFirst(completedMigrationIDs.count)
@@ -390,6 +419,14 @@ final class DatabaseLifecycle {
             }
         }
 
+        for indexName in Self.requiredIndexNames {
+            guard try indexExists(indexName, connection: connection) else {
+                throw DatabasePreparationFailure(
+                    message: "数据库缺少必要索引: \(indexName)"
+                )
+            }
+        }
+
         let migrationIDs = try recordedMigrationIDs(from: connection)
         try validateRecordedMigrationIDs(migrationIDs, against: try validatedMigrations())
         guard migrationIDs.count == migrationCatalog.migrations.count else {
@@ -417,6 +454,17 @@ final class DatabaseLifecycle {
         try scalarCount(
             "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = ?",
             bindings: [tableName],
+            connection: connection
+        ) == 1
+    }
+
+    private func indexExists(
+        _ indexName: String,
+        connection: Connection
+    ) throws -> Bool {
+        try scalarCount(
+            "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'index' AND name = ?",
+            bindings: [indexName],
             connection: connection
         ) == 1
     }
