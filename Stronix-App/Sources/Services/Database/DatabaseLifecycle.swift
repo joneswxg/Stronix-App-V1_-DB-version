@@ -59,6 +59,35 @@ struct DatabasePreparationFailure: Error, Equatable {
 }
 
 final class DatabaseLifecycle {
+    private static let baselineMigrationID = "20260721_0001_baseline"
+    private static let requiredTableNames = [
+        "schema_migrations",
+        "body_part",
+        "target_muscle",
+        "equipment",
+        "action",
+        "action_target_muscle_link",
+        "user",
+        "training_plans",
+        "plan_actions",
+        "plan_sets",
+        "training_sessions",
+        "training_plan_executions",
+        "execution_actions",
+        "execution_sets",
+        "training_history",
+        "training_history_details",
+        "body_measurements",
+        "password_reset_codes"
+    ]
+    private static let expectedSeedCounts = [
+        "body_part": 10,
+        "target_muscle": 19,
+        "equipment": 28,
+        "action": 272,
+        "action_target_muscle_link": 272
+    ]
+
     private let environment: DatabaseEnvironment
     private let fileManager: FileManager
     private let preparationQueue: DispatchQueue
@@ -198,12 +227,88 @@ final class DatabaseLifecycle {
         try connection.execute("PRAGMA foreign_keys = ON")
         try connection.execute("PRAGMA busy_timeout = 5000")
 
-        let integrityResult = try connection.scalar("PRAGMA quick_check") as? String
+        let integrityResult = try connection.scalar("PRAGMA integrity_check") as? String
         guard integrityResult == "ok" else {
             throw DatabasePreparationFailure(
                 message: "数据库完整性检查失败"
             )
         }
+
+        guard try rowCount(for: "PRAGMA foreign_key_check", connection: connection) == 0 else {
+            throw DatabasePreparationFailure(
+                message: "数据库外键检查失败"
+            )
+        }
+
+        for tableName in Self.requiredTableNames {
+            guard try tableExists(tableName, connection: connection) else {
+                throw DatabasePreparationFailure(
+                    message: "数据库缺少必要表: \(tableName)"
+                )
+            }
+        }
+
+        guard try scalarCount(
+            "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+            bindings: [Self.baselineMigrationID],
+            connection: connection
+        ) == 1 else {
+            throw DatabasePreparationFailure(
+                message: "数据库缺少 baseline migration 记录"
+            )
+        }
+
+        for tableName in Self.expectedSeedCounts.keys.sorted() {
+            let expectedCount = Self.expectedSeedCounts[tableName] ?? 0
+            let actualCount = try scalarCount(
+                "SELECT COUNT(*) FROM \(tableName)",
+                connection: connection
+            )
+            guard actualCount == expectedCount else {
+                throw DatabasePreparationFailure(
+                    message: "数据库种子校验失败: \(tableName)"
+                )
+            }
+        }
+    }
+
+    private func tableExists(
+        _ tableName: String,
+        connection: Connection
+    ) throws -> Bool {
+        try scalarCount(
+            "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = ?",
+            bindings: [tableName],
+            connection: connection
+        ) == 1
+    }
+
+    private func scalarCount(
+        _ query: String,
+        bindings: [Binding?] = [],
+        connection: Connection
+    ) throws -> Int64 {
+        let statement = try connection.prepare(query)
+        for row in try statement.run(bindings) {
+            if let count = row[0] as? Int64 {
+                return count
+            }
+            if let count = row[0] as? Int {
+                return Int64(count)
+            }
+        }
+        return 0
+    }
+
+    private func rowCount(
+        for query: String,
+        connection: Connection
+    ) throws -> Int {
+        var count = 0
+        for _ in try connection.prepare(query) {
+            count += 1
+        }
+        return count
     }
 
     private func prepareDatabaseFile() throws -> DatabasePreparation {
@@ -278,16 +383,27 @@ final class DatabaseLifecycle {
     }
 
     private func validateDatabase(at databaseURL: URL) throws {
-        let connection = try Connection(databaseURL.path)
-        try configureAndValidate(connection)
+        try withConnection(at: databaseURL) { connection in
+            try configureAndValidate(connection)
+        }
     }
 
     private func checkpointDatabaseIfNeeded(at databaseURL: URL) throws {
-        let connection = try Connection(databaseURL.path)
-        let journalMode = try connection.scalar("PRAGMA journal_mode") as? String
-        if journalMode?.lowercased() == "wal" {
-            try connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        try withConnection(at: databaseURL) { connection in
+            let journalMode = try connection.scalar("PRAGMA journal_mode") as? String
+            if journalMode?.lowercased() == "wal" {
+                try connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            }
         }
+    }
+
+    private func withConnection<T>(
+        at databaseURL: URL,
+        operation: (Connection) throws -> T
+    ) throws -> T {
+        var connection: Connection? = try Connection(databaseURL.path)
+        defer { connection = nil }
+        return try operation(connection!)
     }
 
     private func removeDatabaseArtifacts(at databaseURL: URL) {
