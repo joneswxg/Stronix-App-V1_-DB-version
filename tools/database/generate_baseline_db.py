@@ -170,6 +170,24 @@ def validate_database(connection: sqlite3.Connection) -> None:
     if ledger_rows != expected_ledger:
         raise ValueError(f"Unexpected schema ledger: {ledger_rows}")
 
+    trigger_rows = [
+        row[0]
+        for row in connection.execute(
+            """
+            SELECT name
+            FROM sqlite_schema
+            WHERE type = 'trigger' AND tbl_name = 'schema_migrations'
+            ORDER BY name
+            """
+        )
+    ]
+    expected_triggers = [
+        "schema_migrations_prevent_delete",
+        "schema_migrations_prevent_update",
+    ]
+    if trigger_rows != expected_triggers:
+        raise ValueError(f"Unexpected schema ledger triggers: {trigger_rows}")
+
 
 def logical_fingerprint(connection: sqlite3.Connection) -> str:
     digest = hashlib.sha256()

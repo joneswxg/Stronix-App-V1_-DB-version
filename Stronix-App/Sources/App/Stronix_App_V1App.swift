@@ -26,6 +26,8 @@ struct Stronix_App_V1App: App {
                         message: message,
                         retry: retryDatabasePreparation
                     )
+                case .incompatible(let message):
+                    DatabaseStartupIncompatibilityView(message: message)
                 }
             }
             .task {
@@ -69,6 +71,11 @@ struct Stronix_App_V1App: App {
                 case .ready(let database):
                     print("✅ 数据库生命周期准备完成: \(database.databaseURL.path)")
                     databaseState = .ready
+                case .incompatible(let incompatibility):
+                    print("❌ 数据库 schema 版本过新: \(incompatibility.supportedMigrationID)")
+                    databaseState = .incompatible(
+                        "本地数据库由较新版本的 App 创建，请更新 App 后再继续使用。"
+                    )
                 case .failed(let failure):
                     print("❌ 数据库生命周期准备失败: \(failure.message)")
                     databaseState = .failed(failure.message)
@@ -97,6 +104,26 @@ private enum DatabaseStartupState {
     case preparing
     case ready
     case failed(String)
+    case incompatible(String)
+}
+
+private struct DatabaseStartupIncompatibilityView: View {
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "externaldrive.badge.exclamationmark")
+                .font(.system(size: 44))
+                .foregroundStyle(.orange)
+            Text("本地数据库需要更新")
+                .font(.headline)
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+    }
 }
 
 private struct DatabaseStartupFailureView: View {
