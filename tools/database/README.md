@@ -14,7 +14,7 @@ python3 tools/database/generate_baseline_db.py \
   --output Stronix-App/Resources/Database/database_stronix.db
 ```
 
-The generator creates a fresh temporary database, imports all seed rows in deterministic ID order, inserts the immutable `20260721_0001_baseline` ledger record, runs integrity and foreign-key checks, then atomically replaces the output.
+The generator creates a fresh temporary database, imports all seed rows in deterministic ID order, inserts the immutable `20260721_0001_baseline` ledger record, verifies the append-only ledger triggers, runs integrity and foreign-key checks, then atomically replaces the output. Future migrations may only append records to `schema_migrations`; changing or deleting a completed record is rejected by the database.
 
 Expected static catalog counts:
 

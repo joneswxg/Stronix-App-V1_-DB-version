@@ -34,20 +34,74 @@ enum DatabasePreparation: Equatable {
     case rebuilt
 }
 
+struct DatabaseMigration {
+    let id: String
+    let apply: (Connection) throws -> Void
+    let validate: (Connection) throws -> Void
+
+    init(
+        id: String,
+        apply: @escaping (Connection) throws -> Void,
+        validate: @escaping (Connection) throws -> Void = { _ in }
+    ) {
+        self.id = id
+        self.apply = apply
+        self.validate = validate
+    }
+}
+
+struct DatabaseMigrationCatalog {
+    let migrations: [DatabaseMigration]
+
+    static let production = DatabaseMigrationCatalog(migrations: [
+        DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+        DatabaseMigration(id: "20260721_0002_protect_schema_ledger") { connection in
+            try connection.run(
+                """
+                CREATE TRIGGER IF NOT EXISTS schema_migrations_prevent_update
+                BEFORE UPDATE ON schema_migrations
+                BEGIN
+                    SELECT RAISE(ABORT, 'schema_migrations is append-only');
+                END
+                """
+            )
+            try connection.run(
+                """
+                CREATE TRIGGER IF NOT EXISTS schema_migrations_prevent_delete
+                BEFORE DELETE ON schema_migrations
+                BEGIN
+                    SELECT RAISE(ABORT, 'schema_migrations is append-only');
+                END
+                """
+            )
+        }
+    ])
+}
+
+struct DatabaseSchemaIncompatibility: Error, Equatable {
+    let appliedMigrationIDs: [String]
+    let supportedMigrationID: String
+}
+
 struct ReadyDatabase {
     let connection: Connection
     let databaseURL: URL
     let preparation: DatabasePreparation
+    let appliedMigrationIDs: [String]
+    let schemaMigrationID: String
 }
 
 enum DatabasePreparationResult: CustomStringConvertible {
     case ready(ReadyDatabase)
+    case incompatible(DatabaseSchemaIncompatibility)
     case failed(DatabasePreparationFailure)
 
     var description: String {
         switch self {
         case .ready(let database):
             return "ready(\(database.databaseURL.path))"
+        case .incompatible(let incompatibility):
+            return "incompatible(\(incompatibility.supportedMigrationID))"
         case .failed(let failure):
             return "failed(\(failure.message))"
         }
@@ -90,16 +144,20 @@ final class DatabaseLifecycle {
 
     private let environment: DatabaseEnvironment
     private let fileManager: FileManager
+    private let migrationCatalog: DatabaseMigrationCatalog
     private let preparationQueue: DispatchQueue
     private var readyDatabase: ReadyDatabase?
     private var failure: DatabasePreparationFailure?
+    private var incompatibility: DatabaseSchemaIncompatibility?
 
     init(
         environment: DatabaseEnvironment,
-        fileManager: FileManager = .default
+        fileManager: FileManager = .default,
+        migrationCatalog: DatabaseMigrationCatalog = .production
     ) {
         self.environment = environment
         self.fileManager = fileManager
+        self.migrationCatalog = migrationCatalog
         self.preparationQueue = DispatchQueue(
             label: "database.lifecycle.prepare.\(UUID().uuidString)",
             qos: .userInitiated
@@ -115,6 +173,7 @@ final class DatabaseLifecycle {
     func retry() -> DatabasePreparationResult {
         preparationQueue.sync {
             failure = nil
+            incompatibility = nil
             return prepareLocked()
         }
     }
@@ -137,9 +196,15 @@ final class DatabaseLifecycle {
                 ReadyDatabase(
                     connection: readyDatabase.connection,
                     databaseURL: readyDatabase.databaseURL,
-                    preparation: .alreadyReady
+                    preparation: .alreadyReady,
+                    appliedMigrationIDs: [],
+                    schemaMigrationID: readyDatabase.schemaMigrationID
                 )
             )
+        }
+
+        if let incompatibility {
+            return .incompatible(incompatibility)
         }
 
         if let failure {
@@ -154,6 +219,9 @@ final class DatabaseLifecycle {
             )
             readyDatabase = database
             return .ready(database)
+        } catch let databaseIncompatibility as DatabaseSchemaIncompatibility {
+            incompatibility = databaseIncompatibility
+            return .incompatible(databaseIncompatibility)
         } catch let preparationFailure as DatabasePreparationFailure {
             if preparation == .initialized {
                 removeDatabaseArtifacts(at: environment.databaseURL)
@@ -215,30 +283,104 @@ final class DatabaseLifecycle {
         preparation: DatabasePreparation
     ) throws -> ReadyDatabase {
         let connection = try Connection(environment.databaseURL.path)
-        try configureAndValidate(connection)
+        try configure(connection)
+        let appliedMigrationIDs = try runPendingMigrations(on: connection)
+        try validateReadyDatabase(connection)
         return ReadyDatabase(
             connection: connection,
             databaseURL: environment.databaseURL,
-            preparation: preparation
+            preparation: preparation,
+            appliedMigrationIDs: appliedMigrationIDs,
+            schemaMigrationID: try targetMigrationID()
         )
     }
 
-    private func configureAndValidate(_ connection: Connection) throws {
+    private func configure(_ connection: Connection) throws {
         try connection.execute("PRAGMA foreign_keys = ON")
         try connection.execute("PRAGMA busy_timeout = 5000")
+    }
 
+    private func runPendingMigrations(on connection: Connection) throws -> [String] {
+        let migrations = try validatedMigrations()
+        let completedMigrationIDs = try recordedMigrationIDs(from: connection)
+        try validateRecordedMigrationIDs(completedMigrationIDs, against: migrations)
+
+        let pendingMigrations = migrations.dropFirst(completedMigrationIDs.count)
+        for migration in pendingMigrations {
+            try connection.transaction(.immediate) {
+                try migration.apply(connection)
+                try migration.validate(connection)
+                try validateMigrationState(connection)
+                try connection.run(
+                    "INSERT INTO schema_migrations (migration_id, applied_at) VALUES (?, datetime('now'))",
+                    migration.id
+                )
+            }
+        }
+        return pendingMigrations.map(\.id)
+    }
+
+    private func validatedMigrations() throws -> [DatabaseMigration] {
+        let migrations = migrationCatalog.migrations
+        guard migrations.first?.id == Self.baselineMigrationID else {
+            throw DatabasePreparationFailure(message: "migration catalog 缺少 baseline")
+        }
+
+        let migrationIDs = migrations.map(\.id)
+        guard Set(migrationIDs).count == migrationIDs.count else {
+            throw DatabasePreparationFailure(message: "migration catalog 包含重复 ID")
+        }
+        guard migrationIDs == migrationIDs.sorted() else {
+            throw DatabasePreparationFailure(message: "migration catalog 顺序无效")
+        }
+        return migrations
+    }
+
+    private func targetMigrationID() throws -> String {
+        try validatedMigrations().last!.id
+    }
+
+    private func recordedMigrationIDs(from connection: Connection) throws -> [String] {
+        var migrationIDs: [String] = []
+        for row in try connection.prepare(
+            "SELECT migration_id FROM schema_migrations ORDER BY migration_id"
+        ) {
+            guard let migrationID = row[0] as? String else {
+                throw DatabasePreparationFailure(message: "migration ledger 记录无效")
+            }
+            migrationIDs.append(migrationID)
+        }
+        return migrationIDs
+    }
+
+    private func validateRecordedMigrationIDs(
+        _ completedMigrationIDs: [String],
+        against migrations: [DatabaseMigration]
+    ) throws {
+        let supportedMigrationIDs = migrations.map(\.id)
+        if completedMigrationIDs.contains(where: { !supportedMigrationIDs.contains($0) }) {
+            throw DatabaseSchemaIncompatibility(
+                appliedMigrationIDs: completedMigrationIDs,
+                supportedMigrationID: supportedMigrationIDs.last!
+            )
+        }
+        guard completedMigrationIDs == Array(supportedMigrationIDs.prefix(completedMigrationIDs.count)) else {
+            throw DatabasePreparationFailure(message: "migration ledger 顺序无效")
+        }
+    }
+
+    private func validateMigrationState(_ connection: Connection) throws {
         let integrityResult = try connection.scalar("PRAGMA integrity_check") as? String
         guard integrityResult == "ok" else {
-            throw DatabasePreparationFailure(
-                message: "数据库完整性检查失败"
-            )
+            throw DatabasePreparationFailure(message: "数据库完整性检查失败")
         }
-
         guard try rowCount(for: "PRAGMA foreign_key_check", connection: connection) == 0 else {
-            throw DatabasePreparationFailure(
-                message: "数据库外键检查失败"
-            )
+            throw DatabasePreparationFailure(message: "数据库外键检查失败")
         }
+    }
+
+    private func validateReadyDatabase(_ connection: Connection) throws {
+        try validateMigrationState(connection)
 
         for tableName in Self.requiredTableNames {
             guard try tableExists(tableName, connection: connection) else {
@@ -248,14 +390,10 @@ final class DatabaseLifecycle {
             }
         }
 
-        guard try scalarCount(
-            "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
-            bindings: [Self.baselineMigrationID],
-            connection: connection
-        ) == 1 else {
-            throw DatabasePreparationFailure(
-                message: "数据库缺少 baseline migration 记录"
-            )
+        let migrationIDs = try recordedMigrationIDs(from: connection)
+        try validateRecordedMigrationIDs(migrationIDs, against: try validatedMigrations())
+        guard migrationIDs.count == migrationCatalog.migrations.count else {
+            throw DatabasePreparationFailure(message: "数据库 migration 未完成")
         }
 
         for tableName in Self.expectedSeedCounts.keys.sorted() {
@@ -384,7 +522,43 @@ final class DatabaseLifecycle {
 
     private func validateDatabase(at databaseURL: URL) throws {
         try withConnection(at: databaseURL) { connection in
-            try configureAndValidate(connection)
+            try configure(connection)
+            try validateBundledBaseline(connection)
+        }
+    }
+
+    private func validateBundledBaseline(_ connection: Connection) throws {
+        try validateMigrationState(connection)
+
+        for tableName in Self.requiredTableNames {
+            guard try tableExists(tableName, connection: connection) else {
+                throw DatabasePreparationFailure(
+                    message: "数据库缺少必要表: \(tableName)"
+                )
+            }
+        }
+
+        guard try scalarCount(
+            "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+            bindings: [Self.baselineMigrationID],
+            connection: connection
+        ) == 1 else {
+            throw DatabasePreparationFailure(
+                message: "数据库缺少 baseline migration 记录"
+            )
+        }
+
+        for tableName in Self.expectedSeedCounts.keys.sorted() {
+            let expectedCount = Self.expectedSeedCounts[tableName] ?? 0
+            let actualCount = try scalarCount(
+                "SELECT COUNT(*) FROM \(tableName)",
+                connection: connection
+            )
+            guard actualCount == expectedCount else {
+                throw DatabasePreparationFailure(
+                    message: "数据库种子校验失败: \(tableName)"
+                )
+            }
         }
     }
 
