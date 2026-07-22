@@ -69,15 +69,15 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 ## Phase 1 Manual Execution Record
 
 - Date: 2026-07-22
-- Commit: Pending final readiness commit
+- Commit: `d4cc32e`
 - Device or simulator: iPhone 17 Simulator
 - iOS version: 26.5
 - Build configuration: Debug
-- Tester: Claude Code
-- Database diagnostic summary: Startup path built and launched; detailed manual diagnostic capture pending.
+- Tester: User
+- Database diagnostic summary: Clean-install startup reached the login UI without a blocking readiness error.
 - Result: Partial
 - Follow-up issues: None created; unexecuted checks must be filed as follow-up issues if they fail.
-- Notes: The full XCTest suite passed and the app built, installed, and launched in the iPhone 17 Simulator. The manual business-flow gate below remains unexecuted and must not be marked passing without a real end-to-end run.
+- Notes: The full XCTest suite passed. User verified registration, login, body-measurement creation, template-plan use, training execution, and training-history recording. Logout, explicit User Plan creation/edit isolation, history-detail/statistics inspection, and relaunch persistence remain unexecuted.
 
 ## Core Smoke Paths
 
@@ -110,7 +110,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Login succeeds for valid credentials.
 - User session is reflected in profile and dependent pages.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 3. Logout
 
@@ -142,7 +142,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - The copied plan belongs only to the signed-in user.
 - Editing the copy does not alter the template.
 
-**Result**: Pending
+**Result**: Pass for template browsing and use in training, verified by user on 2026-07-22. Copy ownership and edit isolation remain pending.
 
 ### 5. Create Training Plan
 
@@ -193,7 +193,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Set changes are reflected in the active session.
 - Timer behavior does not block core recording.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 8. Complete Training And Save History
 
@@ -209,7 +209,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - A Training History record appears.
 - History details show the completed actions and sets.
 
-**Result**: Pending
+**Result**: Pass for completion and history recording, verified by user on 2026-07-22. History-detail inspection remains pending.
 
 ### 9. View Training History
 
@@ -240,7 +240,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Measurement saves successfully.
 - New value appears in list or overview.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 11. App Relaunch Data Persistence
 
