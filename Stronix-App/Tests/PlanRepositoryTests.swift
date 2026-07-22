@@ -157,6 +157,42 @@ final class PlanRepositoryTests: XCTestCase {
         }
     }
 
+    func testServiceAdapterReadsAndCopiesPlansWithInjectedAuthenticatedUser() async throws {
+        let service = LocalPlanService(
+            connectionProvider: { self.connection },
+            authenticatedUserIDProvider: { self.ownerID }
+        )
+
+        let templates = try await service.templatePlans()
+        let template = try XCTUnwrap(templates.first)
+        let templateDetail = try await service.templatePlanDetail(id: template.id)
+        let initialUserPlans = try await service.userPlans()
+        XCTAssertTrue(templateDetail.isTemplate)
+        XCTAssertTrue(initialUserPlans.isEmpty)
+
+        let copied = try await service.copyTemplatePlan(id: template.id)
+        let userPlan = try await service.userPlanDetail(id: copied.plan_id)
+        let copiedUserPlans = try await service.userPlans()
+
+        XCTAssertEqual(userPlan.templateId, template.id)
+        XCTAssertEqual(userPlan.actions?.map(\.id), templateDetail.actions?.map(\.id))
+        XCTAssertEqual(copiedUserPlans.map(\.id), [copied.plan_id])
+    }
+
+    func testServiceAdapterRejectsMissingAuthenticatedUser() async throws {
+        let service = LocalPlanService(
+            connectionProvider: { self.connection },
+            authenticatedUserIDProvider: { nil }
+        )
+
+        do {
+            _ = try await service.userPlans()
+            XCTFail("Expected an unauthenticated user-plan request to fail")
+        } catch let error as LocalPlanError {
+            XCTAssertEqual(error.code, 401)
+        }
+    }
+
     func testUserPlanListActionCountMatchesDetailAndCopyStartsTraining() throws {
         let result = try repository.copyTemplatePlan(id: 1, ownerID: ownerID)
         let listedPlan = try XCTUnwrap(try repository.userPlans(ownerID: ownerID).first)

@@ -1,0 +1,250 @@
+import XCTest
+@testable import Stronix
+
+@MainActor
+final class PlanViewModelTests: XCTestCase {
+    func testInitialLoadPopulatesTemplateAndUserPlans() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let userPlan = makePlan(id: 2, name: "我的计划", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .success([userPlan])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        XCTAssertEqual(repository.templatePlansCallCount, 0)
+        XCTAssertEqual(repository.userPlansCallCount, 0)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.templatePlans.map(\.id), [template.id])
+        XCTAssertEqual(viewModel.personalPlans.map(\.id), [userPlan.id])
+        XCTAssertEqual(repository.templatePlansCallCount, 1)
+        XCTAssertEqual(repository.userPlansCallCount, 1)
+        XCTAssertFalse(viewModel.isLoadingTemplates)
+        XCTAssertFalse(viewModel.isLoadingPersonal)
+        XCTAssertFalse(viewModel.showError)
+    }
+
+    func testInitialLoadDoesNotReloadAfterSuccessfulLoad() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([]),
+            userPlansResult: .success([])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(repository.templatePlansCallCount, 1)
+        XCTAssertEqual(repository.userPlansCallCount, 1)
+    }
+
+    func testConcurrentInitialLoadsShareOneRepositoryRequest() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([]),
+            userPlansResult: .success([]),
+            delayNanoseconds: 100_000_000
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        async let firstLoad: Void = viewModel.loadInitialData()
+        async let secondLoad: Void = viewModel.loadInitialData()
+        await firstLoad
+        await secondLoad
+
+        XCTAssertEqual(repository.templatePlansCallCount, 1)
+        XCTAssertEqual(repository.userPlansCallCount, 1)
+    }
+
+    func testInitialLoadSupportsEmptyPlans() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([]),
+            userPlansResult: .success([])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertTrue(viewModel.templatePlans.isEmpty)
+        XCTAssertTrue(viewModel.personalPlans.isEmpty)
+        XCTAssertFalse(viewModel.showError)
+    }
+
+    func testInitialLoadShowsUserSafeErrorForUnauthorizedUserPlans() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .failure(LocalPlanError.unauthorized("未登录"))
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.templatePlans.map(\.id), [template.id])
+        XCTAssertTrue(viewModel.personalPlans.isEmpty)
+        XCTAssertTrue(viewModel.showError)
+        XCTAssertEqual(viewModel.errorMessage, "加载个人计划失败: 未登录")
+    }
+
+    func testClearDataIgnoresACompletedCancelledLoad() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let userPlan = makePlan(id: 2, name: "我的计划", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .success([userPlan]),
+            delayNanoseconds: 100_000_000
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        let load = Task { @MainActor in
+            await viewModel.loadInitialData()
+        }
+        try? await Task.sleep(nanoseconds: 10_000_000)
+        viewModel.clearData()
+        await load.value
+
+        XCTAssertTrue(viewModel.templatePlans.isEmpty)
+        XCTAssertTrue(viewModel.personalPlans.isEmpty)
+    }
+
+    func testInitialLoadHidesRepositoryImplementationErrors() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .failure(TestError.repositoryFailure),
+            userPlansResult: .success([])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertTrue(viewModel.showError)
+        XCTAssertEqual(viewModel.errorMessage, "加载模板计划失败: 暂时无法完成请求，请稍后重试")
+        XCTAssertFalse(viewModel.isLoadingTemplates)
+        XCTAssertFalse(viewModel.isLoadingPersonal)
+    }
+
+    func testRefreshReloadsBothPlanLists() async {
+        let firstTemplate = makePlan(id: 1, name: "旧模板", isTemplate: true)
+        let firstUserPlan = makePlan(id: 2, name: "旧计划", isTemplate: false)
+        let refreshedTemplate = makePlan(id: 3, name: "新模板", isTemplate: true)
+        let refreshedUserPlan = makePlan(id: 4, name: "新计划", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([firstTemplate]),
+            userPlansResult: .success([firstUserPlan])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+        repository.templatePlansResult = .success([refreshedTemplate])
+        repository.userPlansResult = .success([refreshedUserPlan])
+
+        await viewModel.refresh()
+
+        XCTAssertEqual(viewModel.templatePlans.map(\.id), [refreshedTemplate.id])
+        XCTAssertEqual(viewModel.personalPlans.map(\.id), [refreshedUserPlan.id])
+        XCTAssertEqual(repository.templatePlansCallCount, 2)
+        XCTAssertEqual(repository.userPlansCallCount, 2)
+    }
+
+    func testCopyTemplateRefreshesPersonalPlans() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let copiedPlan = makePlan(id: 2, name: "模板计划 - 副本", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .success([]),
+            copyTemplatePlanResult: .success(CreatePlanResponse(plan_id: copiedPlan.id))
+        )
+        let viewModel = PlanViewModel(repository: repository)
+        repository.userPlansResult = .success([copiedPlan])
+
+        await viewModel.copyTemplatePlan(template)
+
+        XCTAssertEqual(repository.copiedTemplateIDs, [template.id])
+        XCTAssertEqual(viewModel.personalPlans.map(\.id), [copiedPlan.id])
+        XCTAssertEqual(repository.userPlansCallCount, 1)
+    }
+    private func makePlan(id: Int, name: String, isTemplate: Bool) -> TrainingPlan {
+        TrainingPlan(
+            id: id,
+            name: name,
+            creator: isTemplate ? "系统模板" : "我",
+            createdDate: "2026-07-22T00:00:00Z",
+            lastTraining: "未开始",
+            volume: 0,
+            description: nil,
+            isTemplate: isTemplate,
+            templateId: nil,
+            difficulty: nil,
+            duration: nil,
+            actions: []
+        )
+    }
+}
+
+private enum TestError: Error {
+    case repositoryFailure
+}
+
+private final class MockPlanRepository: PlanRepository {
+    var templatePlansResult: Result<[TrainingPlan], Error>
+    var userPlansResult: Result<[TrainingPlan], Error>
+    var copyTemplatePlanResult: Result<CreatePlanResponse, Error>
+    var templatePlansCallCount = 0
+    var userPlansCallCount = 0
+    var copiedTemplateIDs: [Int] = []
+    var delayNanoseconds: UInt64
+
+    init(
+        templatePlansResult: Result<[TrainingPlan], Error>,
+        userPlansResult: Result<[TrainingPlan], Error>,
+        copyTemplatePlanResult: Result<CreatePlanResponse, Error> = .success(CreatePlanResponse(plan_id: 0)),
+        delayNanoseconds: UInt64 = 0
+    ) {
+        self.templatePlansResult = templatePlansResult
+        self.userPlansResult = userPlansResult
+        self.copyTemplatePlanResult = copyTemplatePlanResult
+        self.delayNanoseconds = delayNanoseconds
+    }
+
+    func templatePlans() async throws -> [TrainingPlan] {
+        templatePlansCallCount += 1
+        await waitIfNeeded()
+        return try templatePlansResult.get()
+    }
+
+    func userPlans() async throws -> [TrainingPlan] {
+        userPlansCallCount += 1
+        await waitIfNeeded()
+        return try userPlansResult.get()
+    }
+
+    func templatePlanDetail(id: Int) async throws -> TrainingPlan {
+        fatalError("Not used by this test")
+    }
+
+    func userPlanDetail(id: Int) async throws -> TrainingPlan {
+        fatalError("Not used by this test")
+    }
+
+    func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse {
+        copiedTemplateIDs.append(id)
+        return try copyTemplatePlanResult.get()
+    }
+
+    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse {
+        fatalError("Not used by this test")
+    }
+
+    func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws {
+        fatalError("Not used by this test")
+    }
+
+    func deleteUserPlan(id: Int) async throws {
+        fatalError("Not used by this test")
+    }
+
+    private func waitIfNeeded() async {
+        guard delayNanoseconds > 0 else { return }
+        try? await Task.sleep(nanoseconds: delayNanoseconds)
+    }
+}

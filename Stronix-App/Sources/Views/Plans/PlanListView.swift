@@ -2,15 +2,12 @@ import SwiftUI
 
 struct PlanListView: View {
     @Environment(\.theme) private var theme
-    @StateObject private var viewModel = PlanViewModel()
+    @ObservedObject var viewModel: PlanViewModel
     @ObservedObject private var authService = LocalUserService.shared
     @State private var showLogin = false
     @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
     @State private var isEditPlanPresented = false // 添加标记，跟踪EditPlan是否打开
     @State private var navigateToCreatePlan = false // 添加导航状态
-    
-    // 使用@AppStorage来持久化加载状态
-    @AppStorage("PlanListView_hasInitiallyLoaded") private var hasInitiallyLoaded = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -192,24 +189,20 @@ struct PlanListView: View {
         .fullScreenCover(isPresented: $navigateToCreatePlan) {
             CreatePlanView()
                 .onDisappear {
-                    // 创建计划后刷新数据
                     if authService.isLoggedIn {
-                        // 延迟刷新，让视图层级稳定下来
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            print("🔄 CreatePlanView onDisappear - 延迟刷新数据")
-                            viewModel.refresh()
-                            hasInitiallyLoaded = true
+                        Task {
+                            await viewModel.refresh()
                         }
                     }
                 }
-            }
+        }
         .sheet(isPresented: $showLogin) {
             LoginView()
                 .onDisappear {
-                    // 登录后刷新数据
                     if authService.isLoggedIn {
-                        viewModel.refresh()
-                        hasInitiallyLoaded = true
+                        Task {
+                            await viewModel.refresh()
+                        }
                     }
                 }
         }
@@ -218,7 +211,9 @@ struct PlanListView: View {
                 viewModel.showError = false
             }
             Button("重试") {
-                viewModel.refresh()
+                Task {
+                    await viewModel.refresh()
+                }
             }
             if !authService.isLoggedIn {
                 Button("登录") {
@@ -230,45 +225,23 @@ struct PlanListView: View {
         }
         .refreshable {
             if authService.isLoggedIn {
-                viewModel.refresh()
+                await viewModel.refresh()
             }
         }
-        .onAppear {
-            print("🔍 PlanListView onAppear - isLoggedIn: \(authService.isLoggedIn), hasInitiallyLoaded: \(hasInitiallyLoaded), isEditPlanPresented: \(isEditPlanPresented)")
-            
-            // 如果EditPlan正在显示，不执行任何操作
-            if isEditPlanPresented {
-                print("🔍 PlanListView onAppear - EditPlan正在显示，跳过刷新")
-                return
-            }
-            
-            // 只在真正需要时进行token检查和数据加载
-            if !hasInitiallyLoaded {
-                Task {
-                    // 检查token有效性
-                    let _ = await authService.refreshTokenIfNeeded()
-                    
-                    // 首次加载时检查登录状态并加载数据
-                    if authService.isLoggedIn {
-                        print("🔄 PlanListView 首次加载数据")
-                        viewModel.refresh()
-                        hasInitiallyLoaded = true
-                    } else {
-                        // 未登录时也标记为已加载，避免重复检查
-                        hasInitiallyLoaded = true
-                    }
-                }
+        .task {
+            guard !isEditPlanPresented else { return }
+            let _ = await authService.refreshTokenIfNeeded()
+            if authService.isLoggedIn {
+                await viewModel.loadInitialData()
             }
         }
         .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
             if isLoggedIn {
-                // 登录成功后刷新数据
-                viewModel.refresh()
-                hasInitiallyLoaded = true
+                Task {
+                    await viewModel.refresh()
+                }
             } else {
-                // 登出后清空数据并重置加载标记
                 viewModel.clearData()
-                hasInitiallyLoaded = false
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdatedFromDetail"))) { notification in
@@ -672,5 +645,5 @@ struct PersonalPlanCard: View {
 }
 
 #Preview {
-    PlanListView()
+    PlanListView(viewModel: PlanViewModel())
 }
