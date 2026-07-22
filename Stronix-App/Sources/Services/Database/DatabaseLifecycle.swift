@@ -36,6 +36,45 @@ enum DatabasePreparation: Equatable {
     case recovered
 }
 
+enum DatabaseRecoveryStatus: String, Equatable {
+    case notNeeded
+    case restored
+    case restorationFailed
+}
+
+struct DatabaseLifecycleDiagnostic: Equatable {
+    let databaseLocation: String?
+    let schemaVersion: String?
+    let supportedSchemaVersion: String?
+    let foreignKeysEnabled: Bool?
+    let busyTimeoutMilliseconds: Int?
+    let journalMode: String?
+    let appliedMigrationIDs: [String]
+    let recoveryStatus: DatabaseRecoveryStatus
+    let preparation: DatabasePreparation?
+
+    var summary: String {
+        let fields = [
+            databaseLocation.map { "database=\($0)" },
+            schemaVersion.map { "schema=\($0)" },
+            supportedSchemaVersion.map { "supportedSchema=\($0)" },
+            foreignKeysEnabled.map { "foreignKeys=\($0)" },
+            busyTimeoutMilliseconds.map { "busyTimeoutMs=\($0)" },
+            journalMode.map { "journalMode=\($0)" },
+            "appliedMigrations=\(appliedMigrationIDs.count)",
+            "recovery=\(recoveryStatus.rawValue)",
+            preparation.map { "preparation=\(String(describing: $0))" }
+        ]
+        return fields.compactMap { $0 }.joined(separator: " ")
+    }
+}
+
+private struct DatabaseConnectionConfiguration: Equatable {
+    let foreignKeysEnabled: Bool
+    let busyTimeoutMilliseconds: Int
+    let journalMode: String
+}
+
 struct DatabaseMigration {
     let id: String
     let apply: (Connection) throws -> Void
@@ -96,6 +135,7 @@ struct ReadyDatabase {
     let databaseURL: URL
     let preparation: DatabasePreparation
     let appliedMigrationIDs: [String]
+    let diagnostic: DatabaseLifecycleDiagnostic
 }
 
 enum DatabasePreparationResult: CustomStringConvertible {
@@ -105,24 +145,66 @@ enum DatabasePreparationResult: CustomStringConvertible {
     case failed(DatabasePreparationFailure)
     case unrecoverable(DatabaseRecoveryFailure)
 
-    var description: String {
+    var diagnostic: DatabaseLifecycleDiagnostic {
         switch self {
-        case .ready(let database):
-            return "ready(\(database.databaseURL.path))"
-        case .recovered(let database, let failure):
-            return "recovered(\(database.databaseURL.path), \(failure.message))"
+        case .ready(let database), .recovered(let database, _):
+            return database.diagnostic
         case .incompatible(let incompatibility):
-            return "incompatible(\(incompatibility.supportedMigrationID))"
+            return DatabaseLifecycleDiagnostic(
+                databaseLocation: nil,
+                schemaVersion: incompatibility.appliedMigrationIDs.last,
+                supportedSchemaVersion: incompatibility.supportedMigrationID,
+                foreignKeysEnabled: nil,
+                busyTimeoutMilliseconds: nil,
+                journalMode: nil,
+                appliedMigrationIDs: [],
+                recoveryStatus: .notNeeded,
+                preparation: nil
+            )
         case .failed(let failure):
-            return "failed(\(failure.message))"
+            return failure.diagnostic
         case .unrecoverable(let failure):
-            return "unrecoverable(\(failure.restorationFailure.message))"
+            let diagnostic = failure.restorationFailure.diagnostic
+            return DatabaseLifecycleDiagnostic(
+                databaseLocation: diagnostic.databaseLocation,
+                schemaVersion: diagnostic.schemaVersion,
+                supportedSchemaVersion: diagnostic.supportedSchemaVersion,
+                foreignKeysEnabled: diagnostic.foreignKeysEnabled,
+                busyTimeoutMilliseconds: diagnostic.busyTimeoutMilliseconds,
+                journalMode: diagnostic.journalMode,
+                appliedMigrationIDs: diagnostic.appliedMigrationIDs,
+                recoveryStatus: .restorationFailed,
+                preparation: diagnostic.preparation
+            )
         }
+    }
+
+    var description: String {
+        diagnostic.summary
     }
 }
 
 struct DatabasePreparationFailure: Error, Equatable {
     let message: String
+    let diagnostic: DatabaseLifecycleDiagnostic
+
+    init(
+        message: String,
+        diagnostic: DatabaseLifecycleDiagnostic = DatabaseLifecycleDiagnostic(
+            databaseLocation: nil,
+            schemaVersion: nil,
+            supportedSchemaVersion: nil,
+            foreignKeysEnabled: nil,
+            busyTimeoutMilliseconds: nil,
+            journalMode: nil,
+            appliedMigrationIDs: [],
+            recoveryStatus: .notNeeded,
+            preparation: nil
+        )
+    ) {
+        self.message = message
+        self.diagnostic = diagnostic
+    }
 }
 
 struct DatabaseRecoveryFailure: Error, Equatable {
@@ -349,7 +431,13 @@ final class DatabaseLifecycle {
                     connection: readyDatabase.connection,
                     databaseURL: readyDatabase.databaseURL,
                     preparation: .recovered,
-                    appliedMigrationIDs: []
+                    appliedMigrationIDs: [],
+                    diagnostic: makeDiagnostic(
+                        connection: readyDatabase.connection,
+                        preparation: .recovered,
+                        appliedMigrationIDs: [],
+                        recoveryStatus: .restored
+                    )
                 ),
                 recoveredFailure
             )
@@ -361,7 +449,13 @@ final class DatabaseLifecycle {
                     connection: readyDatabase.connection,
                     databaseURL: readyDatabase.databaseURL,
                     preparation: .alreadyReady,
-                    appliedMigrationIDs: []
+                    appliedMigrationIDs: [],
+                    diagnostic: makeDiagnostic(
+                        connection: readyDatabase.connection,
+                        preparation: .alreadyReady,
+                        appliedMigrationIDs: [],
+                        recoveryStatus: .notNeeded
+                    )
                 )
             )
         }
@@ -407,7 +501,8 @@ final class DatabaseLifecycle {
                 removeDatabaseArtifacts(at: environment.databaseURL)
             }
             let preparationFailure = DatabasePreparationFailure(
-                message: error.localizedDescription
+                message: error.localizedDescription,
+                diagnostic: unavailableDiagnostic(preparation: preparation)
             )
             failure = preparationFailure
             return .failed(preparationFailure)
@@ -457,7 +552,7 @@ final class DatabaseLifecycle {
         preparation: DatabasePreparation
     ) throws -> ReadyDatabase {
         var connection: Connection? = try Connection(environment.databaseURL.path)
-        try configure(connection!)
+        let configuration = try configure(connection!)
 
         try validateMigrationState(connection!)
         let migrationPlan = try migrationPlan(for: connection!)
@@ -465,6 +560,7 @@ final class DatabaseLifecycle {
             try validateReadyDatabase(connection!)
             return makeReadyDatabase(
                 connection: connection!,
+                configuration: configuration,
                 preparation: preparation,
                 appliedMigrationIDs: []
             )
@@ -487,6 +583,7 @@ final class DatabaseLifecycle {
             try validateReadyDatabase(connection!)
             let database = makeReadyDatabase(
                 connection: connection!,
+                configuration: configuration,
                 preparation: preparation == .alreadyReady ? .migrated : preparation,
                 appliedMigrationIDs: appliedMigrationIDs
             )
@@ -501,12 +598,14 @@ final class DatabaseLifecycle {
                     replacing: environment.databaseURL
                 )
                 let restoredConnection = try Connection(environment.databaseURL.path)
-                try configure(restoredConnection)
+                let restoredConfiguration = try configure(restoredConnection)
                 try validateRecoveryDatabase(restoredConnection)
                 let database = makeReadyDatabase(
                     connection: restoredConnection,
+                    configuration: restoredConfiguration,
                     preparation: .recovered,
-                    appliedMigrationIDs: []
+                    appliedMigrationIDs: [],
+                    recoveryStatus: .restored
                 )
                 snapshotStore.discardSnapshot(at: snapshotURL)
                 throw DatabaseRecoverySucceeded(
@@ -526,14 +625,60 @@ final class DatabaseLifecycle {
 
     private func makeReadyDatabase(
         connection: Connection,
+        configuration: DatabaseConnectionConfiguration,
         preparation: DatabasePreparation,
-        appliedMigrationIDs: [String]
+        appliedMigrationIDs: [String],
+        recoveryStatus: DatabaseRecoveryStatus = .notNeeded
     ) -> ReadyDatabase {
         ReadyDatabase(
             connection: connection,
             databaseURL: environment.databaseURL,
             preparation: preparation,
-            appliedMigrationIDs: appliedMigrationIDs
+            appliedMigrationIDs: appliedMigrationIDs,
+            diagnostic: makeDiagnostic(
+                connection: connection,
+                configuration: configuration,
+                preparation: preparation,
+                appliedMigrationIDs: appliedMigrationIDs,
+                recoveryStatus: recoveryStatus
+            )
+        )
+    }
+
+    private func makeDiagnostic(
+        connection: Connection,
+        configuration: DatabaseConnectionConfiguration? = nil,
+        preparation: DatabasePreparation,
+        appliedMigrationIDs: [String],
+        recoveryStatus: DatabaseRecoveryStatus
+    ) -> DatabaseLifecycleDiagnostic {
+        let observedConfiguration = configuration ?? (try? readConfiguration(from: connection))
+        return DatabaseLifecycleDiagnostic(
+            databaseLocation: environment.databaseURL.path,
+            schemaVersion: (try? recordedMigrationIDs(from: connection))?.last,
+            supportedSchemaVersion: migrationCatalog.migrations.last?.id,
+            foreignKeysEnabled: observedConfiguration?.foreignKeysEnabled,
+            busyTimeoutMilliseconds: observedConfiguration?.busyTimeoutMilliseconds,
+            journalMode: observedConfiguration?.journalMode,
+            appliedMigrationIDs: appliedMigrationIDs,
+            recoveryStatus: recoveryStatus,
+            preparation: preparation
+        )
+    }
+
+    private func unavailableDiagnostic(
+        preparation: DatabasePreparation? = nil
+    ) -> DatabaseLifecycleDiagnostic {
+        DatabaseLifecycleDiagnostic(
+            databaseLocation: environment.databaseURL.path,
+            schemaVersion: nil,
+            supportedSchemaVersion: migrationCatalog.migrations.last?.id,
+            foreignKeysEnabled: nil,
+            busyTimeoutMilliseconds: nil,
+            journalMode: nil,
+            appliedMigrationIDs: [],
+            recoveryStatus: .notNeeded,
+            preparation: preparation
         )
     }
 
@@ -645,13 +790,41 @@ final class DatabaseLifecycle {
         if let failure = error as? DatabasePreparationFailure {
             return failure
         }
-        return DatabasePreparationFailure(message: error.localizedDescription)
+        return DatabasePreparationFailure(
+            message: error.localizedDescription,
+            diagnostic: unavailableDiagnostic()
+        )
     }
 
-    private func configure(_ connection: Connection) throws {
+    @discardableResult
+    private func configure(_ connection: Connection) throws -> DatabaseConnectionConfiguration {
         try connection.execute("PRAGMA foreign_keys = ON")
         try connection.execute("PRAGMA busy_timeout = 5000")
         try connection.execute("PRAGMA journal_mode = WAL")
+        return try readConfiguration(from: connection)
+    }
+
+    private func readConfiguration(
+        from connection: Connection
+    ) throws -> DatabaseConnectionConfiguration {
+        let foreignKeysEnabled = (try connection.scalar("PRAGMA foreign_keys") as? Int64) == 1
+        let timeoutValue = try connection.scalar("PRAGMA busy_timeout") as? Int64
+        let busyTimeoutMilliseconds = Int(timeoutValue ?? 0)
+        let journalMode = (try connection.scalar("PRAGMA journal_mode") as? String)?.lowercased() ?? ""
+        let configuration = DatabaseConnectionConfiguration(
+            foreignKeysEnabled: foreignKeysEnabled,
+            busyTimeoutMilliseconds: busyTimeoutMilliseconds,
+            journalMode: journalMode
+        )
+        guard configuration.foreignKeysEnabled,
+              configuration.busyTimeoutMilliseconds == 5000,
+              configuration.journalMode == "wal" else {
+            throw DatabasePreparationFailure(
+                message: "数据库连接配置校验失败",
+                diagnostic: unavailableDiagnostic()
+            )
+        }
+        return configuration
     }
 
     private func validatedMigrations() throws -> [DatabaseMigration] {

@@ -57,6 +57,7 @@
 				Models/Local/LocalUserModels.swift,
 				Services/Database/DatabaseLifecycle.swift,
 				Services/Database/DatabaseManager.swift,
+				Services/Database/TemplatePlanMigration.swift,
 				Services/Email/AliCloudEmailService.swift,
 				Services/Email/EmailConfig.swift,
 				Services/Email/EmailService.swift,

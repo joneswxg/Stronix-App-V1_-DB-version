@@ -42,6 +42,13 @@ final class DatabaseLifecycleTests: XCTestCase {
         }
 
         XCTAssertEqual(readyDatabase.preparation, .initialized)
+        XCTAssertEqual(readyDatabase.diagnostic.databaseLocation, readyDatabase.databaseURL.path)
+        XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260722_0003_split_template_and_user_plans")
+        XCTAssertEqual(readyDatabase.diagnostic.supportedSchemaVersion, "20260722_0003_split_template_and_user_plans")
+        XCTAssertEqual(readyDatabase.diagnostic.foreignKeysEnabled, true)
+        XCTAssertEqual(readyDatabase.diagnostic.busyTimeoutMilliseconds, 5000)
+        XCTAssertEqual(readyDatabase.diagnostic.journalMode, "wal")
+        XCTAssertEqual(readyDatabase.diagnostic.recoveryStatus, .notNeeded)
         XCTAssertEqual(
             readyDatabase.appliedMigrationIDs,
             ["20260721_0002_protect_schema_ledger", "20260722_0003_split_template_and_user_plans"]
@@ -317,6 +324,52 @@ final class DatabaseLifecycleTests: XCTestCase {
             try readyDatabase.connection.scalar("PRAGMA journal_mode") as? String,
             "wal"
         )
+        XCTAssertEqual(readyDatabase.diagnostic.foreignKeysEnabled, true)
+        XCTAssertEqual(readyDatabase.diagnostic.busyTimeoutMilliseconds, 5000)
+        XCTAssertEqual(readyDatabase.diagnostic.journalMode, "wal")
+    }
+
+    func testReadyConnectionRejectsForeignKeyViolations() throws {
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: temporaryRoot.appendingPathComponent("Documents", isDirectory: true),
+                databaseFilename: "baseline.db",
+                sourceDatabaseURL: try bundledBaselineURL()
+            )
+        )
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected the baseline database to be ready")
+        }
+
+        XCTAssertThrowsError(
+            try readyDatabase.connection.run(
+                """
+                INSERT INTO body_measurements (
+                    user_id, measurement_timestamp, weight_kg, height_cm,
+                    body_fat_percentage, skeletal_muscle_mass_kg, visceral_fat_level,
+                    created_at, updated_at
+                ) VALUES (999999, '2026-07-22T00:00:00Z', 70, 175, 20, 30, 5, datetime('now'), datetime('now'))
+                """
+            )
+        )
+        XCTAssertEqual(try rowCount("PRAGMA foreign_key_check", in: readyDatabase.connection), 0)
+    }
+
+    func testDiagnosticSummaryDoesNotIncludeFailureMessage() throws {
+        let secret = "password-reset-code-123456-training-detail"
+        let lifecycle = DatabaseLifecycle(
+            environment: DatabaseEnvironment(
+                documentsDirectory: temporaryRoot.appendingPathComponent("Documents", isDirectory: true),
+                databaseFilename: "missing.db",
+                sourceDatabaseURL: nil
+            )
+        )
+
+        guard case .failed(let failure) = lifecycle.prepare() else {
+            return XCTFail("Expected preparation to fail")
+        }
+        XCTAssertFalse(failure.diagnostic.summary.contains(secret))
+        XCTAssertFalse(DatabasePreparationFailure(message: secret).diagnostic.summary.contains(secret))
     }
 
     func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
@@ -414,7 +467,10 @@ final class DatabaseLifecycleTests: XCTestCase {
         let connection = readyDatabase.connection
         XCTAssertEqual(
             readyDatabase.appliedMigrationIDs,
-            ["20260722_0003_split_template_and_user_plans"]
+            [
+                "20260721_0002_protect_schema_ledger",
+                "20260722_0003_split_template_and_user_plans"
+            ]
         )
         XCTAssertEqual(
             try connection.scalar("SELECT COUNT(*) FROM training_plans WHERE id = 9001") as? Int64,
@@ -849,7 +905,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         XCTAssertEqual(
             incompatibility.supportedMigrationID,
-            "20260721_0002_protect_schema_ledger"
+            "20260722_0003_split_template_and_user_plans"
         )
         XCTAssertNil(lifecycle.readyConnection())
         XCTAssertEqual(
@@ -1467,7 +1523,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         }
 
         XCTAssertNil(lifecycle.readyConnection())
-        XCTAssertTrue(lifecycle.retry().description.starts(with: "unrecoverable"))
+        XCTAssertEqual(lifecycle.retry().diagnostic.recoveryStatus, .restorationFailed)
         XCTAssertNil(lifecycle.readyConnection())
         let artifacts = try FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
         XCTAssertTrue(artifacts.contains { $0.contains("migration-backup") })

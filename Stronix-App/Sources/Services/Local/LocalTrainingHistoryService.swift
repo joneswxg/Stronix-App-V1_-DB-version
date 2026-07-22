@@ -79,10 +79,6 @@ class LocalTrainingHistoryService {
     /// 保存训练历史
     /// 迁移自 Backend-Reference save_training_history
     func saveTrainingHistory(_ request: SaveTrainingHistoryRequest, user_id: Int? = nil, language: String = "zh_CN") async throws -> SaveTrainingHistoryResponse {
-        print("🔄 LocalTrainingHistoryService.saveTrainingHistory 开始...")
-        print("📊 训练数据: 计划=\(request.plan_name), 容量=\(request.volume)kg, 时长=\(request.duration)秒")
-        print("📝 详情数量: \(request.details.count)组")
-        
         guard let db = dbManager.getConnection() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
@@ -122,7 +118,6 @@ class LocalTrainingHistoryService {
                 }
                 
                 // 插入训练历史主记录
-                print("➡️ 准备插入训练历史主记录：\(localRequest)")
                 let historyRowId = try db.run(training_history.insert(
                     th_user_id <- currentUserId,
                     th_plan_id <- localRequest.plan_id,

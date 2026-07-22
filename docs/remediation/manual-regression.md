@@ -53,6 +53,32 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Result: Partial
 - Notes: User reported successful Xcode build, simulator launch, and app startup. Deeper business-flow regression paths remain pending for later phase gates.
 
+## Phase 1 Execution Record Template
+
+- Date:
+- Commit:
+- Device or simulator:
+- iOS version:
+- Build configuration:
+- Tester:
+- Database diagnostic summary:
+- Result: Pass / Fail / Partial
+- Follow-up issues:
+- Notes:
+
+## Phase 1 Manual Execution Record
+
+- Date: Not executed
+- Commit: Pending implementation validation
+- Device or simulator: Pending
+- iOS version: Pending
+- Build configuration: Pending
+- Tester: Pending
+- Database diagnostic summary: Pending
+- Result: Partial
+- Follow-up issues: None created; unexecuted checks must be filed as follow-up issues if they fail.
+- Notes: Automated lifecycle verification is tracked with the Phase 1.7 implementation. The manual release gate below remains unexecuted and must not be marked passing without a real simulator or device run.
+
 ## Core Smoke Paths
 
 ### 1. App Startup
@@ -100,7 +126,25 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 4. Create Training Plan
+### 4. Browse And Copy Template Plan
+
+**Steps**:
+
+1. Sign in with a local user.
+2. Open the template plan list and inspect a seeded template.
+3. Copy the template to the signed-in user's plans.
+4. Edit the copied User Plan.
+5. Reopen the original template.
+
+**Expected**:
+
+- Seeded templates are visible and browsable.
+- The copied plan belongs only to the signed-in user.
+- Editing the copy does not alter the template.
+
+**Result**: Pending
+
+### 5. Create Training Plan
 
 **Steps**:
 
@@ -118,7 +162,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 5. Edit Training Plan
+### 6. Edit Training Plan
 
 **Steps**:
 
@@ -134,7 +178,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 6. Start Training
+### 7. Start Training
 
 **Steps**:
 
@@ -151,7 +195,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 7. Complete Training And Save History
+### 8. Complete Training And Save History
 
 **Steps**:
 
@@ -167,7 +211,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 8. View Training History
+### 9. View Training History
 
 **Steps**:
 
@@ -183,7 +227,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 9. Add Body Measurement
+### 10. Add Body Measurement
 
 **Steps**:
 
@@ -198,7 +242,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending
 
-### 10. App Relaunch Data Persistence
+### 11. App Relaunch Data Persistence
 
 **Steps**:
 
@@ -215,4 +259,4 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 ## Phase Completion Rule
 
-For Phase 0, this checklist document establishes the regression gate. The first actual manual execution should be recorded before Phase 1 changes are considered ready to merge.
+For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.
