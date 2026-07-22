@@ -4,6 +4,7 @@ struct MainTabView: View {
     @Environment(\.theme) private var theme: AppTheme
     @AppStorage("MainTabView_selectedTab") private var selectedTab = 0 // 持久化选中的Tab
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
+    @StateObject private var planViewModel = PlanViewModel()
     @AppStorage("MainTabView_lastUserSelectedTab") private var lastUserSelectedTab = 0 // 持久化用户最后选择的标签页
     @StateObject private var keyboardManager = CustomKeyboardManager()
     
@@ -26,10 +27,10 @@ struct MainTabView: View {
                 NavigationStack {
                     Group {
                         if trainingManager.isTrainingActive, let currentPlan = trainingManager.currentPlan {
-                            TrainingView(plan: currentPlan, viewModel: PlanViewModel())
+                            TrainingView(plan: currentPlan, viewModel: planViewModel)
                                 .id("training-active")
                         } else {
-                            PlanListView()
+                            PlanListView(viewModel: planViewModel)
                                 .id("plan-list")
                         }
                     }

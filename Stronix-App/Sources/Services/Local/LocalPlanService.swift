@@ -2,6 +2,17 @@ import Foundation
 import SQLite
 
 protocol PlanRepository {
+    func templatePlans() async throws -> [TrainingPlan]
+    func templatePlanDetail(id: Int) async throws -> TrainingPlan
+    func userPlans() async throws -> [TrainingPlan]
+    func userPlanDetail(id: Int) async throws -> TrainingPlan
+    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse
+    func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse
+    func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws
+    func deleteUserPlan(id: Int) async throws
+}
+
+private protocol SQLitePlanStore {
     func templatePlans() throws -> [TrainingPlan]
     func templatePlanDetail(id: Int) throws -> TrainingPlan
     func userPlans(ownerID: Int) throws -> [TrainingPlan]
@@ -12,7 +23,7 @@ protocol PlanRepository {
     func deleteUserPlan(id: Int, ownerID: Int) throws
 }
 
-final class SQLitePlanRepository: PlanRepository {
+final class SQLitePlanRepository: SQLitePlanStore {
     private let connection: Connection
 
     init(connection: Connection) {
@@ -466,7 +477,7 @@ final class SQLitePlanRepository: PlanRepository {
     }
 }
 
-final class LocalPlanService {
+final class LocalPlanService: PlanRepository {
     static let shared = LocalPlanService()
 
     private let connectionProvider: () -> Connection?
@@ -533,6 +544,38 @@ final class LocalPlanService {
             planData: planData,
             ownerID: try currentUserID(user_id, language: language)
         )
+    }
+
+    func templatePlans() async throws -> [TrainingPlan] {
+        try await getTemplatePlans()
+    }
+
+    func templatePlanDetail(id: Int) async throws -> TrainingPlan {
+        try await getTemplatePlanDetail(planId: id)
+    }
+
+    func userPlans() async throws -> [TrainingPlan] {
+        try await getPersonalPlans()
+    }
+
+    func userPlanDetail(id: Int) async throws -> TrainingPlan {
+        try await getUserPlanDetail(planId: id)
+    }
+
+    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse {
+        try await createPlan(planData, user_id: try currentUserID(nil, language: "zh_CN"))
+    }
+
+    func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse {
+        try await copyTemplatePlan(templateId: id, user_id: try currentUserID(nil, language: "zh_CN"))
+    }
+
+    func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws {
+        try await updatePlan(planId: id, planData: planData, user_id: try currentUserID(nil, language: "zh_CN"))
+    }
+
+    func deleteUserPlan(id: Int) async throws {
+        try await deletePlan(planId: id, user_id: try currentUserID(nil, language: "zh_CN"))
     }
 
     private func repository(language: String) throws -> SQLitePlanRepository {
