@@ -72,20 +72,23 @@ final class SQLitePlanRepository: PlanRepository {
         let now = ISO8601DateFormatter().string(from: Date())
         var planID = 0
         try connection.transaction {
-            planID = Int(try connection.run(
+            try connection.run(
                 """
                 INSERT INTO training_plans (
                     name, description, difficulty, duration, created_at, updated_at, user_id
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                planData["name"] as? String ?? "",
-                planData["description"] as? String ?? "",
-                planData["difficulty"] as? String ?? "",
-                planData["duration"] as? Int ?? 0,
-                now,
-                now,
-                ownerID
-            ))
+                [
+                    planData["name"] as? String ?? "",
+                    planData["description"] as? String ?? "",
+                    planData["difficulty"] as? String ?? "",
+                    planData["duration"] as? Int ?? 0,
+                    now,
+                    now,
+                    ownerID
+                ]
+            )
+            planID = Int(connection.lastInsertRowid)
             try insertActions(
                 planID: planID,
                 ownerID: ownerID,
@@ -103,21 +106,24 @@ final class SQLitePlanRepository: PlanRepository {
         var planID = 0
 
         try connection.transaction {
-            planID = Int(try connection.run(
+            try connection.run(
                 """
                 INSERT INTO training_plans (
                     name, description, difficulty, duration, created_at, updated_at, user_id, source_template_id
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                "\(template.name) - 副本",
-                template.description ?? "",
-                template.difficulty ?? "",
-                template.duration ?? 0,
-                now,
-                now,
-                ownerID,
-                id
-            ))
+                [
+                    "\(template.name) - 副本",
+                    template.description ?? "",
+                    template.difficulty ?? "",
+                    template.duration ?? 0,
+                    now,
+                    now,
+                    ownerID,
+                    id
+                ]
+            )
+            planID = Int(connection.lastInsertRowid)
             try connection.run(
                 """
                 INSERT INTO plan_actions (plan_id, action_id, "order", sets, reps, rest, weight, note, record_bilateral)
@@ -246,14 +252,14 @@ final class SQLitePlanRepository: PlanRepository {
     ) throws -> TrainingPlan {
         let ownerClause = ownerID == nil ? "" : " AND user_id = ?"
         let bindings: [Binding?] = ownerID.map { [id, $0] } ?? [id]
-        guard let plan = try connection.pluck(
+        let statement = try connection.prepare(
             """
             SELECT id, name, description, difficulty, duration, created_at, updated_at
             FROM \(table)
             WHERE id = ?\(ownerClause)
-            """,
-            bindings
-        ) else {
+            """
+        )
+        guard let plan = try statement.run(bindings).makeIterator().next() else {
             throw ownerID == nil ? LocalPlanError.templateNotFound(get_error_message("TEMPLATE_NOT_FOUND")) : LocalPlanError.planNotFound(get_error_message("PLAN_NOT_FOUND"))
         }
 

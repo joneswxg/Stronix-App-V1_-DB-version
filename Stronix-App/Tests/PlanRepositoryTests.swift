@@ -178,13 +178,13 @@ final class PlanRepositoryTests: XCTestCase {
     }
 
     private func insertUser(username: String, email: String) throws -> Int {
-        Int(try connection.run(
+        try connection.run(
             """
             INSERT INTO user (username, email, password_hash, created_at)
             VALUES (?, ?, 'test-hash', '2026-07-22T00:00:00Z')
             """,
-            username,
-            email
-        ))
+            [username, email]
+        )
+        return Int(connection.lastInsertRowid)
     }
 }

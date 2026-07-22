@@ -94,11 +94,7 @@ class LocalUserService: ObservableObject {
                 }
                 
                 let storedPasswordHash = row[9] as? String ?? ""
-                
-                print("🔍 验证用户: \(email)")
-                print("🔑 输入密码: \(password)")
-                print("🔒 存储哈希: \(String(storedPasswordHash.prefix(50)))...")
-                
+
                 // 验证密码
                 let isPasswordValid = verifyPassword(password: password, hash: storedPasswordHash)
                 
@@ -120,11 +116,6 @@ class LocalUserService: ObservableObject {
                     let createdAt = row[7] as? String ?? ""
                     let isAdmin = (row[8] as? Int64 ?? 0) == 1
                     
-                    print("🔍 解析用户数据:")
-                    print("  原始ID: \(String(describing: row[0])), 转换后ID: \(userId)")
-                    print("  用户名: \(username)")
-                    print("  邮箱: \(email)")
-                    
                     let user = User(
                         id: userId,
                         username: username,
@@ -141,8 +132,6 @@ class LocalUserService: ObservableObject {
                         wechatUnionId: row[13] as? String,
                         appleId: row[14] as? String
                     )
-                    
-                    print("✅ 登录成功: 用户ID=\(user.id), 用户名=\(user.username)")
                     
                     await MainActor.run {
                         self.currentUser = user
@@ -208,14 +197,7 @@ class LocalUserService: ObservableObject {
             
             // 转换中文性别为英文（如果需要）
             let genderValue = convertGenderToEnglish(gender)
-            
-            print("🔍 注册新用户:")
-            print("  用户名: \(username)")
-            print("  邮箱: \(email)")
-            print("  性别: \(gender ?? "未指定") -> \(genderValue ?? "未指定")")
-            print("  身高: \(heightValue?.description ?? "未指定")")
-            print("  体重: \(weightValue?.description ?? "未指定")")
-            
+
             let insertQuery = """
                 INSERT INTO user (username, email, password_hash, gender, height, weight, role, is_admin, created_at, account_type, external_id)
                 VALUES (?, ?, ?, ?, ?, ?, 'regular', 0, datetime('now'), ?, ?)

@@ -53,6 +53,32 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Result: Partial
 - Notes: User reported successful Xcode build, simulator launch, and app startup. Deeper business-flow regression paths remain pending for later phase gates.
 
+## Phase 1 Execution Record Template
+
+- Date:
+- Commit:
+- Device or simulator:
+- iOS version:
+- Build configuration:
+- Tester:
+- Database diagnostic summary:
+- Result: Pass / Fail / Partial
+- Follow-up issues:
+- Notes:
+
+## Phase 1 Manual Execution Record
+
+- Date: 2026-07-22
+- Commit: `d4cc32e`
+- Device or simulator: iPhone 17 Simulator
+- iOS version: 26.5
+- Build configuration: Debug
+- Tester: User
+- Database diagnostic summary: Clean-install startup reached the login UI without a blocking readiness error.
+- Result: Pass
+- Follow-up issues: None.
+- Notes: The full XCTest suite passed. User verified registration, login, logout, body-measurement creation, template-plan use, standalone User Plan creation, User Plan editing and saving, template-copy ownership/isolation, training execution, training-history recording, history-detail/statistics views, relaunch persistence, and small-tool functionality. Templates are used to create personal plans; editing and saving the personal plan does not alter the original template.
+
 ## Core Smoke Paths
 
 ### 1. App Startup
@@ -84,7 +110,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Login succeeds for valid credentials.
 - User session is reflected in profile and dependent pages.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 3. Logout
 
@@ -98,9 +124,27 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Session is cleared.
 - Protected user data is not shown as if still logged in.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 4. Create Training Plan
+### 4. Browse And Use Template Plan
+
+**Steps**:
+
+1. Sign in with a local user.
+2. Open the template plan list and inspect a seeded template.
+3. Use the template to add it to the signed-in user's plans.
+4. Edit and save the resulting User Plan.
+5. Reopen the original template.
+
+**Expected**:
+
+- Seeded templates are visible and browsable.
+- The resulting User Plan belongs only to the signed-in user.
+- Editing the User Plan does not alter the template.
+
+**Result**: Pass, verified by user on 2026-07-22
+
+### 5. Create Training Plan
 
 **Steps**:
 
@@ -116,9 +160,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Plan appears in the user plan list.
 - Reopening the plan shows the saved values.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 5. Edit Training Plan
+### 6. Edit Training Plan
 
 **Steps**:
 
@@ -132,9 +176,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Changes persist.
 - No duplicate or missing actions are introduced.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 6. Start Training
+### 7. Start Training
 
 **Steps**:
 
@@ -149,9 +193,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Set changes are reflected in the active session.
 - Timer behavior does not block core recording.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 7. Complete Training And Save History
+### 8. Complete Training And Save History
 
 **Steps**:
 
@@ -165,9 +209,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - A Training History record appears.
 - History details show the completed actions and sets.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 8. View Training History
+### 9. View Training History
 
 **Steps**:
 
@@ -181,9 +225,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Detail screen matches the saved training.
 - Statistics pages do not crash.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 9. Add Body Measurement
+### 10. Add Body Measurement
 
 **Steps**:
 
@@ -196,9 +240,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Measurement saves successfully.
 - New value appears in list or overview.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 10. App Relaunch Data Persistence
+### 11. App Relaunch Data Persistence
 
 **Steps**:
 
@@ -211,8 +255,8 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Local data persists.
 - No startup migration or database copy loses user data.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ## Phase Completion Rule
 
-For Phase 0, this checklist document establishes the regression gate. The first actual manual execution should be recorded before Phase 1 changes are considered ready to merge.
+For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.
