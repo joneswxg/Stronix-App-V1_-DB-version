@@ -99,7 +99,10 @@ struct TrainingView: View {
             if let selectedAction = selectedActionForHistory {
                 ActionHistoryView(
                     actionId: selectedAction.id,
-                    actionName: selectedAction.name
+                    actionName: selectedAction.name,
+                    viewModel: ActionHistoryViewModel(
+                        repository: SQLiteActionHistoryRepository()
+                    )
                 )
             }
         }
