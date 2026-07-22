@@ -77,6 +77,48 @@ CREATE TABLE user (
     apple_id TEXT
 );
 
+CREATE TABLE template_plans (
+    id INTEGER PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    difficulty TEXT NOT NULL DEFAULT '',
+    duration INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE template_plan_actions (
+    template_plan_id INTEGER NOT NULL,
+    action_id INTEGER NOT NULL,
+    "order" INTEGER NOT NULL,
+    sets INTEGER NOT NULL DEFAULT 0,
+    reps TEXT,
+    rest INTEGER NOT NULL DEFAULT 60,
+    weight REAL NOT NULL DEFAULT 0,
+    note TEXT,
+    record_bilateral INTEGER NOT NULL DEFAULT 0 CHECK (record_bilateral IN (0, 1)),
+    PRIMARY KEY (template_plan_id, action_id),
+    UNIQUE (template_plan_id, "order"),
+    FOREIGN KEY (template_plan_id) REFERENCES template_plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (action_id) REFERENCES action(id)
+) WITHOUT ROWID;
+
+CREATE TABLE template_plan_sets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    template_plan_id INTEGER NOT NULL,
+    action_id INTEGER NOT NULL,
+    set_number INTEGER NOT NULL,
+    weight REAL NOT NULL DEFAULT 0,
+    reps INTEGER NOT NULL DEFAULT 12,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    left_weight REAL NOT NULL DEFAULT 0,
+    right_weight REAL NOT NULL DEFAULT 0,
+    notes TEXT,
+    UNIQUE (template_plan_id, action_id, set_number),
+    FOREIGN KEY (template_plan_id, action_id) REFERENCES template_plan_actions(template_plan_id, action_id) ON DELETE CASCADE
+);
+
 CREATE TABLE training_plans (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -85,12 +127,10 @@ CREATE TABLE training_plans (
     duration INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER,
-    is_template INTEGER NOT NULL DEFAULT 0 CHECK (is_template IN (0, 1)),
-    template_id INTEGER,
-    CHECK ((is_template = 1 AND user_id IS NULL) OR (is_template = 0 AND user_id IS NOT NULL)),
+    user_id INTEGER NOT NULL,
+    source_template_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-    FOREIGN KEY (template_id) REFERENCES training_plans(id) ON DELETE SET NULL
+    FOREIGN KEY (source_template_id) REFERENCES template_plans(id) ON DELETE SET NULL
 );
 
 CREATE TABLE plan_actions (
@@ -101,13 +141,12 @@ CREATE TABLE plan_actions (
     reps TEXT,
     rest INTEGER NOT NULL DEFAULT 60,
     weight REAL NOT NULL DEFAULT 0,
-    user_id INTEGER,
     note TEXT,
     record_bilateral INTEGER NOT NULL DEFAULT 0 CHECK (record_bilateral IN (0, 1)),
     PRIMARY KEY (plan_id, action_id),
+    UNIQUE (plan_id, "order"),
     FOREIGN KEY (plan_id) REFERENCES training_plans(id) ON DELETE CASCADE,
-    FOREIGN KEY (action_id) REFERENCES action(id),
-    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+    FOREIGN KEY (action_id) REFERENCES action(id)
 ) WITHOUT ROWID;
 
 CREATE TABLE plan_sets (
@@ -256,8 +295,11 @@ CREATE INDEX idx_user_account_type ON user(account_type);
 CREATE INDEX idx_user_external_id ON user(external_id);
 CREATE INDEX idx_user_wechat_open_id ON user(wechat_open_id);
 CREATE INDEX idx_user_apple_id ON user(apple_id);
-CREATE INDEX idx_training_plans_user_template ON training_plans(user_id, is_template);
-CREATE INDEX idx_plan_actions_user_plan ON plan_actions(user_id, plan_id);
+CREATE INDEX idx_template_plans_external_id ON template_plans(external_id);
+CREATE INDEX idx_template_plan_actions_plan_order ON template_plan_actions(template_plan_id, "order");
+CREATE INDEX idx_template_plan_sets_plan_action ON template_plan_sets(template_plan_id, action_id, set_number);
+CREATE INDEX idx_training_plans_user ON training_plans(user_id);
+CREATE INDEX idx_training_plans_source_template ON training_plans(source_template_id);
 CREATE INDEX idx_plan_actions_plan_order ON plan_actions(plan_id, "order");
 CREATE INDEX idx_plan_sets_plan_action ON plan_sets(plan_id, action_id, set_number);
 CREATE INDEX idx_training_sessions_plan_id ON training_sessions(plan_id);

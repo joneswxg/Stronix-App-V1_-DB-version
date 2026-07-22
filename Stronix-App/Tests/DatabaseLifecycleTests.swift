@@ -44,7 +44,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(readyDatabase.preparation, .initialized)
         XCTAssertEqual(
             readyDatabase.appliedMigrationIDs,
-            ["20260721_0002_protect_schema_ledger"]
+            ["20260721_0002_protect_schema_ledger", "20260722_0003_split_template_and_user_plans"]
         )
         XCTAssertEqual(
             try readyDatabase.connection.scalar("PRAGMA integrity_check") as? String,
@@ -64,12 +64,22 @@ final class DatabaseLifecycleTests: XCTestCase {
             1
         )
 
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260722_0003_split_template_and_user_plans'"
+            ) as? Int64,
+            1
+        )
+
         let expectedSeedCounts: [(String, Int64)] = [
             ("body_part", 10),
             ("target_muscle", 19),
             ("equipment", 28),
             ("action", 272),
-            ("action_target_muscle_link", 272)
+            ("action_target_muscle_link", 272),
+            ("template_plans", 2),
+            ("template_plan_actions", 3),
+            ("template_plan_sets", 6)
         ]
         for (table, expectedCount) in expectedSeedCounts {
             XCTAssertEqual(
@@ -78,6 +88,19 @@ final class DatabaseLifecycleTests: XCTestCase {
                 "Unexpected seed count for \(table)"
             )
         }
+
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('template_plans') WHERE name = 'user_id'"
+            ) as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('training_plans') WHERE name = 'is_template'"
+            ) as? Int64,
+            0
+        )
 
         for table in [
             "user",
@@ -371,6 +394,125 @@ final class DatabaseLifecycleTests: XCTestCase {
                 "SELECT weight_kg FROM body_measurements WHERE id = 9001"
             ) as? Double,
             70
+        )
+    }
+
+    func testPrepareMigratesLegacyMixedPlansAndPreservesUserReferences() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        try makeLegacyMixedPlanDatabase(at: databaseURL)
+
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: .production
+        )
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected the legacy plan schema to migrate successfully")
+        }
+
+        let connection = readyDatabase.connection
+        XCTAssertEqual(
+            readyDatabase.appliedMigrationIDs,
+            ["20260722_0003_split_template_and_user_plans"]
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT COUNT(*) FROM training_plans WHERE id = 9001") as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT source_template_id FROM training_plans WHERE id = 9001") as? Int64,
+            nil
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT COUNT(*) FROM training_plans WHERE id = 9000") as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT COUNT(*) FROM plan_actions WHERE plan_id = 9001") as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT COUNT(*) FROM plan_sets WHERE plan_id = 9001") as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT plan_id FROM training_history WHERE id = 9001") as? Int64,
+            9001
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT plan_id FROM training_sessions WHERE id = 9001") as? Int64,
+            9001
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT plan_id FROM training_plan_executions WHERE id = 9001") as? Int64,
+            9001
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT execution_id FROM execution_actions WHERE id = 9001") as? Int64,
+            9001
+        )
+        XCTAssertEqual(
+            try connection.scalar("SELECT execution_action_id FROM execution_sets WHERE id = 9001") as? Int64,
+            9001
+        )
+        XCTAssertEqual(try rowCount("PRAGMA foreign_key_check", in: connection), 0)
+
+        let restartedLifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: .production)
+        guard case .ready(let restartedDatabase) = restartedLifecycle.prepare() else {
+            return XCTFail("Expected the migrated plan schema to remain ready")
+        }
+        XCTAssertEqual(restartedDatabase.appliedMigrationIDs, [])
+        XCTAssertEqual(
+            try restartedDatabase.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260722_0003_split_template_and_user_plans'"
+            ) as? Int64,
+            1
+        )
+    }
+
+    func testPrepareRestoresLegacyMixedPlansWhenSplitMigrationFails() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        try makeLegacyMixedPlanDatabase(at: databaseURL)
+
+        let catalog = DatabaseMigrationCatalog(migrations: [
+            DatabaseMigration(id: "20260721_0001_baseline") { _ in },
+            DatabaseMigration(id: "20260721_0002_protect_schema_ledger") { _ in },
+            DatabaseMigration(id: "20260722_0003_split_template_and_user_plans") { connection in
+                try TemplatePlanMigration.apply(to: connection)
+                throw DatabasePreparationFailure(message: "injected split migration failure")
+            }
+        ])
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
+
+        guard case .recovered = lifecycle.prepare() else {
+            return XCTFail("Expected the failed split migration to restore the legacy database")
+        }
+
+        let restored = try Connection(databaseURL.path)
+        XCTAssertEqual(
+            try restored.scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('training_plans') WHERE name = 'is_template'"
+            ) as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try restored.scalar("SELECT COUNT(*) FROM training_plans WHERE id = 9001") as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try restored.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260722_0003_split_template_and_user_plans'"
+            ) as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try restored.scalar(
+                "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = 'template_plans'"
+            ) as? Int64,
+            0
         )
     }
 
@@ -1436,6 +1578,9 @@ final class DatabaseLifecycleTests: XCTestCase {
             "equipment",
             "action",
             "action_target_muscle_link",
+            "template_plans",
+            "template_plan_actions",
+            "template_plan_sets",
             "user",
             "training_plans",
             "plan_actions",
@@ -1474,10 +1619,10 @@ final class DatabaseLifecycleTests: XCTestCase {
             """
             INSERT INTO training_plans (
                 id, name, description, difficulty, duration, created_at,
-                updated_at, user_id, is_template
+                updated_at, user_id
             ) VALUES (
                 9001, 'Legacy Plan', '', '', 0, '2026-07-20T00:00:00Z',
-                '2026-07-20T00:00:00Z', 9001, 0
+                '2026-07-20T00:00:00Z', 9001
             )
             """
         )
@@ -1503,6 +1648,131 @@ final class DatabaseLifecycleTests: XCTestCase {
             DatabaseEnvironment.application().sourceDatabaseURL,
             "Expected the generated baseline database in the app bundle"
         )
+    }
+
+    private func makeLegacyMixedPlanDatabase(at databaseURL: URL) throws {
+        try FileManager.default.copyItem(at: try bundledBaselineURL(), to: databaseURL)
+        let connection = try Connection(databaseURL.path)
+        try connection.execute("PRAGMA foreign_keys = OFF")
+        try connection.run("DROP TRIGGER schema_migrations_prevent_update")
+        try connection.run("DROP TRIGGER schema_migrations_prevent_delete")
+        try connection.run(
+            "DELETE FROM schema_migrations WHERE migration_id = '20260722_0003_split_template_and_user_plans'"
+        )
+        try connection.run("DROP TABLE template_plan_sets")
+        try connection.run("DROP TABLE template_plan_actions")
+        try connection.run("DROP TABLE template_plans")
+        try connection.run("DROP TABLE plan_sets")
+        try connection.run("DROP TABLE plan_actions")
+        try connection.run("DROP TABLE training_plans")
+        try connection.run(
+            """
+            CREATE TABLE training_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                difficulty TEXT NOT NULL DEFAULT '',
+                duration INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                user_id INTEGER,
+                is_template INTEGER NOT NULL DEFAULT 0 CHECK (is_template IN (0, 1)),
+                template_id INTEGER,
+                CHECK ((is_template = 1 AND user_id IS NULL) OR (is_template = 0 AND user_id IS NOT NULL)),
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (template_id) REFERENCES training_plans(id) ON DELETE SET NULL
+            )
+            """
+        )
+        try connection.run(
+            """
+            CREATE TABLE plan_actions (
+                plan_id INTEGER NOT NULL,
+                action_id INTEGER NOT NULL,
+                "order" INTEGER NOT NULL,
+                sets INTEGER NOT NULL DEFAULT 0,
+                reps TEXT,
+                rest INTEGER NOT NULL DEFAULT 60,
+                weight REAL NOT NULL DEFAULT 0,
+                user_id INTEGER,
+                note TEXT,
+                record_bilateral INTEGER NOT NULL DEFAULT 0 CHECK (record_bilateral IN (0, 1)),
+                PRIMARY KEY (plan_id, action_id),
+                FOREIGN KEY (plan_id) REFERENCES training_plans(id) ON DELETE CASCADE,
+                FOREIGN KEY (action_id) REFERENCES action(id),
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+            ) WITHOUT ROWID
+            """
+        )
+        try connection.run(
+            """
+            CREATE TABLE plan_sets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL,
+                action_id INTEGER NOT NULL,
+                set_number INTEGER NOT NULL,
+                weight REAL NOT NULL DEFAULT 0,
+                reps INTEGER NOT NULL DEFAULT 12,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                left_weight REAL NOT NULL DEFAULT 0,
+                right_weight REAL NOT NULL DEFAULT 0,
+                notes TEXT,
+                UNIQUE (plan_id, action_id, set_number),
+                FOREIGN KEY (plan_id, action_id) REFERENCES plan_actions(plan_id, action_id) ON DELETE CASCADE
+            )
+            """
+        )
+        try connection.run("CREATE INDEX idx_plan_actions_plan_order ON plan_actions(plan_id, \"order\")")
+        try connection.run("CREATE INDEX idx_plan_sets_plan_action ON plan_sets(plan_id, action_id, set_number)")
+        try connection.run(
+            "INSERT INTO user (id, username, email, password_hash) VALUES (9001, 'legacy-user', 'legacy@example.com', 'legacy-hash')"
+        )
+        try connection.run(
+            "INSERT INTO training_plans (id, name, is_template) VALUES (9000, 'Legacy Template', 1)"
+        )
+        try connection.run(
+            "INSERT INTO training_plans (id, name, user_id, is_template, template_id) VALUES (9001, 'Legacy User Plan', 9001, 0, 9000)"
+        )
+        try connection.run(
+            "INSERT INTO plan_actions (plan_id, action_id, \"order\", sets, rest, weight, user_id, note, record_bilateral) VALUES (9001, 2, 1, 1, 60, 120, 9001, 'legacy note', 0)"
+        )
+        try connection.run(
+            "INSERT INTO plan_sets (id, plan_id, action_id, set_number, weight, reps) VALUES (9001, 9001, 2, 1, 20, 6)"
+        )
+        try connection.run(
+            "INSERT INTO training_history (id, user_id, plan_id, session_id, plan_name, training_date) VALUES (9001, 9001, 9001, 1, 'Legacy User Plan', '2026-07-20T00:00:00Z')"
+        )
+        try connection.run(
+            "INSERT INTO training_sessions (id, plan_id, user_id, plan_name) VALUES (9001, 9001, 9001, 'Legacy User Plan')"
+        )
+        try connection.run(
+            "INSERT INTO training_plan_executions (id, plan_id, plan_name) VALUES (9001, 9001, 'Legacy User Plan')"
+        )
+        try connection.run(
+            "INSERT INTO execution_actions (id, execution_id, action_id, action_name, order_num) VALUES (9001, 9001, 2, 'Legacy Action', 1)"
+        )
+        try connection.run(
+            "INSERT INTO execution_sets (id, execution_action_id, set_number, planned_reps) VALUES (9001, 9001, 1, 6)"
+        )
+        try connection.run(
+            """
+            CREATE TRIGGER schema_migrations_prevent_update
+            BEFORE UPDATE ON schema_migrations
+            BEGIN
+                SELECT RAISE(ABORT, 'schema_migrations is append-only');
+            END
+            """
+        )
+        try connection.run(
+            """
+            CREATE TRIGGER schema_migrations_prevent_delete
+            BEFORE DELETE ON schema_migrations
+            BEGIN
+                SELECT RAISE(ABORT, 'schema_migrations is append-only');
+            END
+            """
+        )
+        try connection.execute("PRAGMA foreign_keys = ON")
     }
 
     private func makeBaselineConnectionWithFixtureTable(

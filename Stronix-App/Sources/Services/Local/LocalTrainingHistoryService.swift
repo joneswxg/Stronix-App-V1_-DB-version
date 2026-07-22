@@ -46,14 +46,14 @@ class LocalTrainingHistoryService {
     
     // training_plans 表字段（用于验证）
     private let tp_id = Expression<Int>("id")
-    private let tp_user_id = Expression<Int?>("user_id")
+    private let tp_user_id = Expression<Int>("user_id")
     
     // plan_actions 表字段（用于更新计划）
     private let pa_plan_id = Expression<Int>("plan_id")
     private let pa_action_id = Expression<Int>("action_id")
-    private let pa_user_id = Expression<Int?>("user_id")
     private let pa_order = Expression<Int>("order")
     private let pa_sets = Expression<Int>("sets")
+    private let pa_weight = Expression<Double>("weight")
     private let pa_rest = Expression<Int>("rest")
     private let pa_note = Expression<String?>("note")
     private let pa_record_bilateral = Expression<Bool>("record_bilateral")
@@ -225,7 +225,7 @@ class LocalTrainingHistoryService {
                 
                 // 删除现有的计划动作和组数据
                 try db.run(plan_sets.filter(ps_plan_id == planId).delete())
-                try db.run(plan_actions.filter(pa_plan_id == planId && pa_user_id == currentUserId).delete())
+                try db.run(plan_actions.filter(pa_plan_id == planId).delete())
                 
                 // 插入新的计划动作和组数据
                 for action in localRequest.actions {
@@ -235,10 +235,10 @@ class LocalTrainingHistoryService {
                         pa_action_id <- action.action_id,
                         pa_order <- action.order,
                         pa_sets <- action.sets.count,
+                        pa_weight <- actionVolume(action),
                         pa_rest <- action.rest,
                         pa_note <- action.note,
-                        pa_record_bilateral <- action.record_bilateral,
-                        pa_user_id <- currentUserId
+                        pa_record_bilateral <- action.record_bilateral
                     ))
                     
                     // 插入计划组数据
@@ -270,6 +270,18 @@ class LocalTrainingHistoryService {
         }
     }
     
+    private func actionVolume(_ action: LocalUpdatePlanActionFromTraining) -> Double {
+        action.sets.reduce(0) { volume, set in
+            let weight: Double
+            if action.record_bilateral {
+                weight = (set.left_weight ?? 0) + (set.right_weight ?? 0)
+            } else {
+                weight = set.weight ?? 0
+            }
+            return volume + weight * Double(set.reps)
+        }
+    }
+
     // MARK: - 获取训练历史列表
     /// 获取训练历史列表
     /// 迁移自 Backend-Reference get_training_history

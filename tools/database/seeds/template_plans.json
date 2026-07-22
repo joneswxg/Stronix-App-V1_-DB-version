@@ -1,0 +1,55 @@
+[
+  {
+    "id": 1,
+    "external_id": "starter-upper-body-v1",
+    "name": "上肢入门训练",
+    "description": "适合初学者的上肢力量训练。",
+    "difficulty": "beginner",
+    "duration": 35,
+    "actions": [
+      {
+        "action_id": 2,
+        "order": 1,
+        "rest": 75,
+        "note": "动作全程保持稳定。",
+        "record_bilateral": false,
+        "sets": [
+          { "set_number": 1, "weight": 20, "reps": 10, "left_weight": 0, "right_weight": 0, "notes": "热身组" },
+          { "set_number": 2, "weight": 25, "reps": 10, "left_weight": 0, "right_weight": 0, "notes": "工作组" }
+        ]
+      },
+      {
+        "action_id": 3,
+        "order": 2,
+        "rest": 60,
+        "note": "控制离心阶段。",
+        "record_bilateral": false,
+        "sets": [
+          { "set_number": 1, "weight": 15, "reps": 12, "left_weight": 0, "right_weight": 0, "notes": "" },
+          { "set_number": 2, "weight": 15, "reps": 12, "left_weight": 0, "right_weight": 0, "notes": "" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "external_id": "starter-arms-v1",
+    "name": "手臂入门训练",
+    "description": "包含双侧记录的手臂力量训练。",
+    "difficulty": "beginner",
+    "duration": 30,
+    "actions": [
+      {
+        "action_id": 4,
+        "order": 1,
+        "rest": 90,
+        "note": "左右两侧独立记录。",
+        "record_bilateral": true,
+        "sets": [
+          { "set_number": 1, "weight": 0, "reps": 12, "left_weight": 7.5, "right_weight": 8, "notes": "保持左右平衡" },
+          { "set_number": 2, "weight": 0, "reps": 10, "left_weight": 8, "right_weight": 8.5, "notes": "" }
+        ]
+      }
+    ]
+  }
+]

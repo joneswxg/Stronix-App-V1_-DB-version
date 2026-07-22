@@ -22,9 +22,10 @@ class PlanViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError = false
     
-    private let planService = LocalPlanService.shared
-    
-    init() {
+    private let planService: LocalPlanService
+
+    init(planService: LocalPlanService = .shared) {
+        self.planService = planService
         loadData()
     }
     
@@ -41,38 +42,7 @@ class PlanViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let plans = try await planService.getTemplatePlans()
-            
-            // 为每个模板计划加载详情以获取动作信息
-            var enrichedPlans: [TrainingPlan] = []
-            for plan in plans {
-                do {
-                    let detailedPlan = try await planService.getPlanDetail(planId: plan.id)
-                    
-                    // 创建包含动作摘要的计划对象
-                    let enrichedPlan = TrainingPlan(
-                        id: plan.id,
-                        name: plan.name,
-                        creator: plan.creator,
-                        createdDate: plan.createdDate,
-                        lastTraining: plan.lastTraining,
-                        volume: detailedPlan.calculatedVolume, // 使用计算后的容量
-                        description: plan.description,
-                        isTemplate: plan.isTemplate,
-                        templateId: plan.templateId,
-                        difficulty: plan.difficulty,
-                        duration: plan.duration,
-                        actions: detailedPlan.actions // 保留所有动作数据用于容量计算
-                    )
-                    
-                    enrichedPlans.append(enrichedPlan)
-                } catch {
-                    // 如果获取详情失败，使用原始计划
-                    enrichedPlans.append(plan)
-                }
-            }
-            
-            templatePlans = enrichedPlans
+            templatePlans = try await planService.getTemplatePlans()
         } catch {
             handleError(error, context: "加载模板计划")
         }
@@ -85,38 +55,7 @@ class PlanViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let plans = try await planService.getPersonalPlans()
-            
-            // 为每个计划加载详情以获取动作信息
-            var enrichedPlans: [TrainingPlan] = []
-            for plan in plans {
-                do {
-                    let detailedPlan = try await planService.getPlanDetail(planId: plan.id)
-                    
-                    // 创建包含动作摘要的计划对象
-                    let enrichedPlan = TrainingPlan(
-                        id: plan.id,
-                        name: plan.name,
-                        creator: plan.creator,
-                        createdDate: plan.createdDate,
-                        lastTraining: plan.lastTraining,
-                        volume: detailedPlan.calculatedVolume, // 使用计算后的容量
-                        description: plan.description,
-                        isTemplate: plan.isTemplate,
-                        templateId: plan.templateId,
-                        difficulty: plan.difficulty,
-                        duration: plan.duration,
-                        actions: detailedPlan.actions // 保留所有动作数据用于容量计算
-                    )
-                    
-                    enrichedPlans.append(enrichedPlan)
-                } catch {
-                    // 如果获取详情失败，使用原始计划
-                    enrichedPlans.append(plan)
-                }
-            }
-            
-            personalPlans = enrichedPlans
+            personalPlans = try await planService.getPersonalPlans()
         } catch {
             handleError(error, context: "加载个人计划")
         }
@@ -125,54 +64,53 @@ class PlanViewModel: ObservableObject {
     }
     
     // MARK: - 计划详情
-    func loadPlanDetail(planId: Int) async {
+    func loadTemplatePlanDetail(planId: Int) async {
         isLoadingPlanDetail = true
         errorMessage = nil
-        
+
         do {
-            let plan = try await planService.getPlanDetail(planId: planId)
-            selectedPlan = plan
+            selectedPlan = try await planService.getTemplatePlanDetail(planId: planId)
         } catch {
-            handleError(error, context: "加载计划详情")
+            handleError(error, context: "加载模板计划详情")
         }
-        
+
         isLoadingPlanDetail = false
     }
-    
+
+    func loadUserPlanDetail(planId: Int) async {
+        isLoadingPlanDetail = true
+        errorMessage = nil
+
+        do {
+            selectedPlan = try await planService.getUserPlanDetail(planId: planId)
+        } catch {
+            handleError(error, context: "加载个人计划详情")
+        }
+
+        isLoadingPlanDetail = false
+    }
+
+    func loadPlanDetail(planId: Int) async {
+        await loadUserPlanDetail(planId: planId)
+    }
+
     // MARK: - 辅助方法
-    private func getCurrentUserId() -> Int {
-        return LocalUserService.shared.currentUser?.id ?? 0
+    private func getCurrentUserId() throws -> Int {
+        guard let userID = LocalUserService.shared.currentUser?.id else {
+            throw LocalPlanError.unauthorized(get_error_message("UNAUTHORIZED"))
+        }
+        return userID
     }
     
     // MARK: - 计划操作
     func copyTemplatePlan(_ templatePlan: TrainingPlan) async {
         do {
-            let response = try await planService.copyTemplatePlan(templateId: templatePlan.id, user_id: getCurrentUserId())
-            print("复制计划成功，新计划ID: \(response.plan_id)")
-            
-            // 创建新的计划对象并添加到本地数组，避免API调用
-            let newPlan = TrainingPlan(
-                id: response.plan_id,
-                name: "\(templatePlan.name) - 副本",
-                creator: templatePlan.creator,
-                createdDate: Date().ISO8601String(),
-                lastTraining: "未开始",
-                volume: templatePlan.volume,
-                description: templatePlan.description,
-                isTemplate: false,
+            _ = try await planService.copyTemplatePlan(
                 templateId: templatePlan.id,
-                difficulty: templatePlan.difficulty,
-                duration: templatePlan.duration,
-                actions: templatePlan.actions
+                user_id: getCurrentUserId()
             )
-            
-            // 将新计划添加到列表开头
-            personalPlans.insert(newPlan, at: 0)
-            print("🔄 PlanViewModel.copyTemplatePlan() 本地添加完成，现有 \(personalPlans.count) 个计划")
-            
-            // 显示成功消息
+            await refreshPersonalPlansOnly()
             showSuccessMessage("已将模板计划复制到个人计划")
-            
         } catch {
             handleError(error, context: "复制模板计划")
         }
@@ -360,45 +298,7 @@ class PlanViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let plans = try await planService.getPersonalPlans()
-            
-            // 为每个计划加载详情以获取最新的动作信息和正确的容量计算
-            var enrichedPlans: [TrainingPlan] = []
-            for plan in plans {
-                do {
-                    let detailedPlan = try await planService.getPlanDetail(planId: plan.id)
-                    
-                    // 创建包含最新动作数据的计划对象
-                    let enrichedPlan = TrainingPlan(
-                        id: plan.id,
-                        name: plan.name,
-                        creator: plan.creator,
-                        createdDate: plan.createdDate,
-                        lastTraining: plan.lastTraining,
-                        volume: detailedPlan.calculatedVolume, // 使用计算后的容量
-                        description: plan.description,
-                        isTemplate: plan.isTemplate,
-                        templateId: plan.templateId,
-                        difficulty: plan.difficulty,
-                        duration: plan.duration,
-                        actions: detailedPlan.actions // 保留所有动作数据用于容量计算
-                    )
-                    
-                    enrichedPlans.append(enrichedPlan)
-                    
-                    // 打印详细信息用于调试
-                    let actionsInfo = detailedPlan.actions?.prefix(2).map { "\($0.name) x \($0.totalSets)" }.joined(separator: ", ") ?? "无动作"
-                    print("🔍 刷新后计划: \(plan.name), 容量: \(enrichedPlan.calculatedVolume)kg, 动作: \(actionsInfo)")
-                } catch {
-                    // 如果获取详情失败，使用原始计划
-                    enrichedPlans.append(plan)
-                    print("⚠️ 获取计划详情失败，使用原始数据: \(plan.name)")
-                }
-            }
-            
-            personalPlans = enrichedPlans
-            print("🔄 PlanViewModel.refreshPersonalPlansOnly() 完成，加载了 \(enrichedPlans.count) 个个人计划")
-            
+            personalPlans = try await planService.getPersonalPlans()
         } catch {
             handleError(error, context: "刷新个人计划")
         }
