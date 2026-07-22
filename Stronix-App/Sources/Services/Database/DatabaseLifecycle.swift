@@ -32,6 +32,8 @@ enum DatabasePreparation: Equatable {
     case initialized
     case alreadyReady
     case rebuilt
+    case migrated
+    case recovered
 }
 
 struct DatabaseMigration {
@@ -89,28 +91,128 @@ struct ReadyDatabase {
     let databaseURL: URL
     let preparation: DatabasePreparation
     let appliedMigrationIDs: [String]
-    let schemaMigrationID: String
 }
 
 enum DatabasePreparationResult: CustomStringConvertible {
     case ready(ReadyDatabase)
+    case recovered(ReadyDatabase, DatabasePreparationFailure)
     case incompatible(DatabaseSchemaIncompatibility)
     case failed(DatabasePreparationFailure)
+    case unrecoverable(DatabaseRecoveryFailure)
 
     var description: String {
         switch self {
         case .ready(let database):
             return "ready(\(database.databaseURL.path))"
+        case .recovered(let database, let failure):
+            return "recovered(\(database.databaseURL.path), \(failure.message))"
         case .incompatible(let incompatibility):
             return "incompatible(\(incompatibility.supportedMigrationID))"
         case .failed(let failure):
             return "failed(\(failure.message))"
+        case .unrecoverable(let failure):
+            return "unrecoverable(\(failure.restorationFailure.message))"
         }
     }
 }
 
 struct DatabasePreparationFailure: Error, Equatable {
     let message: String
+}
+
+struct DatabaseRecoveryFailure: Error, Equatable {
+    let migrationFailure: DatabasePreparationFailure
+    let restorationFailure: DatabasePreparationFailure
+}
+
+private struct DatabaseRecoverySucceeded: Error {
+    let database: ReadyDatabase
+    let migrationFailure: DatabasePreparationFailure
+}
+
+protocol DatabaseSnapshotStore {
+    func createSnapshot(
+        from sourceConnection: Connection,
+        at snapshotURL: URL
+    ) throws
+
+    func restoreSnapshot(
+        at snapshotURL: URL,
+        replacing databaseURL: URL
+    ) throws
+
+    func discardSnapshot(at snapshotURL: URL)
+}
+
+final class SQLiteDatabaseSnapshotStore: DatabaseSnapshotStore {
+    private let fileManager: FileManager
+
+    init(fileManager: FileManager = .default) {
+        self.fileManager = fileManager
+    }
+
+    func createSnapshot(
+        from sourceConnection: Connection,
+        at snapshotURL: URL
+    ) throws {
+        let snapshotConnection = try Connection(snapshotURL.path)
+        let backup = try sourceConnection.backup(usingConnection: snapshotConnection)
+        try backup.step(pagesToCopy: .all)
+    }
+
+    func restoreSnapshot(
+        at snapshotURL: URL,
+        replacing databaseURL: URL
+    ) throws {
+        let stagingURL = databaseURL.deletingLastPathComponent().appendingPathComponent(
+            ".\(databaseURL.lastPathComponent).restore-\(UUID().uuidString)"
+        )
+        defer { removeArtifacts(for: stagingURL) }
+
+        try fileManager.copyItem(at: snapshotURL, to: stagingURL)
+        try removeSidecars(for: databaseURL)
+
+        guard fileManager.fileExists(atPath: databaseURL.path) else {
+            try fileManager.moveItem(at: stagingURL, to: databaseURL)
+            return
+        }
+
+        let backupName = ".\(databaseURL.lastPathComponent).restore-backup-\(UUID().uuidString)"
+        _ = try fileManager.replaceItemAt(
+            databaseURL,
+            withItemAt: stagingURL,
+            backupItemName: backupName,
+            options: []
+        )
+        removeArtifacts(
+            for: databaseURL.deletingLastPathComponent().appendingPathComponent(backupName)
+        )
+    }
+
+    func discardSnapshot(at snapshotURL: URL) {
+        removeArtifacts(for: snapshotURL)
+    }
+
+    private func removeSidecars(for databaseURL: URL) throws {
+        for url in [
+            URL(fileURLWithPath: databaseURL.path + "-wal"),
+            URL(fileURLWithPath: databaseURL.path + "-shm"),
+            URL(fileURLWithPath: databaseURL.path + "-journal")
+        ] where fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    private func removeArtifacts(for databaseURL: URL) {
+        for url in [
+            databaseURL,
+            URL(fileURLWithPath: databaseURL.path + "-wal"),
+            URL(fileURLWithPath: databaseURL.path + "-shm"),
+            URL(fileURLWithPath: databaseURL.path + "-journal")
+        ] where fileManager.fileExists(atPath: url.path) {
+            try? fileManager.removeItem(at: url)
+        }
+    }
 }
 
 final class DatabaseLifecycle {
@@ -171,19 +273,24 @@ final class DatabaseLifecycle {
     private let environment: DatabaseEnvironment
     private let fileManager: FileManager
     private let migrationCatalog: DatabaseMigrationCatalog
+    private let snapshotStore: DatabaseSnapshotStore
     private let preparationQueue: DispatchQueue
     private var readyDatabase: ReadyDatabase?
     private var failure: DatabasePreparationFailure?
+    private var recoveryFailure: DatabaseRecoveryFailure?
+    private var recoveredFailure: DatabasePreparationFailure?
     private var incompatibility: DatabaseSchemaIncompatibility?
 
     init(
         environment: DatabaseEnvironment,
         fileManager: FileManager = .default,
-        migrationCatalog: DatabaseMigrationCatalog = .production
+        migrationCatalog: DatabaseMigrationCatalog = .production,
+        snapshotStore: DatabaseSnapshotStore? = nil
     ) {
         self.environment = environment
         self.fileManager = fileManager
         self.migrationCatalog = migrationCatalog
+        self.snapshotStore = snapshotStore ?? SQLiteDatabaseSnapshotStore(fileManager: fileManager)
         self.preparationQueue = DispatchQueue(
             label: "database.lifecycle.prepare.\(UUID().uuidString)",
             qos: .userInitiated
@@ -198,7 +305,12 @@ final class DatabaseLifecycle {
 
     func retry() -> DatabasePreparationResult {
         preparationQueue.sync {
+            guard recoveryFailure == nil else {
+                return .unrecoverable(recoveryFailure!)
+            }
+            readyDatabase = nil
             failure = nil
+            recoveredFailure = nil
             incompatibility = nil
             return prepareLocked()
         }
@@ -217,16 +329,31 @@ final class DatabaseLifecycle {
     }
 
     private func prepareLocked() -> DatabasePreparationResult {
+        if let readyDatabase, let recoveredFailure {
+            return .recovered(
+                ReadyDatabase(
+                    connection: readyDatabase.connection,
+                    databaseURL: readyDatabase.databaseURL,
+                    preparation: .recovered,
+                    appliedMigrationIDs: []
+                ),
+                recoveredFailure
+            )
+        }
+
         if let readyDatabase {
             return .ready(
                 ReadyDatabase(
                     connection: readyDatabase.connection,
                     databaseURL: readyDatabase.databaseURL,
                     preparation: .alreadyReady,
-                    appliedMigrationIDs: [],
-                    schemaMigrationID: readyDatabase.schemaMigrationID
+                    appliedMigrationIDs: []
                 )
             )
+        }
+
+        if let recoveryFailure {
+            return .unrecoverable(recoveryFailure)
         }
 
         if let incompatibility {
@@ -245,6 +372,13 @@ final class DatabaseLifecycle {
             )
             readyDatabase = database
             return .ready(database)
+        } catch let recovery as DatabaseRecoverySucceeded {
+            readyDatabase = recovery.database
+            recoveredFailure = recovery.migrationFailure
+            return .recovered(recovery.database, recovery.migrationFailure)
+        } catch let recoveryFailure as DatabaseRecoveryFailure {
+            self.recoveryFailure = recoveryFailure
+            return .unrecoverable(recoveryFailure)
         } catch let databaseIncompatibility as DatabaseSchemaIncompatibility {
             incompatibility = databaseIncompatibility
             return .incompatible(databaseIncompatibility)
@@ -308,33 +442,107 @@ final class DatabaseLifecycle {
     private func openReadyDatabase(
         preparation: DatabasePreparation
     ) throws -> ReadyDatabase {
-        let connection = try Connection(environment.databaseURL.path)
-        try configure(connection)
-        let appliedMigrationIDs = try runPendingMigrations(on: connection)
-        try validateReadyDatabase(connection)
-        return ReadyDatabase(
+        var connection: Connection? = try Connection(environment.databaseURL.path)
+        try configure(connection!)
+
+        try validateMigrationState(connection!)
+        let migrationPlan = try migrationPlan(for: connection!)
+        guard !migrationPlan.pendingMigrations.isEmpty else {
+            try validateReadyDatabase(connection!)
+            return makeReadyDatabase(
+                connection: connection!,
+                preparation: preparation,
+                appliedMigrationIDs: []
+            )
+        }
+
+        let snapshotURL = migrationSnapshotURL()
+        do {
+            try snapshotStore.createSnapshot(from: connection!, at: snapshotURL)
+        } catch {
+            connection = nil
+            snapshotStore.discardSnapshot(at: snapshotURL)
+            throw error
+        }
+
+        do {
+            let appliedMigrationIDs = try apply(
+                migrationPlan.pendingMigrations,
+                on: connection!
+            )
+            try validateReadyDatabase(connection!)
+            let database = makeReadyDatabase(
+                connection: connection!,
+                preparation: preparation == .alreadyReady ? .migrated : preparation,
+                appliedMigrationIDs: appliedMigrationIDs
+            )
+            snapshotStore.discardSnapshot(at: snapshotURL)
+            return database
+        } catch {
+            let migrationFailure = databasePreparationFailure(from: error)
+            connection = nil
+            do {
+                try snapshotStore.restoreSnapshot(
+                    at: snapshotURL,
+                    replacing: environment.databaseURL
+                )
+                let restoredConnection = try Connection(environment.databaseURL.path)
+                try configure(restoredConnection)
+                try validateRecoveryDatabase(restoredConnection)
+                let database = makeReadyDatabase(
+                    connection: restoredConnection,
+                    preparation: .recovered,
+                    appliedMigrationIDs: []
+                )
+                snapshotStore.discardSnapshot(at: snapshotURL)
+                throw DatabaseRecoverySucceeded(
+                    database: database,
+                    migrationFailure: migrationFailure
+                )
+            } catch let recovery as DatabaseRecoverySucceeded {
+                throw recovery
+            } catch {
+                throw DatabaseRecoveryFailure(
+                    migrationFailure: migrationFailure,
+                    restorationFailure: databasePreparationFailure(from: error)
+                )
+            }
+        }
+    }
+
+    private func makeReadyDatabase(
+        connection: Connection,
+        preparation: DatabasePreparation,
+        appliedMigrationIDs: [String]
+    ) -> ReadyDatabase {
+        ReadyDatabase(
             connection: connection,
             databaseURL: environment.databaseURL,
             preparation: preparation,
-            appliedMigrationIDs: appliedMigrationIDs,
-            schemaMigrationID: try targetMigrationID()
+            appliedMigrationIDs: appliedMigrationIDs
         )
     }
 
-    private func configure(_ connection: Connection) throws {
-        try connection.execute("PRAGMA foreign_keys = ON")
-        try connection.execute("PRAGMA busy_timeout = 5000")
-    }
-
-    private func runPendingMigrations(on connection: Connection) throws -> [String] {
+    private func migrationPlan(for connection: Connection) throws -> (
+        migrations: [DatabaseMigration],
+        pendingMigrations: [DatabaseMigration]
+    ) {
         let migrations = try validatedMigrations()
         let completedMigrationIDs = try recordedMigrationIDs(from: connection)
         guard completedMigrationIDs.first == Self.baselineMigrationID else {
             throw DatabasePreparationFailure(message: "数据库缺少 baseline migration 记录")
         }
         try validateRecordedMigrationIDs(completedMigrationIDs, against: migrations)
+        return (
+            migrations,
+            Array(migrations.dropFirst(completedMigrationIDs.count))
+        )
+    }
 
-        let pendingMigrations = migrations.dropFirst(completedMigrationIDs.count)
+    private func apply(
+        _ pendingMigrations: [DatabaseMigration],
+        on connection: Connection
+    ) throws -> [String] {
         for migration in pendingMigrations {
             try connection.transaction(.immediate) {
                 try migration.apply(connection)
@@ -347,6 +555,66 @@ final class DatabaseLifecycle {
             }
         }
         return pendingMigrations.map(\.id)
+    }
+
+    private func validateExistingDatabaseBeforeMigration(_ connection: Connection) throws {
+        try validateMigrationState(connection)
+
+        for tableName in Self.requiredTableNames {
+            guard try tableExists(tableName, connection: connection) else {
+                throw DatabasePreparationFailure(
+                    message: "数据库缺少必要表: \(tableName)"
+                )
+            }
+        }
+
+        for indexName in Self.requiredIndexNames {
+            guard try indexExists(indexName, connection: connection) else {
+                throw DatabasePreparationFailure(
+                    message: "数据库缺少必要索引: \(indexName)"
+                )
+            }
+        }
+    }
+
+    private func validateRecoveryDatabase(_ connection: Connection) throws {
+        try validateExistingDatabaseBeforeMigration(connection)
+        _ = try migrationPlan(for: connection)
+        try validateExpectedSeedCounts(connection)
+    }
+
+    private func validateExpectedSeedCounts(_ connection: Connection) throws {
+        for tableName in Self.expectedSeedCounts.keys.sorted() {
+            let expectedCount = Self.expectedSeedCounts[tableName] ?? 0
+            let actualCount = try scalarCount(
+                "SELECT COUNT(*) FROM \(tableName)",
+                connection: connection
+            )
+            guard actualCount == expectedCount else {
+                throw DatabasePreparationFailure(
+                    message: "数据库种子校验失败: \(tableName)"
+                )
+            }
+        }
+    }
+
+    private func migrationSnapshotURL() -> URL {
+        environment.documentsDirectory.appendingPathComponent(
+            ".\(environment.databaseFilename).migration-backup-\(UUID().uuidString)"
+        )
+    }
+
+    private func databasePreparationFailure(from error: Error) -> DatabasePreparationFailure {
+        if let failure = error as? DatabasePreparationFailure {
+            return failure
+        }
+        return DatabasePreparationFailure(message: error.localizedDescription)
+    }
+
+    private func configure(_ connection: Connection) throws {
+        try connection.execute("PRAGMA foreign_keys = ON")
+        try connection.execute("PRAGMA busy_timeout = 5000")
+        try connection.execute("PRAGMA journal_mode = WAL")
     }
 
     private func validatedMigrations() throws -> [DatabaseMigration] {
@@ -363,10 +631,6 @@ final class DatabaseLifecycle {
             throw DatabasePreparationFailure(message: "migration catalog 顺序无效")
         }
         return migrations
-    }
-
-    private func targetMigrationID() throws -> String {
-        try validatedMigrations().last!.id
     }
 
     private func recordedMigrationIDs(from connection: Connection) throws -> [String] {
@@ -433,18 +697,7 @@ final class DatabaseLifecycle {
             throw DatabasePreparationFailure(message: "数据库 migration 未完成")
         }
 
-        for tableName in Self.expectedSeedCounts.keys.sorted() {
-            let expectedCount = Self.expectedSeedCounts[tableName] ?? 0
-            let actualCount = try scalarCount(
-                "SELECT COUNT(*) FROM \(tableName)",
-                connection: connection
-            )
-            guard actualCount == expectedCount else {
-                throw DatabasePreparationFailure(
-                    message: "数据库种子校验失败: \(tableName)"
-                )
-            }
-        }
+        try validateExpectedSeedCounts(connection)
     }
 
     private func tableExists(
