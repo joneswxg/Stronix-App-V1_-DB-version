@@ -69,6 +69,16 @@ final class ActionHistoryRepositoryTests: XCTestCase {
         XCTAssertFalse(history.contains { $0.planName == "Oldest" || $0.planName == "Other action" })
     }
 
+    func testActionHistoryMapsMissingConnectionToDatabaseError() {
+        let repository = SQLiteActionHistoryRepository(connectionProvider: { nil })
+
+        XCTAssertThrowsError(try repository.actionHistory(for: 42)) { error in
+            guard case .notReady = error as? DatabaseError else {
+                return XCTFail("Expected DatabaseError.notReady, got \(error)")
+            }
+        }
+    }
+
     private func bundledBaselineURL() throws -> URL {
         try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
     }

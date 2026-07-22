@@ -1,6 +1,11 @@
 import Foundation
 import SQLite
 
+enum DatabaseError: Error {
+    case notReady
+    case operationFailed(underlying: Error)
+}
+
 final class DatabaseManager {
     static let shared = DatabaseManager()
 
@@ -38,22 +43,5 @@ final class DatabaseManager {
 
     func isDatabaseReady() -> Bool {
         lifecycle.readyConnection() != nil
-    }
-
-    enum DatabaseError: Error {
-        case databaseNotInitialized
-        case queryFailed(Error)
-        case dataNotFound
-
-        var localizedDescription: String {
-            switch self {
-            case .databaseNotInitialized:
-                return "数据库未初始化"
-            case .queryFailed(let error):
-                return "数据库查询失败: \(error.localizedDescription)"
-            case .dataNotFound:
-                return "数据未找到"
-            }
-        }
     }
 }

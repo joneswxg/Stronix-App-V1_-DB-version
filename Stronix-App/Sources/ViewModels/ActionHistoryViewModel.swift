@@ -27,7 +27,7 @@ final class ActionHistoryViewModel: ObservableObject {
             }.value
             phase = history.isEmpty ? .empty : .success(history)
         } catch {
-            phase = .failure(error.localizedDescription)
+            phase = .failure(AppError.map(error).userMessage)
         }
     }
 

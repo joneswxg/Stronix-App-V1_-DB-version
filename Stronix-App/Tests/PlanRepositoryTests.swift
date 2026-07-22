@@ -209,6 +209,39 @@ final class PlanRepositoryTests: XCTestCase {
         manager.stopTraining()
     }
 
+    func testServiceMapsMissingConnectionToDatabaseError() async {
+        let service = LocalPlanService(
+            connectionProvider: { nil },
+            authenticatedUserIDProvider: { self.ownerID }
+        )
+
+        do {
+            _ = try await service.templatePlans()
+            XCTFail("Expected DatabaseError.notReady")
+        } catch {
+            guard case .notReady = error as? DatabaseError else {
+                return XCTFail("Expected DatabaseError.notReady, got \(error)")
+            }
+        }
+    }
+
+    func testServiceMapsPlanQueryFailureToDatabaseError() async throws {
+        let service = LocalPlanService(
+            connectionProvider: { self.connection },
+            authenticatedUserIDProvider: { self.ownerID }
+        )
+        try connection.execute("DROP TABLE training_plans")
+
+        do {
+            _ = try await service.templatePlans()
+            XCTFail("Expected DatabaseError.operationFailed")
+        } catch {
+            guard case .operationFailed = error as? DatabaseError else {
+                return XCTFail("Expected DatabaseError.operationFailed, got \(error)")
+            }
+        }
+    }
+
     private func bundledBaselineURL() throws -> URL {
         try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
     }

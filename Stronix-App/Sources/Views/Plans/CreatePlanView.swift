@@ -413,11 +413,7 @@ struct CreatePlanView: View {
             
         } catch {
             await MainActor.run {
-                if let localError = error as? LocalPlanError {
-                    errorMessage = localError.message
-                } else {
-                    errorMessage = "保存失败: \(error.localizedDescription)"
-                }
+                errorMessage = "保存失败: \(AppError.map(error).userMessage)"
                 showError = true
             }
         }

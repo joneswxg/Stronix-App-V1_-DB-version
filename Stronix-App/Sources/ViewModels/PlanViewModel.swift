@@ -274,13 +274,7 @@ final class PlanViewModel: ObservableObject {
     }
 
     private func handleError(_ error: Error, context: String) {
-        let message: String
-        if let localError = error as? LocalPlanError {
-            message = localError.message
-        } else {
-            message = "暂时无法完成请求，请稍后重试"
-        }
-        errorMessage = "\(context)失败: \(message)"
+        errorMessage = "\(context)失败: \(AppError.map(error).userMessage)"
         showError = true
     }
 
