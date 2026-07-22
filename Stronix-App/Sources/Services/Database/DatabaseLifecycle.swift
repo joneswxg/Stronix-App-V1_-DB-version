@@ -49,6 +49,7 @@ struct DatabaseLifecycleDiagnostic: Equatable {
     let foreignKeysEnabled: Bool?
     let busyTimeoutMilliseconds: Int?
     let journalMode: String?
+    let migrationIDs: [String]
     let appliedMigrationIDs: [String]
     let recoveryStatus: DatabaseRecoveryStatus
     let preparation: DatabasePreparation?
@@ -61,6 +62,7 @@ struct DatabaseLifecycleDiagnostic: Equatable {
             foreignKeysEnabled.map { "foreignKeys=\($0)" },
             busyTimeoutMilliseconds.map { "busyTimeoutMs=\($0)" },
             journalMode.map { "journalMode=\($0)" },
+            "migrations=\(migrationIDs.count)",
             "appliedMigrations=\(appliedMigrationIDs.count)",
             "recovery=\(recoveryStatus.rawValue)",
             preparation.map { "preparation=\(String(describing: $0))" }
@@ -128,6 +130,17 @@ struct DatabaseMigrationCatalog {
 struct DatabaseSchemaIncompatibility: Error, Equatable {
     let appliedMigrationIDs: [String]
     let supportedMigrationID: String
+    let databaseLocation: String?
+
+    init(
+        appliedMigrationIDs: [String],
+        supportedMigrationID: String,
+        databaseLocation: String? = nil
+    ) {
+        self.appliedMigrationIDs = appliedMigrationIDs
+        self.supportedMigrationID = supportedMigrationID
+        self.databaseLocation = databaseLocation
+    }
 }
 
 struct ReadyDatabase {
@@ -151,12 +164,13 @@ enum DatabasePreparationResult: CustomStringConvertible {
             return database.diagnostic
         case .incompatible(let incompatibility):
             return DatabaseLifecycleDiagnostic(
-                databaseLocation: nil,
+                databaseLocation: incompatibility.databaseLocation,
                 schemaVersion: incompatibility.appliedMigrationIDs.last,
                 supportedSchemaVersion: incompatibility.supportedMigrationID,
                 foreignKeysEnabled: nil,
                 busyTimeoutMilliseconds: nil,
                 journalMode: nil,
+                migrationIDs: incompatibility.appliedMigrationIDs,
                 appliedMigrationIDs: [],
                 recoveryStatus: .notNeeded,
                 preparation: nil
@@ -172,6 +186,7 @@ enum DatabasePreparationResult: CustomStringConvertible {
                 foreignKeysEnabled: diagnostic.foreignKeysEnabled,
                 busyTimeoutMilliseconds: diagnostic.busyTimeoutMilliseconds,
                 journalMode: diagnostic.journalMode,
+                migrationIDs: diagnostic.migrationIDs,
                 appliedMigrationIDs: diagnostic.appliedMigrationIDs,
                 recoveryStatus: .restorationFailed,
                 preparation: diagnostic.preparation
@@ -197,6 +212,7 @@ struct DatabasePreparationFailure: Error, Equatable {
             foreignKeysEnabled: nil,
             busyTimeoutMilliseconds: nil,
             journalMode: nil,
+            migrationIDs: [],
             appliedMigrationIDs: [],
             recoveryStatus: .notNeeded,
             preparation: nil
@@ -652,7 +668,7 @@ final class DatabaseLifecycle {
         appliedMigrationIDs: [String],
         recoveryStatus: DatabaseRecoveryStatus
     ) -> DatabaseLifecycleDiagnostic {
-        let observedConfiguration = configuration ?? (try? readConfiguration(from: connection))
+        let observedConfiguration = configuration ?? (try? readAndValidateConfiguration(from: connection))
         return DatabaseLifecycleDiagnostic(
             databaseLocation: environment.databaseURL.path,
             schemaVersion: (try? recordedMigrationIDs(from: connection))?.last,
@@ -660,6 +676,7 @@ final class DatabaseLifecycle {
             foreignKeysEnabled: observedConfiguration?.foreignKeysEnabled,
             busyTimeoutMilliseconds: observedConfiguration?.busyTimeoutMilliseconds,
             journalMode: observedConfiguration?.journalMode,
+            migrationIDs: (try? recordedMigrationIDs(from: connection)) ?? [],
             appliedMigrationIDs: appliedMigrationIDs,
             recoveryStatus: recoveryStatus,
             preparation: preparation
@@ -676,6 +693,7 @@ final class DatabaseLifecycle {
             foreignKeysEnabled: nil,
             busyTimeoutMilliseconds: nil,
             journalMode: nil,
+            migrationIDs: [],
             appliedMigrationIDs: [],
             recoveryStatus: .notNeeded,
             preparation: preparation
@@ -801,10 +819,10 @@ final class DatabaseLifecycle {
         try connection.execute("PRAGMA foreign_keys = ON")
         try connection.execute("PRAGMA busy_timeout = 5000")
         try connection.execute("PRAGMA journal_mode = WAL")
-        return try readConfiguration(from: connection)
+        return try readAndValidateConfiguration(from: connection)
     }
 
-    private func readConfiguration(
+    private func readAndValidateConfiguration(
         from connection: Connection
     ) throws -> DatabaseConnectionConfiguration {
         let foreignKeysEnabled = (try connection.scalar("PRAGMA foreign_keys") as? Int64) == 1
@@ -864,7 +882,8 @@ final class DatabaseLifecycle {
         if completedMigrationIDs.contains(where: { !supportedMigrationIDs.contains($0) }) {
             throw DatabaseSchemaIncompatibility(
                 appliedMigrationIDs: completedMigrationIDs,
-                supportedMigrationID: supportedMigrationIDs.last!
+                supportedMigrationID: supportedMigrationIDs.last!,
+                databaseLocation: environment.databaseURL.path
             )
         }
         guard completedMigrationIDs == Array(supportedMigrationIDs.prefix(completedMigrationIDs.count)) else {

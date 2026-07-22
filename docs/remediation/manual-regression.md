@@ -68,16 +68,16 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 ## Phase 1 Manual Execution Record
 
-- Date: Not executed
-- Commit: Pending implementation validation
-- Device or simulator: Pending
-- iOS version: Pending
-- Build configuration: Pending
-- Tester: Pending
-- Database diagnostic summary: Pending
+- Date: 2026-07-22
+- Commit: Pending final readiness commit
+- Device or simulator: iPhone 17 Simulator
+- iOS version: 26.5
+- Build configuration: Debug
+- Tester: Claude Code
+- Database diagnostic summary: Startup path built and launched; detailed manual diagnostic capture pending.
 - Result: Partial
 - Follow-up issues: None created; unexecuted checks must be filed as follow-up issues if they fail.
-- Notes: Automated lifecycle verification is tracked with the Phase 1.7 implementation. The manual release gate below remains unexecuted and must not be marked passing without a real simulator or device run.
+- Notes: The full XCTest suite passed and the app built, installed, and launched in the iPhone 17 Simulator. The manual business-flow gate below remains unexecuted and must not be marked passing without a real end-to-end run.
 
 ## Core Smoke Paths
 
