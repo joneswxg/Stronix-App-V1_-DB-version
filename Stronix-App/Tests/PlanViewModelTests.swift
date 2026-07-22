@@ -40,6 +40,24 @@ final class PlanViewModelTests: XCTestCase {
         XCTAssertEqual(repository.userPlansCallCount, 1)
     }
 
+    func testReturningToPlanListKeepsLoadedPlansWithoutReloading() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let userPlan = makePlan(id: 2, name: "我的计划", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .success([userPlan])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.templatePlans.map(\.id), [template.id])
+        XCTAssertEqual(viewModel.personalPlans.map(\.id), [userPlan.id])
+        XCTAssertEqual(repository.templatePlansCallCount, 1)
+        XCTAssertEqual(repository.userPlansCallCount, 1)
+    }
+
     func testConcurrentInitialLoadsShareOneRepositoryRequest() async {
         let repository = MockPlanRepository(
             templatePlansResult: .success([]),
