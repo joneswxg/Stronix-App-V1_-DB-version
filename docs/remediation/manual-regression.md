@@ -75,9 +75,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Build configuration: Debug
 - Tester: User
 - Database diagnostic summary: Clean-install startup reached the login UI without a blocking readiness error.
-- Result: Partial
-- Follow-up issues: None created; unexecuted checks must be filed as follow-up issues if they fail.
-- Notes: The full XCTest suite passed. User verified registration, login, body-measurement creation, template-plan use, training execution, and training-history recording. Logout, explicit User Plan creation/edit isolation, history-detail/statistics inspection, and relaunch persistence remain unexecuted.
+- Result: Pass
+- Follow-up issues: None.
+- Notes: The full XCTest suite passed. User verified registration, login, logout, body-measurement creation, template-plan use, standalone User Plan creation, User Plan editing and saving, template-copy ownership/isolation, training execution, training-history recording, history-detail/statistics views, relaunch persistence, and small-tool functionality. Templates are used to create personal plans; editing and saving the personal plan does not alter the original template.
 
 ## Core Smoke Paths
 
@@ -124,25 +124,25 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Session is cleared.
 - Protected user data is not shown as if still logged in.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
-### 4. Browse And Copy Template Plan
+### 4. Browse And Use Template Plan
 
 **Steps**:
 
 1. Sign in with a local user.
 2. Open the template plan list and inspect a seeded template.
-3. Copy the template to the signed-in user's plans.
-4. Edit the copied User Plan.
+3. Use the template to add it to the signed-in user's plans.
+4. Edit and save the resulting User Plan.
 5. Reopen the original template.
 
 **Expected**:
 
 - Seeded templates are visible and browsable.
-- The copied plan belongs only to the signed-in user.
-- Editing the copy does not alter the template.
+- The resulting User Plan belongs only to the signed-in user.
+- Editing the User Plan does not alter the template.
 
-**Result**: Pass for template browsing and use in training, verified by user on 2026-07-22. Copy ownership and edit isolation remain pending.
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 5. Create Training Plan
 
@@ -160,7 +160,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Plan appears in the user plan list.
 - Reopening the plan shows the saved values.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 6. Edit Training Plan
 
@@ -176,7 +176,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Changes persist.
 - No duplicate or missing actions are introduced.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 7. Start Training
 
@@ -209,7 +209,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - A Training History record appears.
 - History details show the completed actions and sets.
 
-**Result**: Pass for completion and history recording, verified by user on 2026-07-22. History-detail inspection remains pending.
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 9. View Training History
 
@@ -225,7 +225,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Detail screen matches the saved training.
 - Statistics pages do not crash.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ### 10. Add Body Measurement
 
@@ -255,7 +255,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Local data persists.
 - No startup migration or database copy loses user data.
 
-**Result**: Pending
+**Result**: Pass, verified by user on 2026-07-22
 
 ## Phase Completion Rule
 
