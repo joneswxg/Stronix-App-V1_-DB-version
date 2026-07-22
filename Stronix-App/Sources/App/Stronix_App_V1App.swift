@@ -71,6 +71,9 @@ struct Stronix_App_V1App: App {
                 case .ready(let database):
                     print("✅ 数据库生命周期准备完成: \(database.databaseURL.path)")
                     databaseState = .ready
+                case .recovered(let database, let failure):
+                    print("⚠️ 数据库 migration 已恢复: \(database.databaseURL.path), \(failure.message)")
+                    databaseState = .ready
                 case .incompatible(let incompatibility):
                     print("❌ 数据库 schema 版本过新: \(incompatibility.supportedMigrationID)")
                     databaseState = .incompatible(
@@ -79,6 +82,9 @@ struct Stronix_App_V1App: App {
                 case .failed(let failure):
                     print("❌ 数据库生命周期准备失败: \(failure.message)")
                     databaseState = .failed(failure.message)
+                case .unrecoverable(let failure):
+                    print("❌ 数据库恢复失败: \(failure.restorationFailure.message)")
+                    databaseState = .failed("本地数据库恢复失败，请重试或联系支持。")
                 }
             }
         }

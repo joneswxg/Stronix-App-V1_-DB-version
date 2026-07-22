@@ -290,6 +290,10 @@ final class DatabaseLifecycleTests: XCTestCase {
             try readyDatabase.connection.scalar("PRAGMA busy_timeout") as? Int64,
             5000
         )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar("PRAGMA journal_mode") as? String,
+            "wal"
+        )
     }
 
     func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
@@ -442,11 +446,11 @@ final class DatabaseLifecycleTests: XCTestCase {
         }
         let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
 
-        guard case .failed = lifecycle.prepare() else {
-            return XCTFail("Expected the failing migration to prevent readiness")
+        guard case .recovered = lifecycle.prepare() else {
+            return XCTFail("Expected the failing migration to restore the existing database")
         }
 
-        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertNotNil(lifecycle.readyConnection())
         let connection = try Connection(databaseURL.path)
         XCTAssertEqual(
             try connection.scalar(
@@ -490,20 +494,19 @@ final class DatabaseLifecycleTests: XCTestCase {
         ])
         let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: catalog)
 
-        guard case .failed = lifecycle.prepare() else {
-            return XCTFail("Expected a failed migration validation to prevent readiness")
+        guard case .recovered(let recoveredDatabase, _) = lifecycle.prepare() else {
+            return XCTFail("Expected a failed migration validation to restore the existing database")
         }
 
-        let connection = try Connection(databaseURL.path)
-        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertNotNil(lifecycle.readyConnection())
         XCTAssertEqual(
-            try connection.scalar(
+            try recoveredDatabase.connection.scalar(
                 "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = 'validation_failure_fixture'"
             ) as? Int64,
             0
         )
         XCTAssertEqual(
-            try connection.scalar(
+            try recoveredDatabase.connection.scalar(
                 "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
                 fixtureMigrationID
             ) as? Int64,
@@ -741,7 +744,7 @@ final class DatabaseLifecycleTests: XCTestCase {
             )
         )
 
-        guard case .failed = lifecycle.prepare() else {
+        guard case .unrecoverable = lifecycle.prepare() else {
             return XCTFail("Expected a missing required index to prevent readiness")
         }
 
@@ -775,7 +778,7 @@ final class DatabaseLifecycleTests: XCTestCase {
             return XCTFail("Expected the existing database to be ready")
         }
 
-        XCTAssertEqual(readyDatabase.preparation, .alreadyReady)
+        XCTAssertEqual(readyDatabase.preparation, .migrated)
         XCTAssertEqual(
             try readyDatabase.connection.scalar(
                 "SELECT value FROM fixture_values WHERE id = 1"
@@ -960,7 +963,7 @@ final class DatabaseLifecycleTests: XCTestCase {
             return XCTFail("Expected ordinary startup preparation to succeed")
         }
 
-        XCTAssertEqual(readyDatabase.preparation, .alreadyReady)
+        XCTAssertEqual(readyDatabase.preparation, .migrated)
         XCTAssertEqual(
             try readyDatabase.connection.scalar(
                 "SELECT value FROM fixture_values WHERE id = 1"
@@ -1159,6 +1162,207 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(readyDatabase.preparation, .initialized)
     }
 
+    func testNoPendingMigrationDoesNotCreateSnapshot() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: DatabaseMigrationCatalog(migrations: [
+                DatabaseMigration(id: "20260721_0001_baseline") { _ in }
+            ]),
+            snapshotStore: FaultInjectingSnapshotStore(failSnapshotCreation: true)
+        )
+
+        guard case .ready(let database) = lifecycle.prepare() else {
+            return XCTFail("Expected current database to start without a snapshot")
+        }
+
+        XCTAssertEqual(database.preparation, .alreadyReady)
+    }
+
+    func testBackupFailurePreventsMigrationAndPreservesDatabase() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try insertRepresentativeBusinessRows(in: connection)
+        var migrationStarted = false
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { _ in
+                migrationStarted = true
+            },
+            snapshotStore: FaultInjectingSnapshotStore(failSnapshotCreation: true)
+        )
+
+        guard case .failed = lifecycle.prepare() else {
+            return XCTFail("Expected backup failure to block migration")
+        }
+
+        XCTAssertFalse(migrationStarted)
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertEqual(
+            try connection.scalar("SELECT username FROM user WHERE id = 9001") as? String,
+            "legacy-user"
+        )
+        XCTAssertEqual(
+            try connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testFailedMigrationRestoresCommittedWalData() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try connection.execute("PRAGMA journal_mode = WAL")
+        try connection.execute("PRAGMA wal_autocheckpoint = 0")
+        try insertRepresentativeBusinessRows(in: connection)
+        try connection.run("INSERT INTO fixture_values (id, value) VALUES (1, 'wal-marker')")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: databaseURL.path + "-wal"))
+
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { migrationConnection in
+                try migrationConnection.run("CREATE TABLE failed_migration_fixture (id INTEGER PRIMARY KEY)")
+                throw DatabasePreparationFailure(message: "injected migration failure")
+            }
+        )
+
+        guard case .recovered(let database, _) = lifecycle.prepare() else {
+            return XCTFail("Expected failed migration to restore the snapshot")
+        }
+
+        XCTAssertEqual(database.preparation, .recovered)
+        XCTAssertEqual(
+            try database.connection.scalar("SELECT value FROM fixture_values WHERE id = 1") as? String,
+            "wal-marker"
+        )
+        XCTAssertEqual(
+            try database.connection.scalar("SELECT username FROM user WHERE id = 9001") as? String,
+            "legacy-user"
+        )
+        XCTAssertEqual(
+            try database.connection.scalar("SELECT plan_name FROM training_history WHERE id = 9001") as? String,
+            "Legacy Plan"
+        )
+        XCTAssertEqual(
+            try database.connection.scalar("SELECT weight_kg FROM body_measurements WHERE id = 9001") as? Double,
+            70
+        )
+        XCTAssertEqual(
+            try database.connection.scalar(
+                "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND name = 'failed_migration_fixture'"
+            ) as? Int64,
+            0
+        )
+        XCTAssertEqual(
+            try database.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testPostMigrationReadinessFailureRestoresOriginalDatabase() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        try insertRepresentativeBusinessRows(in: connection)
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { migrationConnection in
+                try migrationConnection.run("DROP INDEX idx_training_history_user_date")
+            }
+        )
+
+        guard case .recovered(let database, _) = lifecycle.prepare() else {
+            return XCTFail("Expected failed readiness validation to restore the snapshot")
+        }
+
+        XCTAssertEqual(
+            try database.connection.scalar(
+                "SELECT COUNT(*) FROM sqlite_schema WHERE type = 'index' AND name = 'idx_training_history_user_date'"
+            ) as? Int64,
+            1
+        )
+        XCTAssertEqual(
+            try database.connection.scalar("SELECT username FROM user WHERE id = 9001") as? String,
+            "legacy-user"
+        )
+        XCTAssertEqual(
+            try database.connection.scalar(
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = ?",
+                fixtureMigrationID
+            ) as? Int64,
+            0
+        )
+    }
+
+    func testRestorationFailureLeavesDatabaseUnavailableAndPreservesSnapshot() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { _ in
+                throw DatabasePreparationFailure(message: "injected migration failure")
+            },
+            snapshotStore: FaultInjectingSnapshotStore(failRestoration: true)
+        )
+
+        guard case .unrecoverable = lifecycle.prepare() else {
+            return XCTFail("Expected restore failure to be unrecoverable")
+        }
+
+        XCTAssertNil(lifecycle.readyConnection())
+        XCTAssertTrue(lifecycle.retry().description.starts(with: "unrecoverable"))
+        XCTAssertNil(lifecycle.readyConnection())
+        let artifacts = try FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
+        XCTAssertTrue(artifacts.contains { $0.contains("migration-backup") })
+    }
+
+    func testSuccessfulMigrationRemovesSnapshotArtifacts() throws {
+        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
+        let lifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { migrationConnection in
+                try migrationConnection.run("CREATE TABLE migration_fixture (id INTEGER PRIMARY KEY)")
+            }
+        )
+
+        guard case .ready(let database) = lifecycle.prepare() else {
+            return XCTFail("Expected migration to succeed")
+        }
+
+        XCTAssertEqual(database.preparation, .migrated)
+        let artifacts = try FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
+        XCTAssertFalse(artifacts.contains { $0.contains("migration-backup") })
+
+        let restartedLifecycle = try makeLifecycle(
+            documentsURL: documentsURL,
+            catalog: fixtureMigrationCatalog { _ in
+                XCTFail("Applied migration must not run again")
+            }
+        )
+        guard case .ready(let restartedDatabase) = restartedLifecycle.prepare() else {
+            return XCTFail("Expected migrated database to remain ready")
+        }
+        XCTAssertEqual(restartedDatabase.appliedMigrationIDs, [])
+    }
+
     private let fixtureMigrationID = "20260722_0001_fixture_upgrade"
 
     private func fixtureMigrationCatalog(
@@ -1172,7 +1376,8 @@ final class DatabaseLifecycleTests: XCTestCase {
 
     private func makeLifecycle(
         documentsURL: URL,
-        catalog: DatabaseMigrationCatalog
+        catalog: DatabaseMigrationCatalog,
+        snapshotStore: DatabaseSnapshotStore? = nil
     ) throws -> DatabaseLifecycle {
         DatabaseLifecycle(
             environment: DatabaseEnvironment(
@@ -1180,8 +1385,38 @@ final class DatabaseLifecycleTests: XCTestCase {
                 databaseFilename: "fixture.db",
                 sourceDatabaseURL: try bundledBaselineURL()
             ),
-            migrationCatalog: catalog
+            migrationCatalog: catalog,
+            snapshotStore: snapshotStore
         )
+    }
+
+    private final class FaultInjectingSnapshotStore: DatabaseSnapshotStore {
+        private let store = SQLiteDatabaseSnapshotStore()
+        private let failSnapshotCreation: Bool
+        private let failRestoration: Bool
+
+        init(failSnapshotCreation: Bool = false, failRestoration: Bool = false) {
+            self.failSnapshotCreation = failSnapshotCreation
+            self.failRestoration = failRestoration
+        }
+
+        func createSnapshot(from sourceConnection: Connection, at snapshotURL: URL) throws {
+            if failSnapshotCreation {
+                throw DatabasePreparationFailure(message: "injected backup failure")
+            }
+            try store.createSnapshot(from: sourceConnection, at: snapshotURL)
+        }
+
+        func restoreSnapshot(at snapshotURL: URL, replacing databaseURL: URL) throws {
+            if failRestoration {
+                throw DatabasePreparationFailure(message: "injected restoration failure")
+            }
+            try store.restoreSnapshot(at: snapshotURL, replacing: databaseURL)
+        }
+
+        func discardSnapshot(at snapshotURL: URL) {
+            store.discardSnapshot(at: snapshotURL)
+        }
     }
 
     private func rowCount(_ query: String, in connection: Connection) throws -> Int {
