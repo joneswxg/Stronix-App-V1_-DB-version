@@ -8,6 +8,7 @@ struct TrainingPlanDetailView: View {
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @State private var showTrainingConflictAlert = false
     @State private var isLoadingPlan = false
+    @State private var hasLoadedUserPlan = false
     private let planService = LocalPlanService.shared
     
     init(plan: TrainingPlan) {
@@ -101,10 +102,10 @@ struct TrainingPlanDetailView: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 50)
-                                        .background(plan.actions?.isEmpty == false ? theme.primary : theme.disabled)
+                                        .background(canStartTraining ? theme.primary : theme.disabled)
                                         .cornerRadius(25)
                                 }
-                                .disabled(plan.actions?.isEmpty != false)
+                                .disabled(!canStartTraining)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -153,6 +154,7 @@ struct TrainingPlanDetailView: View {
         .alert("训练冲突", isPresented: $showTrainingConflictAlert) {
             Button("取消", role: .cancel) { }
             Button("停止当前训练") {
+                guard canStartTraining else { return }
                 trainingManager.stopTraining()
                 trainingManager.startTraining(with: plan)
                 dismiss()
@@ -161,45 +163,18 @@ struct TrainingPlanDetailView: View {
             Text("每次只能执行一个训练计划。当前正在进行「\(trainingManager.planName)」训练，是否停止当前训练并开始新的训练？")
         }
         .onAppear {
-            print("📋 TrainingPlanDetailView 页面加载")
-            print("📋 计划名称: \(plan.name)")
-            print("📋 计划ID: \(plan.id)")
-            print("📋 计划描述: \(plan.description ?? "无描述")")
-            print("📋 是否为模板: \(plan.isTemplate)")
-            print("📋 创建日期: \(plan.createdDate)")
-            print("📋 计算容量: \(plan.calculatedVolume) kg")
-            
-            if let actions = plan.actions {
-                print("📋 动作数量: \(actions.count)")
-                for (index, action) in actions.enumerated() {
-                    print("📋 动作\(index + 1): \(action.name) (ID: \(action.id))")
-                    print("📋   - 总容量: \(action.totalVolume) kg")
-                    print("📋   - 总组数: \(action.totalSets)")
-                    print("📋   - 图片URL: \(action.imageUrl)")
-                    print("📋   - 备注: \(action.notes ?? "无备注")")
-                    print("📋   - 休息时间: \(action.restTime)秒")
-                    print("📋   - 双侧记录: \(action.recordBilateral)")
-                    
-                    if !action.sets.isEmpty {
-                        print("📋   - 组数详情:")
-                        for (setIndex, set) in action.sets.enumerated() {
-                            if action.recordBilateral {
-                                print("📋     第\(setIndex + 1)组: 左\(set.leftWeight)kg, 右\(set.rightWeight)kg, \(set.reps)次")
-                            } else {
-                                print("📋     第\(setIndex + 1)组: \(set.weight)kg × \(set.reps)次")
-                            }
-                        }
-                    }
-                }
-            } else {
-                print("📋 无训练动作")
-            }
+            reloadPlanData()
         }
     }
-    
+
     // MARK: - 私有方法
     
+    private var canStartTraining: Bool {
+        !plan.isTemplate && hasLoadedUserPlan && !isLoadingPlan && plan.actions?.isEmpty == false
+    }
+
     private func handleStartTraining() {
+        guard canStartTraining else { return }
         if trainingManager.isTrainingActive {
             // 如果已有训练在进行，显示冲突提示
             showTrainingConflictAlert = true
@@ -212,12 +187,21 @@ struct TrainingPlanDetailView: View {
     
     private func reloadPlanData() {
         isLoadingPlan = true
-        
+        if !plan.isTemplate {
+            hasLoadedUserPlan = false
+        }
+
         Task {
             do {
-                let updatedPlan = try await planService.getPlanDetail(planId: plan.id)
+                let updatedPlan: TrainingPlan
+                if plan.isTemplate {
+                    updatedPlan = try await planService.getTemplatePlanDetail(planId: plan.id)
+                } else {
+                    updatedPlan = try await planService.getUserPlanDetail(planId: plan.id)
+                }
                 await MainActor.run {
                     self.plan = updatedPlan
+                    hasLoadedUserPlan = !updatedPlan.isTemplate
                     isLoadingPlan = false
                     print("✅ 计划数据重新加载成功: \(updatedPlan.name), 动作数量: \(updatedPlan.actions?.count ?? 0)")
                     

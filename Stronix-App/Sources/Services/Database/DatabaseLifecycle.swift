@@ -77,7 +77,12 @@ struct DatabaseMigrationCatalog {
                 END
                 """
             )
-        }
+        },
+        DatabaseMigration(
+            id: "20260722_0003_split_template_and_user_plans",
+            apply: TemplatePlanMigration.apply,
+            validate: TemplatePlanMigration.validate
+        )
     ])
 }
 
@@ -224,6 +229,9 @@ final class DatabaseLifecycle {
         "equipment",
         "action",
         "action_target_muscle_link",
+        "template_plans",
+        "template_plan_actions",
+        "template_plan_sets",
         "user",
         "training_plans",
         "plan_actions",
@@ -245,8 +253,11 @@ final class DatabaseLifecycle {
         "idx_user_external_id",
         "idx_user_wechat_open_id",
         "idx_user_apple_id",
-        "idx_training_plans_user_template",
-        "idx_plan_actions_user_plan",
+        "idx_template_plans_external_id",
+        "idx_template_plan_actions_plan_order",
+        "idx_template_plan_sets_plan_action",
+        "idx_training_plans_user",
+        "idx_training_plans_source_template",
         "idx_plan_actions_plan_order",
         "idx_plan_sets_plan_action",
         "idx_training_sessions_plan_id",
@@ -267,7 +278,10 @@ final class DatabaseLifecycle {
         "target_muscle": 19,
         "equipment": 28,
         "action": 272,
-        "action_target_muscle_link": 272
+        "action_target_muscle_link": 272,
+        "template_plans": 2,
+        "template_plan_actions": 3,
+        "template_plan_sets": 6
     ]
 
     private let environment: DatabaseEnvironment
@@ -560,7 +574,28 @@ final class DatabaseLifecycle {
     private func validateExistingDatabaseBeforeMigration(_ connection: Connection) throws {
         try validateMigrationState(connection)
 
-        for tableName in Self.requiredTableNames {
+        let appliedMigrationIDs = try recordedMigrationIDs(from: connection)
+        let hasSplitPlanMigration = appliedMigrationIDs.contains(
+            "20260722_0003_split_template_and_user_plans"
+        )
+        let requiredTables = hasSplitPlanMigration
+            ? Self.requiredTableNames
+            : Self.requiredTableNames.filter {
+                !["template_plans", "template_plan_actions", "template_plan_sets"].contains($0)
+            }
+        let requiredIndexes = hasSplitPlanMigration
+            ? Self.requiredIndexNames
+            : Self.requiredIndexNames.filter {
+                ![
+                    "idx_template_plans_external_id",
+                    "idx_template_plan_actions_plan_order",
+                    "idx_template_plan_sets_plan_action",
+                    "idx_training_plans_user",
+                    "idx_training_plans_source_template"
+                ].contains($0)
+            }
+
+        for tableName in requiredTables {
             guard try tableExists(tableName, connection: connection) else {
                 throw DatabasePreparationFailure(
                     message: "数据库缺少必要表: \(tableName)"
@@ -568,7 +603,7 @@ final class DatabaseLifecycle {
             }
         }
 
-        for indexName in Self.requiredIndexNames {
+        for indexName in requiredIndexes {
             guard try indexExists(indexName, connection: connection) else {
                 throw DatabasePreparationFailure(
                     message: "数据库缺少必要索引: \(indexName)"
@@ -579,8 +614,10 @@ final class DatabaseLifecycle {
 
     private func validateRecoveryDatabase(_ connection: Connection) throws {
         try validateExistingDatabaseBeforeMigration(connection)
-        _ = try migrationPlan(for: connection)
-        try validateExpectedSeedCounts(connection)
+        let plan = try migrationPlan(for: connection)
+        if plan.pendingMigrations.isEmpty {
+            try validateExpectedSeedCounts(connection)
+        }
     }
 
     private func validateExpectedSeedCounts(_ connection: Connection) throws {

@@ -5,6 +5,7 @@ The files in this directory are the source of truth for the bundled local SQLite
 - `schema/baseline.sql` defines the clean baseline schema.
 - `seeds/body_parts.csv`, `target_muscles.csv`, and `equipment.csv` contain flat static catalogs.
 - `seeds/actions.json` contains actions and their target-muscle relationships.
+- `seeds/template_plans.json` contains the built-in Template Plan catalog, ordered actions, and ordered sets.
 - `generate_baseline_db.py` builds and validates the checked-in database artifact.
 
 Generate the bundle database from the repository root:
@@ -25,5 +26,8 @@ Expected static catalog counts:
 | `equipment` | 28 |
 | `action` | 272 |
 | `action_target_muscle_link` | 272 |
+| `template_plans` | 2 |
+| `template_plan_actions` | 3 |
+| `template_plan_sets` | 6 |
 
-All mutable business tables start empty. Seed IDs and action `external_id` values are stable product identifiers; do not renumber them. The previous bundled database is not an input to generation. Any future product catalog change must edit these reviewable seed files and regenerate the artifact.
+All mutable business tables start empty. Template Plans are deterministic product catalog data and are seeded from `template_plans.json`; they never carry user ownership. Seed IDs and action `external_id` values are stable product identifiers; do not renumber them. The previous bundled database is not an input to generation. Any future product catalog change must edit these reviewable seed files and regenerate the artifact.
