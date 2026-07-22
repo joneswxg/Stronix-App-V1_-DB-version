@@ -1,29 +1,33 @@
 import SwiftUI
-import SQLite
 
 struct ActionHistoryView: SwiftUI.View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     let actionId: Int
     let actionName: String
-    
-    @State private var historyData: [ActionHistoryData] = []
-    @State private var isLoading = true
-    @State private var errorMessage: String?
-    
+
+    @StateObject private var viewModel: ActionHistoryViewModel
+
+    init(actionId: Int, actionName: String, viewModel: ActionHistoryViewModel) {
+        self.actionId = actionId
+        self.actionName = actionName
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
     var body: some SwiftUI.View {
         NavigationView {
             VStack(spacing: 0) {
                 // 头部信息
                 headerSection
                 
-                if isLoading {
+                switch viewModel.phase {
+                case .loading:
                     loadingView
-                } else if let error = errorMessage {
+                case .failure(let error):
                     errorView(error)
-                } else if historyData.isEmpty {
+                case .empty:
                     emptyView
-                } else {
+                case .success:
                     historyListView
                 }
             }
@@ -60,8 +64,8 @@ struct ActionHistoryView: SwiftUI.View {
                 }
             )
         }
-        .onAppear {
-            loadActionHistory()
+        .task {
+            await viewModel.load(actionID: actionId)
         }
     }
     
@@ -154,7 +158,9 @@ struct ActionHistoryView: SwiftUI.View {
                 .foregroundColor(theme.secondary)
                 .multilineTextAlignment(.center)
             Button("重试") {
-                loadActionHistory()
+                Task {
+                    await viewModel.retry(actionID: actionId)
+                }
             }
             .foregroundColor(theme.primary)
             .padding(.horizontal, 24)
@@ -186,189 +192,20 @@ struct ActionHistoryView: SwiftUI.View {
     // MARK: - 历史记录列表
     private var historyListView: some SwiftUI.View {
         ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(Array(historyData.enumerated()), id: \.offset) { index, data in
-                    ActionHistoryCard(
-                        data: data,
-                        index: index + 1
-                    )
-                    .padding(.horizontal, 16)
-                }
-            }
-            .padding(.vertical, 16)
-        }
-    }
-    
-    // MARK: - 加载数据
-    private func loadActionHistory() {
-        isLoading = true
-        errorMessage = nil
-        
-        Task {
-            do {
-                let data = try await fetchActionHistory(actionId: actionId)
-                await MainActor.run {
-                    self.historyData = data
-                    self.isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
-                }
-            }
-        }
-    }
-    
-    // MARK: - 数据获取
-    private func fetchActionHistory(actionId: Int) async throws -> [ActionHistoryData] {
-        guard let db = DatabaseManager.shared.getConnection() else {
-            throw NSError(domain: "DatabaseError", code: 1, userInfo: [NSLocalizedDescriptionKey: "数据库连接失败"])
-        }
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            Task {
-                do {
-                    var actionHistoryData: [ActionHistoryData] = []
-                    
-                    // 查询包含指定动作的训练历史，按日期倒序排列，限制5条
-                    let historyQuery = """
-                        SELECT DISTINCT th.id, th.plan_name, th.training_date
-                        FROM training_history th
-                        INNER JOIN training_history_details thd ON th.id = thd.history_id
-                        WHERE thd.action_id = ?
-                        ORDER BY th.training_date DESC
-                        LIMIT 5
-                    """
-                    
-                    let historyStatement = try db.prepare(historyQuery, actionId)
-                    
-                    for historyRow in historyStatement {
-                        guard historyRow.count >= 3 else { continue }
-                        
-                        let historyId: Int
-                        let planName: String
-                        let trainingDate: String
-                        
-                        // 安全地提取数据
-                        if let id = historyRow[0] as? Int64 {
-                            historyId = Int(id)
-                        } else if let id = historyRow[0] as? Int {
-                            historyId = id
-                        } else {
-                            continue
-                        }
-                        
-                        guard let name = historyRow[1] as? String,
-                              let date = historyRow[2] as? String else {
-                            continue
-                        }
-                        
-                        planName = name
-                        trainingDate = date
-                        
-                        // 查询该次训练中该动作的详细数据
-                        let detailsQuery = """
-                            SELECT set_number, weight, reps, is_completed
-                            FROM training_history_details
-                            WHERE history_id = ? AND action_id = ?
-                            ORDER BY set_number ASC
-                        """
-                        
-                        let detailsStatement = try db.prepare(detailsQuery, historyId, actionId)
-                        
-                        var sets: [ActionHistorySet] = []
-                        var totalVolume = 0
-                        
-                        for detailRow in detailsStatement {
-                            guard detailRow.count >= 4 else { continue }
-                            
-                            let setNumber: Int
-                            let weight: Double
-                            let reps: Int
-                            let isCompleted: Bool
-                            
-                            // 安全地提取数据
-                            if let num = detailRow[0] as? Int64 {
-                                setNumber = Int(num)
-                            } else if let num = detailRow[0] as? Int {
-                                setNumber = num
-                            } else {
-                                continue
-                            }
-                            
-                            if let w = detailRow[1] as? Double {
-                                weight = w
-                            } else if let w = detailRow[1] as? Int64 {
-                                weight = Double(w)
-                            } else if let w = detailRow[1] as? Int {
-                                weight = Double(w)
-                            } else {
-                                continue
-                            }
-                            
-                            if let r = detailRow[2] as? Int64 {
-                                reps = Int(r)
-                            } else if let r = detailRow[2] as? Int {
-                                reps = r
-                            } else {
-                                continue
-                            }
-                            
-                            if let completed = detailRow[3] as? Bool {
-                                isCompleted = completed
-                            } else if let completed = detailRow[3] as? Int64 {
-                                isCompleted = completed != 0
-                            } else if let completed = detailRow[3] as? Int {
-                                isCompleted = completed != 0
-                            } else {
-                                continue
-                            }
-                            
-                            let weightInt = Int(weight)
-                            sets.append(ActionHistorySet(
-                                setNumber: setNumber,
-                                weight: weightInt,
-                                reps: reps,
-                                isCompleted: isCompleted
-                            ))
-                            
-                            // 计算总容量（只计算完成的组）
-                            if isCompleted {
-                                totalVolume += weightInt * reps
-                            }
-                        }
-                        
-                        actionHistoryData.append(ActionHistoryData(
-                            date: trainingDate,
-                            planName: planName,
-                            sets: sets,
-                            totalVolume: totalVolume
-                        ))
+            if case .success(let historyData) = viewModel.phase {
+                LazyVStack(spacing: 12) {
+                    ForEach(Array(historyData.enumerated()), id: \.offset) { index, data in
+                        ActionHistoryCard(
+                            data: data,
+                            index: index + 1
+                        )
+                        .padding(.horizontal, 16)
                     }
-                    
-                    continuation.resume(returning: actionHistoryData)
-                } catch {
-                    continuation.resume(throwing: error)
                 }
+                .padding(.vertical, 16)
             }
         }
     }
-}
-
-// MARK: - 数据模型
-struct ActionHistoryData {
-    let date: String
-    let planName: String
-    let sets: [ActionHistorySet]
-    let totalVolume: Int
-}
-
-struct ActionHistorySet {
-    let setNumber: Int
-    let weight: Int
-    let reps: Int
-    let isCompleted: Bool
 }
 
 // MARK: - 历史记录卡片
@@ -585,6 +422,12 @@ struct ActionHistoryCard: SwiftUI.View {
 }
 
 #Preview {
-    ActionHistoryView(actionId: 1, actionName: "卧推")
+    ActionHistoryView(
+        actionId: 1,
+        actionName: "卧推",
+        viewModel: ActionHistoryViewModel(
+            repository: SQLiteActionHistoryRepository()
+        )
+    )
 }
 
