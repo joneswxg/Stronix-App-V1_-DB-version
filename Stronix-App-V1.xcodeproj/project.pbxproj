@@ -79,6 +79,7 @@
 				Utilities/AppError.swift,
 				Utilities/Constants/APIConfig.swift,
 				Utilities/Constants/DBConfig.swift,
+				UseCases/CopyTemplatePlanUseCase.swift,
 				ViewModels/ActionHistoryViewModel.swift,
 				ViewModels/BodyMeasurementViewModel.swift,
 				ViewModels/PlanViewModel.swift,

@@ -206,8 +206,36 @@ final class PlanViewModelTests: XCTestCase {
         await viewModel.copyTemplatePlan(template)
 
         XCTAssertEqual(repository.copiedTemplateIDs, [template.id])
+        XCTAssertEqual(viewModel.lastCopiedUserPlanID, copiedPlan.id)
         XCTAssertEqual(viewModel.personalPlans.map(\.id), [copiedPlan.id])
         XCTAssertEqual(repository.userPlansCallCount, 1)
+    }
+
+    func testCopyTemplateMapsFailuresToUserSafeStateWithoutRefreshingPlans() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let failures: [(Error, String)] = [
+            (LocalPlanError.templateNotFound("missing"), "请求的数据不存在"),
+            (LocalPlanError.unauthorized("SQLite failure at /tmp/stronix.db"), "请先登录后重试"),
+            (LocalPlanError.permissionDenied("forbidden"), "无权限执行此操作"),
+            (DatabaseError.notReady, "数据暂时无法读取，请稍后重试"),
+            (TestError.repositoryFailure, "暂时无法完成请求，请稍后重试")
+        ]
+
+        for (error, message) in failures {
+            let repository = MockPlanRepository(
+                templatePlansResult: .success([template]),
+                userPlansResult: .success([]),
+                copyTemplatePlanResult: .failure(error)
+            )
+            let viewModel = PlanViewModel(repository: repository)
+
+            await viewModel.copyTemplatePlan(template)
+
+            XCTAssertEqual(viewModel.errorMessage, "复制模板计划失败: \(message)")
+            XCTAssertTrue(viewModel.showError)
+            XCTAssertNil(viewModel.lastCopiedUserPlanID)
+            XCTAssertEqual(repository.userPlansCallCount, 0)
+        }
     }
     func testCopyPersonalPlanSubmitsTypedDraft() async {
         let source = TrainingPlan(
