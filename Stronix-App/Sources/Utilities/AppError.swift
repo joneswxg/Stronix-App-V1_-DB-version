@@ -33,6 +33,17 @@ enum AppError {
             return .databaseUnavailable
         }
 
+        if let historyError = error as? TrainingHistoryRepositoryError {
+            switch historyError {
+            case .invalidOwnerID:
+                return .authenticationRequired
+            case .invalidHistoryID, .invalidPage, .invalidPageSize, .invalidPlanID, .invalidDateRange:
+                return .validationFailed
+            case .notFoundOrUnauthorized:
+                return .resourceNotFound
+            }
+        }
+
         guard let planError = error as? LocalPlanError else {
             return .requestFailed
         }

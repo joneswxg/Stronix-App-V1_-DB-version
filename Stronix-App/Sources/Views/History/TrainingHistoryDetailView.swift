@@ -2,403 +2,182 @@ import SwiftUI
 
 struct TrainingHistoryDetailView: View {
     @Environment(\.theme) private var theme: AppTheme
-    
+    @Environment(\.dismiss) private var dismiss
+
     let historyId: Int
+    private let repository: TrainingHistoryRepository
+    private let ownerIDProvider: () -> Int?
+    @StateObject private var viewModel: TrainingHistoryDetailViewModel
     @State private var showEditView = false
-    @State private var selectedHistory: TrainingHistoryDetailResponse?
-    @State private var isLoading = true
-    @State private var errorMessage: String?
-    
-    @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
-    
-    // 本地日期格式化器
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年MM月dd日"
-        return formatter
-    }()
-    
-    private let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
 
-    // 加载训练历史详情
-    private func loadHistoryDetail() {
-        Task {
-            await MainActor.run {
-                isLoading = true
-                errorMessage = nil
-            }
-            
-            do {
-                print("🔄 获取训练历史详情，ID: \(historyId)")
-                let detail = try await trainingHistoryService.getTrainingHistoryDetail(historyId: historyId)
-                
-                await MainActor.run {
-                    self.selectedHistory = detail
-                    self.isLoading = false
-                    print("✅ 训练历史详情加载完成")
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
-                    print("❌ 加载训练历史详情失败: \(error)")
-                }
-            }
-        }
+    init(
+        historyId: Int,
+        repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
+        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id }
+    ) {
+        self.historyId = historyId
+        self.repository = repository
+        self.ownerIDProvider = ownerIDProvider
+        _viewModel = StateObject(wrappedValue: TrainingHistoryDetailViewModel(repository: repository))
     }
-    
-    // 将API数据转换为UI数据
-    private var detailData: TrainingDetailData? {
-        guard let selectedHistory = selectedHistory else { 
-            return nil 
-        }
-        
-        print("🔄 开始转换训练详情数据: \(selectedHistory.history.plan_name)")
-        
-        // 按动作分组详情
-        let groupedDetails = Dictionary(grouping: selectedHistory.details) { $0.action_id }
-        
-        var exercises: [ExerciseDetail] = []
-        
-        for (actionId, details) in groupedDetails {
-            let actionName = details.first?.action_name ?? "未知动作"
-            
-            let sets = details.sorted { $0.set_number < $1.set_number }.map { detail in
-                // 使用 history_record_bilateral 字段判断是否为双侧训练
-                let isBilateral = detail.history_record_bilateral
-                
-                if isBilateral {
-                    // 双侧训练：显示左右重量
-                    return SetDetail(
-                        number: detail.set_number,
-                        weight: 0.0, // 双侧训练不使用统一重量
-                        reps: detail.reps ?? 0,
-                        actualReps: detail.reps ?? 0,
-                        isCompleted: detail.is_completed,
-                        leftWeight: detail.left_weight ?? 0.0,
-                        rightWeight: detail.right_weight ?? 0.0,
-                        isBilateral: true
-                    )
-                } else {
-                    // 普通训练：显示统一重量
-                    return SetDetail(
-                        number: detail.set_number,
-                        weight: detail.weight ?? 0.0,
-                        reps: detail.reps ?? 0,
-                        actualReps: detail.reps ?? 0,
-                        isCompleted: detail.is_completed
-                    )
-                }
-            }
-            
-            exercises.append(ExerciseDetail(action_id: actionId, name: actionName, sets: sets))
-        }
-        
-        // 格式化时长
-        let durationText = formatDuration(selectedHistory.history.duration)
-        
-        return TrainingDetailData(
-            planName: selectedHistory.history.plan_name,
-            duration: durationText,
-            totalVolume: "\(String(format: "%.1f", selectedHistory.history.volume)) kg",
-            exercises: exercises
-        )
-    }
-    
-    // 格式化时长
-    private func formatDuration(_ duration: Int) -> String {
-        // duration 现在统一为分钟单位
-        let minutes = duration
-        
-        let hours = minutes / 60
-        let remainingMinutes = minutes % 60
-        
-        if hours > 0 {
-            return "\(hours)小时\(remainingMinutes)分钟"
-        } else if minutes > 0 {
-            return "\(minutes)分钟"
-        } else {
-            // 对于不足1分钟的情况，显示为"0"
-            return "0"
-        }
-    }
-    
-    private func formatTrainingTime(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        if let date = formatter.date(from: dateString) {
-            return timeFormatter.string(from: date)
-        }
-        return dateString
-    }
-    
-    private func getTrainingDate() -> Date {
-        guard let selectedHistory = selectedHistory else { return Date() }
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: selectedHistory.history.training_date) ?? Date()
-    }
-
-    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         VStack(spacing: 0) {
-            logoSection
-            navigationSection
-            
-            if isLoading {
+            header
+            switch viewModel.phase {
+            case .loading:
                 Spacer()
-                VStack {
-                    ProgressView("加载训练详情...")
-                    Text("正在加载训练详细数据")
-                        .font(.caption)
-                        .foregroundColor(theme.secondary)
-                        .padding(.top, 8)
-                }
+                ProgressView("加载训练详情...")
                 Spacer()
-            } else if let errorMessage = errorMessage {
+            case .empty:
                 Spacer()
-                VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 50))
-                        .foregroundColor(theme.warning)
-                    
-                    Text("加载失败")
-                        .font(.headline)
-                        .foregroundColor(theme.onSurface)
-                    
-                    Text(errorMessage)
-                        .font(.subheadline)
-                        .foregroundColor(theme.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    Button("重试") {
-                        loadHistoryDetail()
-                    }
-                    .padding()
-                    .background(theme.primary)
-                    .foregroundColor(theme.onPrimary)
-                    .cornerRadius(8)
-                }
-                .padding()
+                Text("没有训练数据").foregroundColor(theme.secondary)
                 Spacer()
-            } else if let detailData = detailData {
-                contentScrollView(detailData)
-            } else {
-                Spacer()
-                VStack {
-                    Text("没有训练数据")
-                        .foregroundColor(theme.secondary)
-                }
-                Spacer()
+            case .failure(let message):
+                failure(message)
+            case .success(let detail):
+                details(detail)
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            print("🎬 TrainingHistoryDetailView 出现，历史ID: \(historyId)")
-            loadHistoryDetail()
-        }
+        .task { await load() }
         .navigationDestination(isPresented: $showEditView) {
-            if let detailData = detailData {
+            if case .success(let detail) = viewModel.phase {
                 EditHistoryDetailView(
-                    selectedDate: getTrainingDate(),
-                    historyData: detailData,
+                    selectedDate: trainingDate(from: detail.history.training_date),
+                    historyData: editData(from: detail),
                     historyId: historyId
                 )
             }
         }
     }
-    
-    // MARK: - 视图组件
-    
-    private var logoSection: some View {
+
+    private var header: some View {
         HStack {
-            Image("StronixLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 35)
-            Spacer()
-            Text("STRONIX")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(theme.primary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(theme.surface)
-        .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
-    }
-    
-    private var navigationSection: some View {
-        HStack {
-            Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.title2)
-                    .foregroundColor(theme.primary)
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left").font(.title2).foregroundColor(theme.primary)
             }
             Spacer()
-            Text("训练详情")
+            Text("训练详情").font(.headline).foregroundColor(theme.onSurface)
+            Spacer()
+            Button("编辑") { showEditView = true }
                 .font(.headline)
-                .foregroundColor(theme.onSurface)
-            Spacer()
-            Button(action: {
-                showEditView = true
-            }) {
-                Text("编辑")
-                    .font(.headline)
-                    .foregroundColor(theme.primary)
-            }
+                .foregroundColor(theme.primary)
         }
         .padding()
         .background(theme.surface)
         .shadow(color: theme.shadow.opacity(0.1), radius: 1, y: 1)
     }
-    
-    private func contentScrollView(_ data: TrainingDetailData) -> some View {
+
+    private func failure(_ message: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "exclamationmark.triangle").font(.system(size: 50)).foregroundColor(theme.warning)
+            Text("加载失败").font(.headline).foregroundColor(theme.onSurface)
+            Text(message).font(.subheadline).foregroundColor(theme.secondary).multilineTextAlignment(.center)
+            Button("重试") { Task { await viewModel.retry() } }
+                .padding().background(theme.primary).foregroundColor(theme.onPrimary).cornerRadius(8)
+            Spacer()
+        }
+        .padding()
+    }
+
+    private func details(_ detail: TrainingHistoryReadDetail) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                dateTimeSection
-                summarySection(data)
-                exercisesList(data)
+                let date = trainingDate(from: detail.history.training_date)
+                HStack(spacing: 15) {
+                    Image(systemName: "clock").foregroundColor(theme.secondary)
+                    Text(date, formatter: dateFormatter).font(.subheadline).foregroundColor(theme.secondary)
+                    Text("• \(trainingTime(detail.history.training_date))").font(.subheadline).foregroundColor(theme.secondary)
+                }
+                HStack {
+                    Spacer()
+                    summary(icon: "clock", value: formatDuration(detail.history.duration))
+                    Spacer()
+                    summary(icon: "scalemass", value: "\(String(format: "%.1f", detail.history.volume)) kg")
+                    Spacer()
+                }
+                .padding().background(theme.shadow.opacity(0.1)).cornerRadius(10)
+                ForEach(detail.actions, id: \.actionID) { action in
+                    actionCard(action)
+                }
             }
             .padding()
         }
     }
-    
-    private var dateTimeSection: some View {
-        HStack(spacing: 15) {
-            Image(systemName: "clock")
-                .foregroundColor(theme.secondary)
-            
-            if let selectedHistory = selectedHistory {
-                let trainingDate = getTrainingDate()
-                Text("\(trainingDate, formatter: dateFormatter)")
-                    .font(.subheadline)
-                    .foregroundColor(theme.secondary)
-                
-                Text("• \(formatTrainingTime(selectedHistory.history.training_date))")
-                    .font(.subheadline)
-                    .foregroundColor(theme.secondary)
-            }
-            
-            Spacer()
-        }
-        .padding(.horizontal)
-    }
-    
-    private func summarySection(_ data: TrainingDetailData) -> some View {
-        HStack {
-            Spacer()
-            VStack {
-                Image(systemName: "clock")
-                    .font(.title3)
-                Text(data.duration)
-                    .font(.subheadline)
-            }
-            Spacer()
-            VStack {
-                Image(systemName: "scalemass")
-                    .font(.title3)
-                Text(data.totalVolume)
-                    .font(.subheadline)
-            }
-            Spacer()
-        }
-        .padding()
-        .background(theme.shadow.opacity(0.1))
-        .cornerRadius(10)
-    }
-    
-    private func exercisesList(_ data: TrainingDetailData) -> some View {
-        ForEach(0..<data.exercises.count, id: \.self) { index in
-            ExerciseCard(exercise: data.exercises[index])
-        }
-    }
-}
 
-struct ExerciseCard: View {
-    @Environment(\.theme) private var theme: AppTheme
-    let exercise: ExerciseDetail
-    
-    var body: some View {
+    private func summary(icon: String, value: String) -> some View {
+        VStack { Image(systemName: icon).font(.title3); Text(value).font(.subheadline) }
+    }
+
+    private func actionCard(_ action: TrainingHistoryDetailAction) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            exerciseHeader
-            exerciseSets
-        }
-        .padding()
-        .background(theme.surface)
-        .cornerRadius(10)
-        .shadow(color: theme.shadow.opacity(0.1), radius: 2, x: 0, y: 2)
-        .padding(.horizontal)
-    }
-    
-    private var exerciseHeader: some View {
-        HStack {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.title2)
-                .foregroundColor(theme.primary)
-                .frame(width: 40, height: 40)
-                .background(theme.primary.opacity(0.1))
-                .cornerRadius(8)
-            
-            VStack(alignment: .leading) {
-                Text(exercise.name)
-                    .font(.headline)
-                    .foregroundColor(theme.onSurface)
-            }
-            
-            Spacer()
-        }
-        .padding(.bottom, 5)
-    }
-    
-    private var exerciseSets: some View {
-        ForEach(0..<exercise.sets.count, id: \.self) { index in
-            let set = exercise.sets[index]
             HStack {
-                Text("第\(set.number)组")
-                    .frame(width: 60, alignment: .leading)
-                    .font(.subheadline)
-                
-                // 根据是否为双侧训练显示不同的重量信息
-                if set.isBilateral {
-                    Text("左\(String(format: "%.1f", set.leftWeight))kg 右\(String(format: "%.1f", set.rightWeight))kg × \(set.reps)")
-                        .font(.subheadline)
-                        .foregroundColor(theme.onSurface)
-                } else {
-                    Text(set.weight == 0 ? "+0.0 kg × \(set.reps)" : "\(String(format: "%.1f", set.weight)) kg × \(set.reps)")
-                        .font(.subheadline)
-                        .foregroundColor(theme.onSurface)
-                }
-                
+                Image(systemName: "figure.strengthtraining.traditional").font(.title2).foregroundColor(theme.primary)
+                Text(action.name).font(.headline).foregroundColor(theme.onSurface)
                 Spacer()
-                
-                if set.isCompleted {
-                Image(systemName: "checkmark")
-                    .font(.subheadline)
-                    .foregroundColor(theme.success)
+            }
+            ForEach(action.sets, id: \.setNumber) { set in
+                HStack {
+                    Text("第\(set.setNumber)组").frame(width: 60, alignment: .leading)
+                    if set.isBilateral {
+                        Text("左\(String(format: "%.1f", set.leftWeight ?? 0))\(set.weightUnit) 右\(String(format: "%.1f", set.rightWeight ?? 0))\(set.weightUnit) × \(set.reps ?? 0)")
+                    } else {
+                        Text("\(String(format: "%.1f", set.weight ?? 0)) \(set.weightUnit) × \(set.reps ?? 0)")
+                    }
+                    Spacer()
+                    if set.isCompleted { Image(systemName: "checkmark").foregroundColor(theme.success) }
                 }
+                .font(.subheadline).foregroundColor(theme.onSurface)
             }
-            .padding(.vertical, 2)
         }
+        .padding().background(theme.surface).cornerRadius(10)
+        .shadow(color: theme.shadow.opacity(0.1), radius: 2, x: 0, y: 2)
     }
-    
-    private func calculateVolume() -> Int {
-        return exercise.sets.reduce(0) { total, set in
-            if set.isBilateral {
-                // 双侧训练：左右重量之和乘以次数
-                return total + Int((set.leftWeight + set.rightWeight) * Double(set.reps))
-            } else {
-                // 普通训练：重量乘以次数
-                return total + Int(set.weight * Double(set.reps))
+
+    private func editData(from detail: TrainingHistoryReadDetail) -> TrainingDetailData {
+        TrainingDetailData(
+            planName: detail.history.plan_name,
+            duration: formatDuration(detail.history.duration),
+            totalVolume: "\(String(format: "%.1f", detail.history.volume)) kg",
+            exercises: detail.actions.map { action in
+                ExerciseDetail(
+                    action_id: action.actionID,
+                    name: action.name,
+                    sets: action.sets.map { set in
+                        SetDetail(
+                            number: set.setNumber,
+                            weight: set.weight ?? 0,
+                            reps: set.reps ?? 0,
+                            actualReps: set.reps ?? 0,
+                            isCompleted: set.isCompleted,
+                            leftWeight: set.leftWeight ?? 0,
+                            rightWeight: set.rightWeight ?? 0,
+                            isBilateral: set.isBilateral
+                        )
+                    }
+                )
             }
-        }
+        )
+    }
+
+    private func load() async {
+        await viewModel.load(historyID: historyId, ownerID: ownerIDProvider() ?? 0)
+    }
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter(); formatter.dateFormat = "yyyy年MM月dd日"; return formatter
+    }()
+    private let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter(); formatter.dateFormat = "HH:mm"; return formatter
+    }()
+    private func trainingDate(from string: String) -> Date { ISO8601DateFormatter().date(from: string) ?? Date() }
+    private func trainingTime(_ string: String) -> String { timeFormatter.string(from: trainingDate(from: string)) }
+    private func formatDuration(_ minutes: Int) -> String {
+        let hours = minutes / 60; let remainder = minutes % 60
+        return hours > 0 ? "\(hours)小时\(remainder)分钟" : "\(minutes)分钟"
     }
 }
 
-#Preview {
-    TrainingHistoryDetailView(historyId: 1)
-}
+#Preview { TrainingHistoryDetailView(historyId: 1) }

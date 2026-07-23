@@ -134,7 +134,7 @@ struct TrainingHistoryListResponse: Codable {
 }
 
 /// 训练历史项目
-struct TrainingHistoryItem: Codable {
+struct TrainingHistoryItem: Codable, Equatable, Sendable {
     let id: Int
     let plan_id: Int?
     let plan_name: String
