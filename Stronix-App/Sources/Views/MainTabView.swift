@@ -30,7 +30,7 @@ struct MainTabView: View {
                 NavigationStack {
                     Group {
                         if trainingManager.isTrainingActive, let currentPlan = trainingManager.currentPlan {
-                            TrainingView(plan: currentPlan, viewModel: planViewModel)
+                            TrainingView(plan: currentPlan)
                                 .id("training-active")
                         } else {
                             PlanListView(

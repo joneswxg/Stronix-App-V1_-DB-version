@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 extension Date {
     func ISO8601String() -> String {
@@ -296,5 +297,181 @@ final class PlanViewModel: ObservableObject {
 
     private func showSuccessMessage(_ message: String) {
         print("成功: \(message)")
+    }
+}
+
+@MainActor
+final class TrainingViewModel: ObservableObject {
+    @Published private(set) var editingActions: [MutableTrainingAction]
+    @Published private(set) var completedSets: Set<String>
+    @Published private(set) var setNotes: [String: String]
+    @Published private(set) var setRestTimers: [String: Int]
+    @Published private(set) var planName: String
+    @Published private(set) var elapsedTimeText: String
+    @Published private(set) var completedVolume: Double
+    @Published private(set) var totalVolume: Double
+    @Published private(set) var showRestTimer: Bool
+    @Published private(set) var currentRestTime: Int
+    @Published private(set) var isRestTimerPaused: Bool
+    @Published private(set) var isCompleting = false
+    @Published private(set) var completionError: String?
+
+    private let session: any TrainingSessionManaging
+    private let historySaver: any TrainingHistorySaving
+    private var sessionChange: AnyCancellable?
+
+    init(
+        session: any TrainingSessionManaging = TrainingSessionManager.shared,
+        historySaver: any TrainingHistorySaving = TrainingHistoryService.shared
+    ) {
+        self.session = session
+        self.historySaver = historySaver
+        editingActions = session.editingActions
+        completedSets = session.completedSets
+        setNotes = session.setNotes
+        setRestTimers = session.setRestTimers
+        planName = session.planName
+        elapsedTimeText = session.formattedTrainingTime()
+        completedVolume = session.completedVolume()
+        totalVolume = session.totalVolume()
+        showRestTimer = session.showRestTimer
+        currentRestTime = session.currentRestTime
+        isRestTimerPaused = session.isRestTimerPaused
+
+        sessionChange = session.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.refresh()
+            }
+        }
+    }
+
+    var volumeText: String {
+        "\(Int(completedVolume))/\(Int(totalVolume)) kg"
+    }
+
+    func startIfNeeded(plan: TrainingPlan) {
+        if !session.isTrainingActive {
+            session.startTraining(with: plan)
+        }
+        refresh()
+    }
+
+    func updateActions(_ actions: [MutableTrainingAction]) {
+        session.updateActions(actions)
+        refresh()
+    }
+
+    func updateCompletedSets(_ completedSets: Set<String>) {
+        session.completedSets = completedSets
+        refresh()
+    }
+
+    func updateSetNotes(_ setNotes: [String: String]) {
+        session.setNotes = setNotes
+        refresh()
+    }
+
+    func deleteAction(_ action: MutableTrainingAction) {
+        session.deleteAction(action)
+        refresh()
+    }
+
+    func handleSetCompleted(setID: String, restTime: Int) {
+        session.handleSetCompleted(setId: setID, restTime: restTime)
+        refresh()
+    }
+
+    func toggleSetCompletion(setID: String, restTime: Int) {
+        session.toggleSetCompletion(setID: setID, restTime: restTime)
+        refresh()
+    }
+
+    func showRestTimer(for setID: String, restTime: Int) {
+        session.handleRestTimerTapped(setId: setID, restTime: restTime)
+        refresh()
+    }
+
+    func toggleRestTimer() {
+        session.toggleRestTimer()
+        refresh()
+    }
+
+    func resetRestTimer() {
+        session.resetRestTimer()
+        refresh()
+    }
+
+    func skipRestTimer() {
+        session.skipRestTimer()
+        refresh()
+    }
+
+    func closeRestTimer() {
+        session.closeRestTimer()
+        refresh()
+    }
+
+    func addRestTime(_ seconds: Int) {
+        session.addRestTime(seconds)
+        refresh()
+    }
+
+    func subtractRestTime(_ seconds: Int) {
+        session.subtractRestTime(seconds)
+        refresh()
+    }
+
+    func cancelTraining() {
+        session.stopTraining()
+    }
+
+    func hasPlanChanges() -> Bool {
+        session.hasChangesFromOriginalPlan()
+    }
+
+    func saveHistoryOnly() async -> Bool {
+        await complete(updatePlan: false)
+    }
+
+    func saveHistoryAndUpdatePlan(planID: Int) async -> Bool {
+        await complete(updatePlan: true, planID: planID)
+    }
+
+    private func complete(updatePlan: Bool, planID: Int? = nil) async -> Bool {
+        guard !isCompleting else { return false }
+
+        isCompleting = true
+        completionError = nil
+        defer { isCompleting = false }
+
+        do {
+            if let request = session.prepareTrainingHistoryData() {
+                _ = try await historySaver.saveTrainingHistory(request)
+            }
+            if updatePlan, let planID, let request = session.preparePlanUpdateData() {
+                try await historySaver.updatePlanFromTraining(planId: planID, request: request)
+            }
+            session.completeTraining()
+            return true
+        } catch {
+            completionError = updatePlan
+                ? "更新训练计划失败: \(AppError.map(error).userMessage)"
+                : "保存训练记录失败: \(AppError.map(error).userMessage)"
+            return false
+        }
+    }
+
+    private func refresh() {
+        editingActions = session.editingActions
+        completedSets = session.completedSets
+        setNotes = session.setNotes
+        setRestTimers = session.setRestTimers
+        planName = session.planName
+        elapsedTimeText = session.formattedTrainingTime()
+        completedVolume = session.completedVolume()
+        totalVolume = session.totalVolume()
+        showRestTimer = session.showRestTimer
+        currentRestTime = session.currentRestTime
+        isRestTimerPaused = session.isRestTimerPaused
     }
 }

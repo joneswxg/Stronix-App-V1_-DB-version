@@ -1,8 +1,13 @@
 import Foundation
 
+protocol TrainingHistorySaving {
+    func saveTrainingHistory(_ request: SaveTrainingHistoryRequest) async throws -> SaveTrainingHistoryResponse
+    func updatePlanFromTraining(planId: Int, request: UpdatePlanFromTrainingRequest) async throws
+}
+
 /// 训练历史服务类（已迁移到本地数据库）
 /// 保持原有接口，内部调用LocalTrainingHistoryService
-class TrainingHistoryService: ObservableObject {
+class TrainingHistoryService: ObservableObject, TrainingHistorySaving {
     static let shared = TrainingHistoryService()
     
     private let localService = LocalTrainingHistoryService.shared
