@@ -33,24 +33,18 @@ struct PlanSet: Identifiable {
 struct CreatePlanView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
-    @State private var planName = ""
-    @State private var planNote = ""
-    @State private var showPlanNote = false
+    @StateObject private var viewModel: CreatePlanViewModel
     @State private var showActionSelect = false
-    @State private var selectedActions: [PlanAction] = []
     @State private var showPlanMenu = false
-    @State private var weightUnit: WeightUnit = .kg
-    @State private var isSaving = false
-    @State private var showError = false
-    @State private var errorMessage = ""
-    @State private var showSuccess = false
-    @State private var successMessage = ""
-    @State private var selectedTargetMuscleId = 0 // 添加目标肌肉ID状态
-    
-    // MARK: - 键盘管理器
+    @State private var selectedTargetMuscleId = 0
+    private let onSaveSucceeded: () async -> Void
+
     @StateObject private var keyboardManager = CustomKeyboardManager()
-    
-    private let localPlanService = LocalPlanService.shared
+
+    init(viewModel: CreatePlanViewModel, onSaveSucceeded: @escaping () async -> Void = {}) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSaveSucceeded = onSaveSucceeded
+    }
     
     // 隐藏系统键盘的方法
     private func hideSystemKeyboard() {
@@ -75,12 +69,12 @@ struct CreatePlanView: View {
                         planNameSection
                         
                         // 计划描述（条件显示）
-                        if showPlanNote {
+                        if viewModel.showPlanNote {
                             planNoteSection
                         }
                      
                         // 动作列表
-                        if !selectedActions.isEmpty {
+                        if !viewModel.selectedActions.isEmpty {
                             actionListSection
                         }
                         
@@ -139,16 +133,16 @@ struct CreatePlanView: View {
                     Button("取消") {
                         dismiss()
                     }
-                    .disabled(isSaving)
+                    .disabled(viewModel.isSaving)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         Task {
-                            await savePlan()
+                            await viewModel.save()
                         }
                     }) {
                         HStack(spacing: 4) {
-                            if isSaving {
+                            if viewModel.isSaving {
                                 ProgressView()
                                     .scaleEffect(0.8)
                             } else {
@@ -156,23 +150,30 @@ struct CreatePlanView: View {
                             }
                         }
                     }
-                    .disabled(planName.isEmpty || selectedActions.isEmpty || isSaving)
+                    .disabled(viewModel.planName.isEmpty || viewModel.selectedActions.isEmpty || viewModel.isSaving)
                 }
             })
-            .alert("错误", isPresented: $showError) {
-                Button("确定") {
-                    showError = false
-                }
+            .alert("错误", isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.dismissError() } }
+            )) {
+                Button("确定", action: viewModel.dismissError)
             } message: {
-                Text(errorMessage)
+                Text(viewModel.errorMessage ?? "")
             }
-            .alert("成功", isPresented: $showSuccess) {
+            .alert("成功", isPresented: Binding(
+                get: { viewModel.savedPlanID != nil },
+                set: { if !$0 { viewModel.consumeSavedPlanID() } }
+            )) {
                 Button("确定") {
-                    showSuccess = false
-                    // 不在这里调用 dismiss()，因为已经在 savePlan() 中延迟调用了
+                    Task {
+                        await onSaveSucceeded()
+                        viewModel.consumeSavedPlanID()
+                        dismiss()
+                    }
                 }
             } message: {
-                Text(successMessage)
+                Text("计划保存成功！")
             }
         }
         .sheet(isPresented: $showActionSelect) {
@@ -180,7 +181,7 @@ struct CreatePlanView: View {
                 onActionSelected: { actionInfo in
                     addSelectedActionInfo(actionInfo)
                 },
-                existingActionIds: Set(selectedActions.map { $0.actionId })
+                existingActionIds: Set(viewModel.selectedActions.map { $0.actionId })
             )
         }
     }
@@ -188,9 +189,9 @@ struct CreatePlanView: View {
     // MARK: - 计划名称区域
     private var planNameSection: some View {
         HStack(spacing: 12) {
-            TextField("输入计划名称", text: $planName)
+            TextField("输入计划名称", text: $viewModel.planName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .disabled(isSaving)
+                .disabled(viewModel.isSaving)
                 .onTapGesture {
                     // 当点击计划名称输入框时，隐藏自定义键盘
                     if keyboardManager.isShowing {
@@ -199,16 +200,16 @@ struct CreatePlanView: View {
                 }
             
             Menu {
-                if !showPlanNote {
+                if !viewModel.showPlanNote {
                     Button(action: {
-                        showPlanNote = true
+                        viewModel.showPlanNote = true
                     }) {
                         Label("添加描述", systemImage: "note.text")
                     }
                 } else {
                     Button(action: {
-                        showPlanNote = false
-                        planNote = ""
+                        viewModel.showPlanNote = false
+                        viewModel.planNote = ""
                     }) {
                         Label("删除描述", systemImage: "trash")
                     }
@@ -226,7 +227,7 @@ struct CreatePlanView: View {
                     .background(theme.secondary.opacity(0.1))
                     .cornerRadius(6)
             }
-            .disabled(isSaving)
+            .disabled(viewModel.isSaving)
         }
         .padding(.horizontal, 16)
     }
@@ -234,10 +235,10 @@ struct CreatePlanView: View {
     // MARK: - 计划描述区域
     private var planNoteSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("添加计划描述", text: $planNote, axis: .vertical)
+            TextField("添加计划描述", text: $viewModel.planNote, axis: .vertical)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .lineLimit(3...6)
-                .disabled(isSaving)
+                .disabled(viewModel.isSaving)
                 .onTapGesture {
                     // 当点击计划描述输入框时，隐藏自定义键盘
                     if keyboardManager.isShowing {
@@ -264,24 +265,24 @@ struct CreatePlanView: View {
             .cornerRadius(12)
         }
         .padding(.horizontal, 16)
-        .disabled(isSaving)
+        .disabled(viewModel.isSaving)
     }
     
     // MARK: - 动作列表区域
     private var actionListSection: some View {
         VStack(spacing: 12) {
-            ForEach(selectedActions, id: \.id) { action in
+            ForEach(viewModel.selectedActions, id: \.id) { action in
                 PlanActionCardWrapper(
                     action: action,
-                    selectedActions: $selectedActions,
-                    weightUnit: weightUnit,
+                    selectedActions: $viewModel.selectedActions,
+                    weightUnit: viewModel.weightUnit,
                     onDelete: {
                         deleteAction(action)
                     },
                     onToggleUnit: {
                         toggleWeightUnit()
                     },
-                    isDisabled: isSaving,
+                    isDisabled: viewModel.isSaving,
                     keyboardManager: keyboardManager,
                     selectedTargetMuscleId: $selectedTargetMuscleId
                 )
@@ -321,75 +322,17 @@ struct CreatePlanView: View {
             targetMuscleIds: action.target_muscle_ids,
             sets: [PlanSet()] // 默认添加一组
         )
-        selectedActions.append(newAction)
+        viewModel.selectedActions.append(newAction)
     }
     
     private func deleteAction(_ action: PlanAction) {
         // 立即删除，不使用动画，避免竞态条件
-        selectedActions.removeAll { $0.id == action.id }
+        viewModel.selectedActions.removeAll { $0.id == action.id }
     }
     
     private func toggleWeightUnit() {
-        weightUnit = weightUnit == .kg ? .lbs : .kg
+        viewModel.weightUnit = viewModel.weightUnit == .kg ? .lbs : .kg
         // 这里可以添加单位转换逻辑
-    }
-    
-    private func savePlan() async {
-        isSaving = true
-        errorMessage = ""
-        
-        do {
-            let draft = PlanDraft(
-                name: planName,
-                description: planNote.isEmpty ? nil : planNote,
-                actions: selectedActions.map { action in
-                    PlanActionDraft(
-                        actionID: action.actionId,
-                        rest: action.restTime,
-                        note: action.notes,
-                        recordBilateral: action.isLeftRightMode,
-                        sets: action.sets.map { set in
-                            PlanSetDraft(
-                                weight: action.isLeftRightMode ? nil : set.weight,
-                                reps: set.reps,
-                                leftWeight: action.isLeftRightMode ? set.leftWeight : nil,
-                                rightWeight: action.isLeftRightMode ? set.rightWeight : nil,
-                                notes: set.notes.isEmpty ? nil : set.notes
-                            )
-                        }
-                    )
-                }
-            )
-            
-            // 获取当前用户ID
-            guard let currentUser = LocalUserService.shared.currentUser else {
-                throw LocalPlanError.unauthorized("用户未登录")
-            }
-            
-            let response = try await localPlanService.createPlan(draft, user_id: currentUser.id)
-            
-            print("创建计划成功，计划ID: \(response.plan_id)")
-            
-            // 保存成功，延迟关闭视图以避免状态冲突
-            await MainActor.run {
-                successMessage = "计划保存成功！"
-                showSuccess = true
-                
-                // 延迟关闭视图，让成功提示显示一下
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    print("🔄 CreatePlanView - 保存成功，准备关闭视图")
-                    dismiss()
-                }
-            }
-            
-        } catch {
-            await MainActor.run {
-                errorMessage = "保存失败: \(AppError.map(error).userMessage)"
-                showError = true
-            }
-        }
-        
-        isSaving = false
     }
 }
 
@@ -1042,5 +985,9 @@ struct PlanActionCard: View {
 }
 
 #Preview {
-    CreatePlanView()
+    CreatePlanView(
+        viewModel: CreatePlanViewModel(
+            useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
+        )
+    )
 }

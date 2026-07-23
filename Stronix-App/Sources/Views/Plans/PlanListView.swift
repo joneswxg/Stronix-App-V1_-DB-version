@@ -187,14 +187,14 @@ struct PlanListView: View {
             }
         }
         .fullScreenCover(isPresented: $navigateToCreatePlan) {
-            CreatePlanView()
-                .onDisappear {
-                    if authService.isLoggedIn {
-                        Task {
-                            await viewModel.refresh()
-                        }
-                    }
+            CreatePlanView(
+                viewModel: CreatePlanViewModel(
+                    useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
+                ),
+                onSaveSucceeded: {
+                    await viewModel.refreshPersonalPlansOnly()
                 }
+            )
         }
         .sheet(isPresented: $showLogin) {
             LoginView()
