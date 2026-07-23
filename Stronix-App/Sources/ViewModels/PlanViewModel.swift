@@ -17,14 +17,17 @@ final class PlanViewModel: ObservableObject {
     @Published var isLoadingPlanDetail = false
     @Published var errorMessage: String?
     @Published var showError = false
+    @Published private(set) var lastCopiedUserPlanID: Int?
 
     private let repository: any PlanRepository
+    private let copyTemplatePlanUseCase: CopyTemplatePlanUseCase
     private var hasLoadedInitialData = false
     private var listLoadTask: Task<Void, Never>?
     private var listLoadGeneration = 0
 
     init(repository: any PlanRepository = LocalPlanService.shared) {
         self.repository = repository
+        copyTemplatePlanUseCase = CopyTemplatePlanUseCase(repository: repository)
     }
 
     func loadInitialData() async {
@@ -92,7 +95,8 @@ final class PlanViewModel: ObservableObject {
 
     func copyTemplatePlan(_ templatePlan: TrainingPlan) async {
         do {
-            _ = try await repository.copyTemplatePlan(id: templatePlan.id)
+            let response = try await copyTemplatePlanUseCase.execute(templatePlanID: templatePlan.id)
+            lastCopiedUserPlanID = response.plan_id
             await refreshPersonalPlansOnly()
             showSuccessMessage("已将模板计划复制到个人计划")
         } catch {
@@ -186,6 +190,16 @@ final class PlanViewModel: ObservableObject {
         )
     }
 
+    func applyUpdatedPlan(_ plan: TrainingPlan) async {
+        if let index = personalPlans.firstIndex(where: { $0.id == plan.id }) {
+            personalPlans[index] = plan
+        }
+        if selectedPlan?.id == plan.id {
+            selectedPlan = plan
+        }
+        await refreshPersonalPlansOnly()
+    }
+
     func refreshPersonalPlansOnly() async {
         await loadPersonalPlans()
     }
@@ -198,6 +212,7 @@ final class PlanViewModel: ObservableObject {
         templatePlans = []
         personalPlans = []
         selectedPlan = nil
+        lastCopiedUserPlanID = nil
         isLoadingTemplates = false
         isLoadingPersonal = false
         isLoadingPlanDetail = false

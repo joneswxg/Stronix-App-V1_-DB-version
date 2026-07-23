@@ -118,6 +118,38 @@ final class PlanRepositoryTests: XCTestCase {
         XCTAssertThrowsError(try repository.userPlanDetail(id: result.plan_id, ownerID: otherOwnerID))
     }
 
+    func testOtherUserCannotMutateCopiedPlan() throws {
+        let templateBefore = try repository.templatePlanDetail(id: 1)
+        let result = try repository.copyTemplatePlan(id: templateBefore.id, ownerID: ownerID)
+        let copiedPlanBefore = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
+        let actionID = try XCTUnwrap(copiedPlanBefore.actions?.first?.id)
+
+        XCTAssertThrowsError(
+            try repository.updateUserPlan(
+                id: result.plan_id,
+                planData: UpdatePlanRequest(
+                    name: "另一用户的编辑",
+                    actions: [
+                        UpdatePlanAction(
+                            action_id: actionID,
+                            order: 1,
+                            sets: [UpdatePlanSet(order: 1, weight: 20, reps: 8)]
+                        )
+                    ]
+                ),
+                ownerID: otherOwnerID
+            )
+        )
+        XCTAssertThrowsError(try repository.deleteUserPlan(id: result.plan_id, ownerID: otherOwnerID))
+
+        let copiedPlanAfter = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
+        let templateAfter = try repository.templatePlanDetail(id: templateBefore.id)
+        XCTAssertEqual(copiedPlanAfter.name, copiedPlanBefore.name)
+        XCTAssertEqual(copiedPlanAfter.actions?.map(\.id), copiedPlanBefore.actions?.map(\.id))
+        XCTAssertEqual(templateAfter.name, templateBefore.name)
+        XCTAssertEqual(templateAfter.actions?.map(\.id), templateBefore.actions?.map(\.id))
+    }
+
     func testUserPlanListIncludesEveryActionAndMatchesDetail() throws {
         let source = try repository.templatePlanDetail(id: 1)
         let actionID = try XCTUnwrap(source.actions?.first?.id)
