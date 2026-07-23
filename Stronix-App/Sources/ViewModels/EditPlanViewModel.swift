@@ -132,4 +132,18 @@ struct EditPlanSet: Identifiable {
     var rightWeight: Double
 }
 
-typealias EditingSet = EditPlanSet
+extension EditPlanAction: PlanFormAction {
+    typealias SetValue = EditPlanSet
+
+    var formNote: String {
+        get { note }
+        set { note = newValue }
+    }
+
+    var recordsBilateral: Bool {
+        get { recordBilateral }
+        set { recordBilateral = newValue }
+    }
+}
+
+extension EditPlanSet: PlanFormSet { }

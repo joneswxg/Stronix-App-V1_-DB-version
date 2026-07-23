@@ -2,39 +2,48 @@ import SwiftUI
 import UIKit
 import Combine
 
-// MARK: - 数据模型
-struct PlanAction: Identifiable {
+struct PlanAction: Identifiable, PlanFormAction {
     let id: Int
-    let actionId: Int // 真正的动作ID，用于保存到数据库
+    let actionId: Int
     let name: String
     let imageUrl: String
-    let nameEn: String // 新增英文名
-    let bodyPartId: Int // 新增部位ID
-    let equipmentId: Int // 新增器材ID
-    let targetMuscleIds: [Int] // 新增目标肌肉组
+    let nameEn: String
+    let bodyPartId: Int
+    let equipmentId: Int
+    let targetMuscleIds: [Int]
     var sets: [PlanSet]
-    var restTime: Int = 60 // 默认休息时间60秒
-    var notes: String = ""
-    var isExpanded: Bool = false
-    var isLeftRightMode: Bool = false // 新增：是否启用左右模式
+    var restTime = 60
+    var notes = ""
+    var isExpanded = false
+    var isLeftRightMode = false
+
+    typealias SetValue = PlanSet
+
+    var formNote: String {
+        get { notes }
+        set { notes = newValue }
+    }
+
+    var recordsBilateral: Bool {
+        get { isLeftRightMode }
+        set { isLeftRightMode = newValue }
+    }
 }
 
-struct PlanSet: Identifiable {
+struct PlanSet: Identifiable, PlanFormSet {
     let id = UUID()
-    var weight: Double = 0.0
-    var leftWeight: Double = 0.0  // 新增：左侧重量
-    var rightWeight: Double = 0.0 // 新增：右侧重量
-    var reps: Int = 0
-    var notes: String = ""
-    var isCompleted: Bool = false
-    var hasNotes: Bool = false // 新增：是否有备注
+    var weight = 0.0
+    var leftWeight = 0.0
+    var rightWeight = 0.0
+    var reps = 0
+    var notes = ""
+    var isCompleted = false
+    var hasNotes = false
 }
 
 enum PlanWeightUnit: String, CaseIterable {
     case kg = "kg"
     case lbs = "lbs"
-
-    var displayName: String { rawValue }
 }
 
 struct CreatePlanView: View {
@@ -42,21 +51,14 @@ struct CreatePlanView: View {
     @Environment(\.theme) private var theme: AppTheme
     @StateObject private var viewModel: CreatePlanViewModel
     @State private var showActionSelect = false
-    @State private var showPlanMenu = false
     @State private var weightUnit: PlanWeightUnit = .kg
     @State private var selectedTargetMuscleId = 0
-    private let onSaveSucceeded: () async -> Void
-
     @StateObject private var keyboardManager = CustomKeyboardManager()
+    private let onSaveSucceeded: () async -> Void
 
     init(viewModel: CreatePlanViewModel, onSaveSucceeded: @escaping () async -> Void = {}) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onSaveSucceeded = onSaveSucceeded
-    }
-    
-    // 隐藏系统键盘的方法
-    private func hideSystemKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     var body: some View {
@@ -64,94 +66,70 @@ struct CreatePlanView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(spacing: 16) {
-                        // 计划名称和菜单
-                        planNameSection
-                        
-                        // 计划描述（条件显示）
-                        if viewModel.showPlanNote {
-                            planNoteSection
-                        }
-                     
-                        // 动作列表
+                        PlanFormNameEditor(
+                            name: $viewModel.planName,
+                            description: $viewModel.planNote,
+                            isDescriptionVisible: $viewModel.showPlanNote,
+                            style: .optionalMenu,
+                            isDisabled: viewModel.isSaving,
+                            dismissNumericKeyboard: keyboardManager.cancelKeyboard
+                        )
+
                         if !viewModel.selectedActions.isEmpty {
-                            actionListSection
+                            PlanFormActionList(
+                                actions: $viewModel.selectedActions,
+                                weightUnit: weightUnit.rawValue,
+                                allowsUnitToggle: true,
+                                notesConfiguration: PlanFormSetNotesConfiguration(
+                                    hasNotes: { $0.hasNotes },
+                                    toggleNotes: { set in
+                                        set.hasNotes.toggle()
+                                        if !set.hasNotes { set.notes = "" }
+                                    },
+                                    note: { $0.notes },
+                                    updateNote: { set, note in set.notes = note }
+                                ),
+                                usesCircularImage: true,
+                                isDisabled: viewModel.isSaving,
+                                keyboardManager: keyboardManager,
+                                makeSet: PlanSet.init,
+                                onDelete: deleteAction,
+                                onToggleUnit: toggleWeightUnit,
+                                actionDetail: actionDetail
+                            )
                         }
-                        
-                        // 添加动作按钮（始终显示）
+
                         addActionButton
-                        
-                        // 底部间距
                         Spacer(minLength: 50)
-                        
-                        // 为键盘预留空间
-                        if keyboardManager.isShowing {
-                            Spacer()
-                                .frame(height: 280)
-                        }
+                        if keyboardManager.isShowing { Spacer().frame(height: 280) }
                     }
                     .padding(.top, 20)
                 }
                 .background(theme.background)
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    // 点击空白区域隐藏键盘
-                    if keyboardManager.isShowing {
-                        keyboardManager.cancelKeyboard()
-                        hideSystemKeyboard()
-                    }
-                }
+                .onTapGesture { dismissKeyboard() }
                 .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                    // 系统键盘即将显示时，隐藏自定义键盘
-                    if keyboardManager.isShowing {
-                        keyboardManager.cancelKeyboard()
-                    }
+                    if keyboardManager.isShowing { keyboardManager.cancelKeyboard() }
                 }
-                
-                // 自定义键盘
-                if keyboardManager.isShowing {
-                    CustomNumberKeyboard(
-                        value: $keyboardManager.currentValue,
-                        isShowing: $keyboardManager.isShowing,
-                        step: keyboardManager.step,
-                        maxValue: keyboardManager.maxValue,
-                        isInteger: keyboardManager.isInteger,
-                        keyboardManager: keyboardManager
-                    )
-                    .onChange(of: keyboardManager.isShowing) { _, isShowing in
-                        if !isShowing {
-                            hideSystemKeyboard()
-                        }
-                    }
-                }
+
+                if keyboardManager.isShowing { keyboard }
             }
             .navigationTitle("创建计划")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                    .disabled(viewModel.isSaving)
+                    Button("取消", action: dismiss.callAsFunction).disabled(viewModel.isSaving)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        Task {
-                            await viewModel.save()
-                        }
-                    }) {
-                        HStack(spacing: 4) {
-                            if viewModel.isSaving {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                            } else {
-                                Text("保存")
-                            }
-                        }
+                    PlanFormSaveButton(
+                        isSaving: viewModel.isSaving,
+                        isEnabled: !viewModel.planName.isEmpty && !viewModel.selectedActions.isEmpty
+                    ) {
+                        Task { await viewModel.save() }
                     }
-                    .disabled(viewModel.planName.isEmpty || viewModel.selectedActions.isEmpty || viewModel.isSaving)
                 }
-            })
+            }
             .alert("错误", isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.dismissError() } }
@@ -178,808 +156,90 @@ struct CreatePlanView: View {
         }
         .sheet(isPresented: $showActionSelect) {
             PlanActionSelectView(
-                onActionSelected: { actionInfo in
-                    addSelectedActionInfo(actionInfo)
-                },
-                existingActionIds: Set(viewModel.selectedActions.map { $0.actionId })
+                onActionSelected: addSelectedActionInfo,
+                existingActionIds: Set(viewModel.selectedActions.map(\.actionId))
             )
         }
     }
-    
-    // MARK: - 计划名称区域
-    private var planNameSection: some View {
-        HStack(spacing: 12) {
-            TextField("输入计划名称", text: $viewModel.planName)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .disabled(viewModel.isSaving)
-                .onTapGesture {
-                    // 当点击计划名称输入框时，隐藏自定义键盘
-                    if keyboardManager.isShowing {
-                        keyboardManager.cancelKeyboard()
-                    }
-                }
-            
-            Menu {
-                if !viewModel.showPlanNote {
-                    Button(action: {
-                        viewModel.showPlanNote = true
-                    }) {
-                        Label("添加描述", systemImage: "note.text")
-                    }
-                } else {
-                    Button(action: {
-                        viewModel.showPlanNote = false
-                        viewModel.planNote = ""
-                    }) {
-                        Label("删除描述", systemImage: "trash")
-                    }
-                }
-                
-                Button(action: {
-                    // 编辑计划名称 - 可以聚焦到输入框
-                }) {
-                    Label("编辑计划名称", systemImage: "pencil")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .foregroundColor(theme.secondary)
-                    .frame(width: 30, height: 30)
-                    .background(theme.secondary.opacity(0.1))
-                    .cornerRadius(6)
-            }
-            .disabled(viewModel.isSaving)
-        }
-        .padding(.horizontal, 16)
-    }
-    
-    // MARK: - 计划描述区域
-    private var planNoteSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("添加计划描述", text: $viewModel.planNote, axis: .vertical)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .lineLimit(3...6)
-                .disabled(viewModel.isSaving)
-                .onTapGesture {
-                    // 当点击计划描述输入框时，隐藏自定义键盘
-                    if keyboardManager.isShowing {
-                        keyboardManager.cancelKeyboard()
-                    }
-                }
-        }
-        .padding(.horizontal, 16)
-    }
-    
-    // MARK: - 添加动作按钮
+
     private var addActionButton: some View {
-        Button(action: {
+        Button {
             showActionSelect = true
-        }) {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                Text("添加动作")
-            }
-            .foregroundColor(theme.primary)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(theme.surface)
-            .cornerRadius(12)
+        } label: {
+            Label("添加动作", systemImage: "plus.circle.fill")
+                .foregroundColor(theme.primary)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(theme.surface)
+                .cornerRadius(12)
         }
         .padding(.horizontal, 16)
         .disabled(viewModel.isSaving)
     }
-    
-    // MARK: - 动作列表区域
-    private var actionListSection: some View {
-        VStack(spacing: 12) {
-            ForEach(viewModel.selectedActions, id: \.id) { action in
-                PlanActionCardWrapper(
-                    action: action,
-                    selectedActions: $viewModel.selectedActions,
-                    weightUnit: weightUnit,
-                    onDelete: {
-                        deleteAction(action)
-                    },
-                    onToggleUnit: {
-                        toggleWeightUnit()
-                    },
-                    isDisabled: viewModel.isSaving,
-                    keyboardManager: keyboardManager,
-                    selectedTargetMuscleId: $selectedTargetMuscleId
-                )
-            }
+
+    private var keyboard: some View {
+        CustomNumberKeyboard(
+            value: $keyboardManager.currentValue,
+            isShowing: $keyboardManager.isShowing,
+            step: keyboardManager.step,
+            maxValue: keyboardManager.maxValue,
+            isInteger: keyboardManager.isInteger,
+            keyboardManager: keyboardManager
+        )
+        .onChange(of: keyboardManager.isShowing) { _, isShowing in
+            if !isShowing { hideSystemKeyboard() }
         }
     }
-    
-    // MARK: - 方法
-    private func addSelectedActionInfo(_ actionInfo: ActionInfo) {
-        // 将ActionInfo转换为Action
-        let action = Action(
-            id: actionInfo.id,
-            external_id: String(actionInfo.id),
-            name: actionInfo.name,
-            name_en: nil,
-            gifUrl: actionInfo.imageUrl,
-            description: nil,
-            description_en: nil,
-            difficulty: nil,
-            bodypart_id: 0,
-            equipment_id: nil,
-            is_bilateral: false,
-            target_muscle_ids: []
-        )
-        addSelectedAction(action)
+
+    private func actionDetail(_ action: PlanAction) -> AnyView {
+        AnyView(ActionDetailView(
+            action: Action(
+                id: action.actionId,
+                external_id: String(action.actionId),
+                name: action.name,
+                name_en: action.nameEn,
+                gifUrl: action.imageUrl,
+                description: nil,
+                description_en: nil,
+                difficulty: nil,
+                bodypart_id: action.bodyPartId,
+                equipment_id: action.equipmentId,
+                is_bilateral: false,
+                target_muscle_ids: action.targetMuscleIds
+            ),
+            selectedTargetMuscleId: $selectedTargetMuscleId
+        ))
     }
-    
-    private func addSelectedAction(_ action: Action) {
-        let newAction = PlanAction(
-            id: Int.random(in: 100000...999999), // 使用随机ID避免冲突
-            actionId: action.id, // 真正的动作ID
+
+    private func addSelectedActionInfo(_ action: ActionInfo) {
+        viewModel.selectedActions.append(PlanAction(
+            id: Int.random(in: 100000...999999),
+            actionId: action.id,
             name: action.name,
-            imageUrl: action.gifUrl ?? "",
-            nameEn: action.name_en ?? "",
-            bodyPartId: action.bodypart_id,
-            equipmentId: action.equipment_id ?? 0,
-            targetMuscleIds: action.target_muscle_ids,
-            sets: [PlanSet()] // 默认添加一组
-        )
-        viewModel.selectedActions.append(newAction)
+            imageUrl: action.imageUrl,
+            nameEn: "",
+            bodyPartId: 0,
+            equipmentId: 0,
+            targetMuscleIds: [],
+            sets: [PlanSet()]
+        ))
     }
-    
+
     private func deleteAction(_ action: PlanAction) {
-        // 立即删除，不使用动画，避免竞态条件
         viewModel.selectedActions.removeAll { $0.id == action.id }
     }
-    
+
     private func toggleWeightUnit() {
         weightUnit = weightUnit == .kg ? .lbs : .kg
-        // 这里可以添加单位转换逻辑
     }
-}
 
-// MARK: - 动作卡片包装器
-struct PlanActionCardWrapper: View {
-    let action: PlanAction
-    @Binding var selectedActions: [PlanAction]
-    let weightUnit: PlanWeightUnit
-    let onDelete: () -> Void
-    let onToggleUnit: () -> Void
-    let isDisabled: Bool
-    let keyboardManager: CustomKeyboardManager
-    @Binding var selectedTargetMuscleId: Int
-    
-    private var actionBinding: Binding<PlanAction> {
-        Binding(
-            get: {
-                selectedActions.first { $0.id == action.id } ?? action
-            },
-            set: { newValue in
-                if let index = selectedActions.firstIndex(where: { $0.id == action.id }) {
-                    selectedActions[index] = newValue
-                }
-            }
-        )
+    private func dismissKeyboard() {
+        guard keyboardManager.isShowing else { return }
+        keyboardManager.cancelKeyboard()
+        hideSystemKeyboard()
     }
-    
-    var body: some View {
-        PlanActionCard(
-            action: actionBinding,
-            weightUnit: weightUnit,
-            onDelete: onDelete,
-            onToggleUnit: onToggleUnit,
-            isDisabled: isDisabled,
-            keyboardManager: keyboardManager,
-            selectedTargetMuscleId: $selectedTargetMuscleId
-        )
-    }
-}
 
-// MARK: - 动作卡片组件
-struct PlanActionCard: View {
-    @Environment(\.theme) private var theme: AppTheme
-    @Binding var action: PlanAction
-    let weightUnit: PlanWeightUnit
-    let onDelete: () -> Void
-    let onToggleUnit: () -> Void
-    let isDisabled: Bool
-    let keyboardManager: CustomKeyboardManager
-    @Binding var selectedTargetMuscleId: Int
-    
-    @State private var showActionMenu = false
-    @State private var showSetMenu = false
-    @State private var selectedSetIndex: Int?
-    @State private var showRestTimer = false // 新增：休息计时器设置弹窗
-    @State private var minutes: Int = 1 // 新增：分钟设置
-    @State private var seconds: Int = 0 // 新增：秒数设置
-    @State private var showActionDetail = false // 新增：显示动作详情
-    @State private var showDeleteAlert = false // 新增：删除确认弹窗
-    @State private var showDeleteSetAlert = false // 新增：删除组确认弹窗
-    @State private var setToDelete: PlanSet? = nil // 新增：要删除的组
-    
-    // 计算总容量
-    private var totalVolume: Int {
-        action.sets.reduce(0) { total, set in
-            if action.isLeftRightMode {
-                let leftWeight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
-                let rightWeight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
-                let volume = (leftWeight + rightWeight) * Double(set.reps)
-                return total + Int(volume.isNaN || volume.isInfinite ? 0.0 : volume)
-            } else {
-                let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
-                let volume = weight * Double(set.reps)
-                return total + Int(volume.isNaN || volume.isInfinite ? 0.0 : volume)
-            }
-        }
-    }
-    
-    // 隐藏系统键盘的方法
     private func hideSystemKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // 动作头部
-            actionHeader
-            
-            // 组数详情（展开时显示）
-            if action.isExpanded {
-                setsSection
-            }
-        }
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .padding(.horizontal, 16)
-        .sheet(isPresented: $showRestTimer) {
-            restTimerSettingSheet
-        }
-        .navigationDestination(isPresented: $showActionDetail) {
-            ActionDetailView(
-                action: Action(
-                    id: action.actionId, // 使用真正的动作ID
-                    external_id: String(action.actionId),
-                    name: action.name,
-                    name_en: action.nameEn,
-                    gifUrl: action.imageUrl,
-                    description: nil,
-                    description_en: nil,
-                    difficulty: nil,
-                    bodypart_id: action.bodyPartId,
-                    equipment_id: action.equipmentId,
-                    is_bilateral: false,
-                    target_muscle_ids: action.targetMuscleIds
-                ),
-                selectedTargetMuscleId: $selectedTargetMuscleId
-            )
-        }
-        .alert("确认删除", isPresented: $showDeleteAlert) {
-            Button("取消", role: .cancel) { }
-            Button("删除", role: .destructive) {
-                onDelete()
-            }
-        } message: {
-            Text("确定要删除这个训练动作吗？")
-        }
-        .alert("确认删除", isPresented: $showDeleteSetAlert) {
-            Button("取消", role: .cancel) { 
-                setToDelete = nil
-            }
-            Button("删除", role: .destructive) {
-                if let setToDelete = setToDelete {
-                    action.sets.removeAll { $0.id == setToDelete.id }
-                }
-                setToDelete = nil
-            }
-        } message: {
-            Text("确定要删除这组吗？")
-        }
-    }
-    
-    // 休息计时器设置表单
-    private var restTimerSettingSheet: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("设置休息时间")) {
-                    Stepper("分钟: \(minutes)", value: $minutes, in: 0...10)
-                    Stepper("秒数: \(seconds)", value: $seconds, in: 0...59)
-                }
-            }
-            .navigationTitle("休息计时器")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        showRestTimer = false
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("确定") {
-                        action.restTime = minutes * 60 + seconds
-                        showRestTimer = false
-                    }
-                }
-            })
-        }
-    }
-    
-    // MARK: - 动作头部
-    private var actionHeader: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                // 动作图片 - 使用本地图片加载
-                Group {
-                    if let uiImage = loadLocalActionImage(fileName: action.imageUrl) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Rectangle()
-                            .fill(theme.secondary.opacity(0.3))
-                            .overlay(
-                                Image(systemName: "figure.strengthtraining.traditional")
-                                    .foregroundColor(theme.secondary)
-                            )
-                    }
-                }
-                .frame(width: 50, height: 50)
-                .clipShape(Circle())
-                
-                // 动作信息
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(action.name)
-                            .font(.system(size: 16, weight: .medium))
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        // 容量显示
-                        Text("\(totalVolume)")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(theme.secondary)
-                    }
-                    
-                    HStack {
-                        Text("\(action.sets.count)组")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.secondary)
-                        
-                        Spacer()
-                        
-                        // 左右模式开关
-                        Toggle(isOn: $action.isLeftRightMode) {
-                            Text("记录左右")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondary)
-                        }
-                        .tint(theme.primary)
-                        .scaleEffect(0.8)
-                        .disabled(isDisabled)
-                        .onChange(of: action.isLeftRightMode) { _, newValue in
-                            // 切换模式时清空重量数据
-                            for index in action.sets.indices {
-                                if newValue {
-                                    // 切换到左右模式，清空普通重量
-                                    action.sets[index].weight = 0.0
-                                } else {
-                                    // 切换到普通模式，清空左右重量
-                                    action.sets[index].leftWeight = 0.0
-                                    action.sets[index].rightWeight = 0.0
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // 设置菜单
-                Menu {
-                    Button(action: {
-                        showActionDetail = true
-                    }) {
-                        Label("动作详情", systemImage: "info.circle")
-                    }
-                    
-                    Button(action: {
-                        minutes = action.restTime / 60
-                        seconds = action.restTime % 60
-                        showRestTimer = true
-                    }) {
-                        Label("设置休息计时器", systemImage: "timer")
-                    }
-                    
-                    Button(action: onToggleUnit) {
-                        Label("切换单位 (\(weightUnit.displayName))", systemImage: "arrow.2.squarepath")
-                    }
-                    
-                    Button(action: {
-                        showDeleteAlert = true
-                    }) {
-                        Label("删除动作", systemImage: "trash")
-                    }
-                    .foregroundColor(.red)
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                        .foregroundColor(theme.primary)
-                        .font(.system(size: 20))
-                }
-                .disabled(isDisabled)
-            }
-            
-            // 如果展开,显示表头
-            if action.isExpanded {
-                Divider()
-                    .padding(.vertical, 4)
-                
-                tableHeader
-            }
-        }
-        .padding()
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if !isDisabled {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    action.isExpanded.toggle()
-                }
-            }
-        }
-    }
-    
-    // 表头组件
-    private var tableHeader: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 16) {
-                Text("组")
-                    .frame(width: 30, height: 36, alignment: .center)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(theme.secondary)
-                    .background(theme.surface)
-                    .cornerRadius(6)
-
-                if action.isLeftRightMode {
-                    Text("左\(weightUnit.displayName)")
-                        .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(theme.secondary)
-                        .background(theme.surface)
-                        .cornerRadius(6)
-                    
-                    Text("右\(weightUnit.displayName)")
-                        .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(theme.secondary)
-                        .background(theme.surface)
-                        .cornerRadius(6)
-                } else {
-                    Text(weightUnit.displayName)
-                        .frame(width: 60, height: 36, alignment: .center)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(theme.secondary)
-                        .background(theme.surface)
-                        .cornerRadius(6)
-                }
-                
-                Text("次数")
-                    .frame(width: 60, height: 36, alignment: .center)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(theme.secondary)
-                    .background(theme.surface)
-                    .cornerRadius(6)
-                
-                Spacer()
-            }
-            .padding(.leading, 5)
-            .padding(.trailing, 16)
-        }
-        .padding(.leading, 20)
-        .padding(.trailing, 16)
-    }
-    
-    // MARK: - 组数区域
-    private var setsSection: some View {
-        VStack(spacing: 16) {
-            // 组数列表
-            ForEach(action.sets.indices, id: \.self) { index in
-                setRow(set: action.sets[index], setNumber: index + 1, setIndex: index)
-            }
-            
-            // 底部按钮区域
-            HStack(spacing: 16) {
-                Button(action: {
-                    action.sets.append(PlanSet())
-                }) {
-                    Text("新增一组")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.primary)
-                }
-                .disabled(isDisabled)
-                
-                Spacer()
-                
-                Button(action: {
-                    // TODO: 显示动作历史
-                }) {
-                    Text("动作历史")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.primary)
-                }
-                .disabled(isDisabled)
-                                
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
-        }
-    }
-    
-    // MARK: - 单组行
-    private func setRow(set: PlanSet, setNumber: Int, setIndex: Int) -> some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 16) {
-                // 组数标号
-                Text("\(setNumber)")
-                    .font(.system(size: 16, weight: .medium))
-                    .frame(width: 30, height: 36, alignment: .center)
-                    .background(Color(UIColor.systemGroupedBackground))
-                    .cornerRadius(6)
-
-                if action.isLeftRightMode {
-                    // 左侧重量
-                    Button(action: {
-                        hideSystemKeyboard()
-                        let inputId = "left_weight_\(action.id)_\(set.id)"
-                        keyboardManager.showKeyboard(
-                            inputId: inputId,
-                            initialValue: set.leftWeight,
-                            isInteger: false,
-                            step: 1.0,
-                            maxValue: 999.0
-                        ) { newValue in
-                            if setIndex < action.sets.count {
-                                let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
-                                action.sets[setIndex].leftWeight = safeValue
-                            }
-                        }
-                    }) {
-                        let isActive = keyboardManager.activeInputId == "left_weight_\(action.id)_\(set.id)"
-                        let isSelected = isActive && keyboardManager.isValueSelected
-                        
-                        Text({
-                            let weight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
-                            return weight == 0 ? "0" : String(format: "%.1f", weight)
-                        }())
-                            .font(.system(size: 16))
-                            .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 60, height: 36)
-                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
-                            )
-                    }
-                    .disabled(isDisabled)
-                    
-                    // 右侧重量
-                    Button(action: {
-                        hideSystemKeyboard()
-                        let inputId = "right_weight_\(action.id)_\(set.id)"
-                        keyboardManager.showKeyboard(
-                            inputId: inputId,
-                            initialValue: set.rightWeight,
-                            isInteger: false,
-                            step: 1.0,
-                            maxValue: 999.0
-                        ) { newValue in
-                            if setIndex < action.sets.count {
-                                let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
-                                action.sets[setIndex].rightWeight = safeValue
-                            }
-                        }
-                    }) {
-                        let isActive = keyboardManager.activeInputId == "right_weight_\(action.id)_\(set.id)"
-                        let isSelected = isActive && keyboardManager.isValueSelected
-                        
-                        Text({
-                            let weight = set.rightWeight.isNaN || set.rightWeight.isInfinite ? 0.0 : set.rightWeight
-                            return weight == 0 ? "0" : String(format: "%.1f", weight)
-                        }())
-                            .font(.system(size: 16))
-                            .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 60, height: 36)
-                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
-                            )
-                    }
-                    .disabled(isDisabled)
-                } else {
-                    // 普通重量
-                    Button(action: {
-                        hideSystemKeyboard()
-                        let inputId = "weight_\(action.id)_\(set.id)"
-                        keyboardManager.showKeyboard(
-                            inputId: inputId,
-                            initialValue: set.weight,
-                            isInteger: false,
-                            step: 1.0,
-                            maxValue: 999.0
-                        ) { newValue in
-                        if setIndex < action.sets.count {
-                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
-                            action.sets[setIndex].weight = safeValue
-                        }
-                    }
-                    }) {
-                        let isActive = keyboardManager.activeInputId == "weight_\(action.id)_\(set.id)"
-                        let isSelected = isActive && keyboardManager.isValueSelected
-                        
-                        Text({
-                            let weight = set.weight.isNaN || set.weight.isInfinite ? 0.0 : set.weight
-                            return weight == 0 ? "0" : String(format: "%.1f", weight)
-                        }())
-                            .font(.system(size: 16))
-                            .foregroundColor(isSelected ? .white : .black)
-                            .frame(width: 60, height: 36)
-                            .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
-                        .cornerRadius(6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
-                        )
-                    }
-                    .disabled(isDisabled)
-                }
-                
-                // 次数输入
-                Button(action: {
-                    hideSystemKeyboard()
-                    let inputId = "reps_\(action.id)_\(set.id)"
-                    keyboardManager.showKeyboard(
-                        inputId: inputId,
-                        initialValue: Double(set.reps),
-                        isInteger: true,
-                        step: 1.0,
-                        maxValue: 999.0
-                    ) { newValue in
-                        if setIndex < action.sets.count {
-                            let safeValue = newValue.isNaN || newValue.isInfinite ? 0.0 : newValue
-                            action.sets[setIndex].reps = Int(safeValue)
-                        }
-                    }
-                }) {
-                    let isActive = keyboardManager.activeInputId == "reps_\(action.id)_\(set.id)"
-                    let isSelected = isActive && keyboardManager.isValueSelected
-                    
-                    Text("\(set.reps)")
-                        .font(.system(size: 16))
-                        .foregroundColor(isSelected ? .white : .black)
-                        .frame(width: 60, height: 36)
-                        .background(isSelected ? theme.primary : Color(UIColor.systemGroupedBackground))
-                        .cornerRadius(6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(isActive && !isSelected ? theme.primary : Color.clear, lineWidth: 2)
-                        )
-                }
-                .disabled(isDisabled)
-                
-                Spacer()
-                
-                // 组菜单
-                Menu {
-                    if set.hasNotes {
-                        Button(action: {
-                            if setIndex < action.sets.count {
-                                action.sets[setIndex].hasNotes = false
-                                action.sets[setIndex].notes = ""
-                            }
-                        }) {
-                            Label("删除备注", systemImage: "trash")
-                        }
-                        .foregroundColor(.red)
-                    } else {
-                        Button(action: {
-                            if setIndex < action.sets.count {
-                                action.sets[setIndex].hasNotes = true
-                            }
-                        }) {
-                            Label("输入备注", systemImage: "note.text")
-                        }
-                    }
-                    
-                    Button(action: {
-                        setToDelete = set
-                        showDeleteSetAlert = true
-                    }) {
-                        Label("删除", systemImage: "trash")
-                    }
-                    .foregroundColor(.red)
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(.gray)
-                        .frame(width: 30, height: 30)
-                }
-                .disabled(isDisabled)
-            }
-            .padding(.leading, 20)
-            .padding(.trailing, 16)
-            
-            // 备注输入框
-            if set.hasNotes {
-                HStack {
-                    Spacer()
-                        .frame(width: 42) // 对齐组数标号
-                    
-                    if setIndex < action.sets.count {
-                        TextField("输入备注", text: $action.sets[setIndex].notes)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .font(.system(size: 14))
-                            .disabled(isDisabled)
-                            .onTapGesture {
-                                // 当点击备注输入框时，隐藏自定义键盘
-                                if keyboardManager.isShowing {
-                                    keyboardManager.cancelKeyboard()
-                                }
-                            }
-                    }
-                    
-                    Spacer()
-                        .frame(width: 42) // 对齐菜单按钮
-                }
-            }
-        }
-        .padding(.leading, 20)
-        .padding(.trailing, 16)
-    }
-    
-    /// 从本地bundle加载动作图片
-    private func loadLocalActionImage(fileName: String) -> UIImage? {
-        // 处理完整路径格式，例如：Images/abs/exercise_1.gif
-        let cleanPath = fileName.replacingOccurrences(of: ".gif", with: "")
-        
-        // 尝试直接使用完整路径
-        if let url = Bundle.main.url(forResource: cleanPath, withExtension: "gif"),
-           let data = try? Data(contentsOf: url),
-           let image = UIImage(data: data) {
-            return image
-        }
-        
-        // 备用方案：提取文件名
-        let justFileName = URL(fileURLWithPath: fileName).lastPathComponent.replacingOccurrences(of: ".gif", with: "")
-        
-        // 尝试从不同的bundle路径加载图片
-        let possiblePaths = [
-            "Images/abs/\(justFileName)",
-            "Images/pectorals/\(justFileName)",
-            "Images/biceps/\(justFileName)",
-            "Images/triceps/\(justFileName)",
-            "Images/delts/\(justFileName)",
-            "Images/lats/\(justFileName)",
-            "Images/quads/\(justFileName)",
-            "Images/hamstrings/\(justFileName)",
-            "Images/glutes/\(justFileName)",
-            "Images/calves/\(justFileName)",
-            "Images/forearms/\(justFileName)",
-            "Images/traps/\(justFileName)",
-            "Images/cardiovascular system/\(justFileName)",
-            "Images/spine/\(justFileName)",
-            "Images/upper back/\(justFileName)",
-            "Images/serratus anterior/\(justFileName)",
-            "Images/levator scapulae/\(justFileName)",
-            "Images/adductors/\(justFileName)",
-            "Images/abductors/\(justFileName)",
-            justFileName
-        ]
-        
-        for path in possiblePaths {
-            if let url = Bundle.main.url(forResource: path, withExtension: "gif"),
-               let data = try? Data(contentsOf: url),
-               let image = UIImage(data: data) {
-                return image
-            }
-        }
-        
-        return nil
     }
 }

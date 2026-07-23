@@ -111,6 +111,7 @@
 				Views/MainTabView.swift,
 				Views/Plans/CreatePlanView.swift,
 				Views/Plans/EditPlanView.swift,
+				Views/Plans/PlanFormComponents.swift,
 				Views/Plans/PlanActionSelectView.swift,
 				Views/Plans/PlanListView.swift,
 				Views/Plans/QuickStartTrainingView.swift,
