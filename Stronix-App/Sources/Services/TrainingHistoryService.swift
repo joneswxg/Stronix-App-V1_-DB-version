@@ -1,7 +1,6 @@
 import Foundation
 
-protocol TrainingHistorySaving {
-    func saveTrainingHistory(_ request: SaveTrainingHistoryRequest) async throws -> SaveTrainingHistoryResponse
+protocol TrainingHistorySaving: TrainingHistoryPersisting {
     func updatePlanFromTraining(planId: Int, request: UpdatePlanFromTrainingRequest) async throws
 }
 

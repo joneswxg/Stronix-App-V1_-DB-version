@@ -31,8 +31,7 @@ protocol TrainingSessionManaging: AnyObject {
     func formattedTrainingTime() -> String
     func completedVolume() -> Double
     func totalVolume() -> Double
-    func prepareTrainingHistoryData() -> SaveTrainingHistoryRequest?
-    func preparePlanUpdateData() -> UpdatePlanFromTrainingRequest?
+    func captureCompletionSnapshot() -> TrainingCompletionSnapshot?
     func hasChangesFromOriginalPlan() -> Bool
 }
 
@@ -404,88 +403,69 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging {
     }
     
     // MARK: - 数据准备方法
-    
-    /// 准备训练历史保存数据
-    func prepareTrainingHistoryData() -> SaveTrainingHistoryRequest? {
-        guard let currentPlan = currentPlan else { return nil }
-        
+
+    func captureCompletionSnapshot() -> TrainingCompletionSnapshot? {
+        guard let currentPlan else { return nil }
+
         var details: [TrainingHistoryDetail] = []
-        
-        // 遍历所有动作和组，准备详情数据
         for action in editingActions {
             for (index, set) in action.sets.enumerated() {
-                let setId = "\(action.id)_\(set.id)"
-                let isCompleted = completedSets.contains(setId)
-                
-                let detail = TrainingHistoryDetail(
-                    action_id: action.id,
-                    set_number: index + 1,
-                    weight: action.recordBilateral ? nil : set.weight,
-                    weight_unit: "kg",
-                    reps: set.reps,
-                    difficulty: nil,
-                    left_weight: action.recordBilateral ? set.leftWeight : 0.0,
-                    right_weight: action.recordBilateral ? set.rightWeight : 0.0,
-                    is_completed: isCompleted,
-                    history_record_bilateral: action.recordBilateral  // 添加这一行
+                let setID = "\(action.id)_\(set.id)"
+                details.append(
+                    TrainingHistoryDetail(
+                        action_id: action.id,
+                        set_number: index + 1,
+                        weight: action.recordBilateral ? nil : set.weight,
+                        weight_unit: "kg",
+                        reps: set.reps,
+                        difficulty: nil,
+                        left_weight: action.recordBilateral ? set.leftWeight : 0.0,
+                        right_weight: action.recordBilateral ? set.rightWeight : 0.0,
+                        is_completed: completedSets.contains(setID),
+                        history_record_bilateral: action.recordBilateral
+                    )
                 )
-                details.append(detail)
             }
         }
-        
-        let dateFormatter = ISO8601DateFormatter()
-        let trainingDate = dateFormatter.string(from: trainingStartTime ?? Date())
-        
-        return SaveTrainingHistoryRequest(
+
+        let historyRequest = SaveTrainingHistoryRequest(
             plan_id: currentPlan.id,
-            session_id: Int.random(in: 1000...9999), // 临时生成会话ID
+            session_id: Int.random(in: 1000...9999),
             plan_name: planName,
             plan_description: currentPlan.description,
-            training_date: trainingDate,
+            training_date: ISO8601DateFormatter().string(from: trainingStartTime ?? Date()),
             volume: completedVolume(),
-            duration: Int(totalTrainingTime / 60), // 转换为分钟
+            duration: Int(totalTrainingTime / 60),
             note: nil,
             details: details
         )
-    }
-    
-    /// 准备计划更新数据
-    func preparePlanUpdateData() -> UpdatePlanFromTrainingRequest? {
-        guard let currentPlan = currentPlan else { return nil }
-        
-        var actions: [UpdatePlanActionFromTraining] = []
-        
-        for (order, action) in editingActions.enumerated() {
-            var sets: [UpdatePlanSetFromTraining] = []
-            
-            for (setOrder, set) in action.sets.enumerated() {
-                let planSet = UpdatePlanSetFromTraining(
-                    weight: action.recordBilateral ? nil : set.weight,
-                    reps: set.reps,
-                    left_weight: action.recordBilateral ? set.leftWeight : 0.0,
-                    right_weight: action.recordBilateral ? set.rightWeight : 0.0,
-                    order: setOrder + 1
-                )
-                sets.append(planSet)
-            }
-            
-            let planAction = UpdatePlanActionFromTraining(
-                action_id: action.id,
-                rest: action.restTime,
-                note: "", // 可以从setNotes中获取相关备注
-                record_bilateral: action.recordBilateral,
-                order: order + 1,
-                sets: sets
-            )
-            actions.append(planAction)
-        }
-        
-        return UpdatePlanFromTrainingRequest(
+
+        let planDraft = PlanDraft(
             name: planName,
             description: currentPlan.description,
             difficulty: currentPlan.difficulty,
             duration: currentPlan.duration,
-            actions: actions
+            actions: editingActions.map { action in
+                PlanActionDraft(
+                    actionID: action.id,
+                    rest: action.restTime,
+                    recordBilateral: action.recordBilateral,
+                    sets: action.sets.map { set in
+                        PlanSetDraft(
+                            weight: action.recordBilateral ? nil : set.weight,
+                            reps: set.reps,
+                            leftWeight: action.recordBilateral ? set.leftWeight : nil,
+                            rightWeight: action.recordBilateral ? set.rightWeight : nil
+                        )
+                    }
+                )
+            }
+        )
+
+        return TrainingCompletionSnapshot(
+            historyRequest: historyRequest,
+            planID: currentPlan.id,
+            planDraft: planDraft
         )
     }
     
