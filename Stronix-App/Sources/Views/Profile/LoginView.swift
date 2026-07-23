@@ -174,32 +174,6 @@ struct LoginView: View {
                     }
                     .padding(.top, 20)
                     
-                    // 测试账户提示
-                    VStack(spacing: 8) {
-                        Text("体验账户")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(theme.secondary)
-                        
-                        VStack(spacing: 4) {
-                            Text("邮箱: iostest@example.com")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondary)
-                            Text("密码: password123")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondary)
-                        }
-                        
-                        Button(action: {
-                            email = "iostest@example.com"
-                            password = "password123"
-                        }) {
-                            Text("使用体验账户直接登陆")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.primary)
-                        }
-                    }
-                    .padding(.top, 16)
-                    
                     Spacer()
                 }
             }
@@ -224,61 +198,36 @@ struct LoginView: View {
     }
     
     private func loginWithEmail() {
-        print("🚀 开始本地登录流程")
-        print("📧 邮箱: \(email)")
-        print("🔒 密码长度: \(password.count)")
-        
-        // 先调试检查数据库
-        localUserService.debugCheckDatabase()
-        
         Task {
             do {
-                print("🗄️ 检查本地数据库...")
                 let response = try await localUserService.login(email: email, password: password)
-                print("📨 收到登录响应: success=\(response.success), message=\(response.message)")
-                
+
                 if !response.success {
                     await MainActor.run {
                         errorMessage = response.message
                         showError = true
-                        print("❌ 登录失败: \(response.message)")
                     }
-                } else {
-                    print("✅ 本地登录成功")
-                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
-                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
-                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = error.localizedDescription
+                    errorMessage = "登录失败，请稍后重试"
                     showError = true
-                    print("❌ 登录异常: \(error)")
                 }
             }
         }
     }
-    
+
     private func loginWithWechat() {
-        print("🚀 开始微信登录流程")
-        
         Task {
             do {
                 let response = try await localUserService.loginWithWechat()
-                
+
                 if !response.success {
                     await MainActor.run {
                         errorMessage = response.message
                         showError = true
-                        print("❌ 微信登录失败: \(response.message)")
                     }
                 } else {
-                    print("✅ 微信登录成功")
-                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
-                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
-                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
-                    
-                    // 微信登录成功后自动关闭登录页面
                     await MainActor.run {
                         if localUserService.isLoggedIn {
                             dismiss()
@@ -287,9 +236,8 @@ struct LoginView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = error.localizedDescription
+                    errorMessage = "登录失败，请稍后重试"
                     showError = true
-                    print("❌ 微信登录异常: \(error)")
                 }
             }
         }

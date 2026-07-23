@@ -257,6 +257,26 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pass, verified by user on 2026-07-22
 
+## Phase 5.1: Local Password Reset Release Gate
+
+**Steps**:
+
+1. Build and launch the **Release** configuration.
+2. Open Login and select “忘记密码？”.
+3. Confirm the unavailable explanation appears immediately.
+4. Confirm there is no email, verification-code, or new-password form; resend action; success message; or route into a reset flow.
+5. Dismiss the sheet and verify normal login remains available.
+6. Review the Xcode console during this flow.
+
+**Expected**:
+
+- The sheet states that password reset is unavailable for local on-device accounts.
+- The only available action dismisses or returns to login.
+- No reset operation reports success or changes account state.
+- Console output includes no password, reset code, mail key/configuration, recipient, or mail-provider response.
+
+**Result**: Pending manual Release verification
+
 ## Phase Completion Rule
 
 For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.
