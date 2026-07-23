@@ -4,6 +4,18 @@ struct HistoryView: View {
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var themeManager: ThemeManager
     @State private var selectedHistoryTab: HistoryTab = .calendar
+    private let historyRepository: TrainingHistoryRepository
+    private let deleteHistory: (Int) async throws -> Void
+
+    init(
+        historyRepository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
+        deleteHistory: @escaping (Int) async throws -> Void = { historyID in
+            try await TrainingHistoryService.shared.deleteTrainingHistory(historyId: historyID)
+        }
+    ) {
+        self.historyRepository = historyRepository
+        self.deleteHistory = deleteHistory
+    }
 
     enum HistoryTab: String, CaseIterable, Identifiable {
         case calendar = "日历"
@@ -62,7 +74,10 @@ struct HistoryView: View {
                 // 根据选择显示对应内容
                 switch selectedHistoryTab {
                 case .calendar:
-                    CalendarView()
+                    CalendarView(
+                        repository: historyRepository,
+                        deleteHistory: deleteHistory
+                    )
                 case .statistics:
                     StatisticsView()
                 }

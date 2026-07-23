@@ -30,8 +30,21 @@ struct CalendarView: View {
     @State private var selectedDateString: String?
     @State private var trainingDatesInMonth: Set<String> = []
     @State private var isLoadingMonth = false
-    
-    @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
+    @State private var loadErrorMessage: String?
+
+    private let repository: TrainingHistoryRepository
+    private let ownerIDProvider: () -> Int?
+    private let deleteHistory: (Int) async throws -> Void
+
+    init(
+        repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
+        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id },
+        deleteHistory: @escaping (Int) async throws -> Void = { _ in }
+    ) {
+        self.repository = repository
+        self.ownerIDProvider = ownerIDProvider
+        self.deleteHistory = deleteHistory
+    }
 
 // 模拟训练数据结构
 struct TrainingDayData: Identifiable {
@@ -55,43 +68,31 @@ struct TrainingDayData: Identifiable {
     
     // 加载当前月份的训练日期
     private func loadTrainingDatesForCurrentMonth() {
+        guard let ownerID = ownerIDProvider() else {
+            loadErrorMessage = AppError.authenticationRequired.userMessage
+            return
+        }
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: currentDate)
+        guard let year = components.year, let month = components.month else { return }
+        let startDate = String(format: "%04d-%02d-01", year, month)
+        let daysInMonth = calendar.range(of: .day, in: .month, for: currentDate)?.count ?? 31
+        let endDate = String(format: "%04d-%02d-%02d", year, month, daysInMonth)
+        let range = TrainingHistoryDateRange(startDate: startDate, endDate: endDate)
+        let repository = repository
+
         Task {
-            await MainActor.run {
-                isLoadingMonth = true
-            }
-            
+            isLoadingMonth = true
+            loadErrorMessage = nil
             do {
-                let calendar = Calendar.current
-                let components = calendar.dateComponents([.year, .month], from: currentDate)
-                guard let year = components.year, let month = components.month else { return }
-                
-                // 计算当月第一天和最后一天
-                let startDate = String(format: "%04d-%02d-01", year, month)
-                let daysInMonth = calendar.range(of: .day, in: .month, for: currentDate)?.count ?? 31
-                let endDate = String(format: "%04d-%02d-%02d", year, month, daysInMonth)
-                
-                print("🗓️ 加载月份训练日期: \(startDate) 到 \(endDate)")
-                
-                // 使用新的API获取训练日期
-                let response = try await trainingHistoryService.getTrainingDates(
-                    startDate: startDate,
-                    endDate: endDate
-                )
-                
-                // 转换为Set便于快速查找
-                let trainingDates = Set(response.training_dates)
-                
-                await MainActor.run {
-                    self.trainingDatesInMonth = trainingDates
-                    self.isLoadingMonth = false
-                    print("✅ 当月训练日期加载完成: \(trainingDates.sorted())")
-                }
+                let dates = try await Task.detached {
+                    try repository.trainingDates(ownerID: ownerID, in: range)
+                }.value
+                trainingDatesInMonth = Set(dates.dates)
             } catch {
-                await MainActor.run {
-                    self.isLoadingMonth = false
-                    print("❌ 加载当月训练日期失败: \(error)")
-                }
+                loadErrorMessage = AppError.map(error).userMessage
             }
+            isLoadingMonth = false
         }
     }
 
@@ -103,6 +104,15 @@ struct TrainingDayData: Identifiable {
             if isLoadingMonth {
                 ProgressView("加载当月训练数据...")
                     .padding()
+            } else if let loadErrorMessage {
+                VStack(spacing: 12) {
+                    Text(loadErrorMessage)
+                        .font(.caption)
+                        .foregroundColor(theme.secondary)
+                    Button("重试", action: loadTrainingDatesForCurrentMonth)
+                        .foregroundColor(theme.primary)
+                }
+                .padding()
             }
             
             calendarGrid
@@ -152,7 +162,12 @@ struct TrainingDayData: Identifiable {
     private var calendarGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
             ForEach(getDaysInMonth(date: currentDate), id: \.self) { calendarDate in
-                NavigationLink(destination: HistoryListView(selectedDateString: calendarDate.dateString)) {
+                NavigationLink(destination: HistoryListView(
+                    selectedDateString: calendarDate.dateString,
+                    repository: repository,
+                    ownerIDProvider: ownerIDProvider,
+                    deleteHistory: deleteHistory
+                )) {
                     CalendarDayView(
                         calendarDate: calendarDate,
                         currentDate: currentDate,
