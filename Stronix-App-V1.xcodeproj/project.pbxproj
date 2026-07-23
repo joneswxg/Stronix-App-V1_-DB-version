@@ -80,6 +80,7 @@
 				Utilities/AppError.swift,
 				Utilities/Constants/APIConfig.swift,
 				Utilities/Constants/DBConfig.swift,
+				UseCases/CompleteTrainingUseCase.swift,
 				UseCases/CopyTemplatePlanUseCase.swift,
 				UseCases/CreateUserPlanUseCase.swift,
 				ViewModels/ActionHistoryViewModel.swift,

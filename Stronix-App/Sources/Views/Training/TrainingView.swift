@@ -159,7 +159,7 @@ struct TrainingView: View {
             }
             Button("更新") {
                 Task {
-                    if await viewModel.saveHistoryAndUpdatePlan(planID: plan.id) {
+                    if await viewModel.saveHistoryAndUpdatePlan() {
                         dismiss()
                     } else {
                         showCompletionError = true
@@ -170,7 +170,18 @@ struct TrainingView: View {
             Text("检测到训练计划有变动，是否更新训练计划？")
         }
         .alert("完成训练失败", isPresented: $showCompletionError) {
-            Button("确定") { }
+            if viewModel.canRetryPlanUpdate {
+                Button("重试更新计划") {
+                    Task {
+                        if await viewModel.retryCompletion() {
+                            dismiss()
+                        } else {
+                            showCompletionError = true
+                        }
+                    }
+                }
+            }
+            Button("确定", role: .cancel) { }
         } message: {
             Text(viewModel.completionError ?? "未知错误")
         }

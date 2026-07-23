@@ -315,17 +315,22 @@ final class TrainingViewModel: ObservableObject {
     @Published private(set) var isRestTimerPaused: Bool
     @Published private(set) var isCompleting = false
     @Published private(set) var completionError: String?
+    @Published private(set) var canRetryPlanUpdate = false
 
     private let session: any TrainingSessionManaging
-    private let historySaver: any TrainingHistorySaving
+    private let completionUseCase: any CompleteTrainingExecuting
+    private var pendingCompletionSnapshot: TrainingCompletionSnapshot?
     private var sessionChange: AnyCancellable?
 
     init(
         session: any TrainingSessionManaging = TrainingSessionManager.shared,
-        historySaver: any TrainingHistorySaving = TrainingHistoryService.shared
+        completionUseCase: any CompleteTrainingExecuting = CompleteTrainingUseCase(
+            historyPersistence: TrainingHistoryService.shared,
+            planWriter: UserPlanWriter(repository: LocalPlanService.shared)
+        )
     ) {
         self.session = session
-        self.historySaver = historySaver
+        self.completionUseCase = completionUseCase
         editingActions = session.editingActions
         completedSets = session.completedSets
         setNotes = session.setNotes
@@ -417,6 +422,8 @@ final class TrainingViewModel: ObservableObject {
     }
 
     func cancelTraining() {
+        pendingCompletionSnapshot = nil
+        canRetryPlanUpdate = false
         session.stopTraining()
     }
 
@@ -425,35 +432,51 @@ final class TrainingViewModel: ObservableObject {
     }
 
     func saveHistoryOnly() async -> Bool {
-        await complete(updatePlan: false)
+        await complete(choice: .historyOnly)
     }
 
-    func saveHistoryAndUpdatePlan(planID: Int) async -> Bool {
-        await complete(updatePlan: true, planID: planID)
+    func saveHistoryAndUpdatePlan() async -> Bool {
+        await complete(choice: .saveHistoryAndUpdatePlan)
     }
 
-    private func complete(updatePlan: Bool, planID: Int? = nil) async -> Bool {
+    func retryCompletion() async -> Bool {
+        guard let pendingCompletionSnapshot else { return false }
+        return await complete(snapshot: pendingCompletionSnapshot, choice: .saveHistoryAndUpdatePlan)
+    }
+
+    private func complete(choice: TrainingCompletionChoice) async -> Bool {
+        guard let snapshot = pendingCompletionSnapshot ?? session.captureCompletionSnapshot() else {
+            completionError = "无法保存训练记录"
+            return false
+        }
+        pendingCompletionSnapshot = snapshot
+        return await complete(snapshot: snapshot, choice: choice)
+    }
+
+    private func complete(snapshot: TrainingCompletionSnapshot, choice: TrainingCompletionChoice) async -> Bool {
         guard !isCompleting else { return false }
 
         isCompleting = true
         completionError = nil
+        canRetryPlanUpdate = false
         defer { isCompleting = false }
 
-        do {
-            if let request = session.prepareTrainingHistoryData() {
-                _ = try await historySaver.saveTrainingHistory(request)
-            }
-            if updatePlan, let planID, let request = session.preparePlanUpdateData() {
-                try await historySaver.updatePlanFromTraining(planId: planID, request: request)
-            }
+        switch await completionUseCase.execute(snapshot: snapshot, choice: choice) {
+        case .completed:
+            pendingCompletionSnapshot = nil
+            canRetryPlanUpdate = false
             session.completeTraining()
             return true
-        } catch {
-            completionError = updatePlan
-                ? "更新训练计划失败: \(AppError.map(error).userMessage)"
-                : "保存训练记录失败: \(AppError.map(error).userMessage)"
-            return false
+        case .historySaveFailed(let error):
+            completionError = "保存训练记录失败: \(AppError.map(error).userMessage)"
+        case .historySavedPlanUpdateFailed(let error):
+            canRetryPlanUpdate = true
+            completionError = "训练记录已保存，更新训练计划失败: \(AppError.map(error).userMessage)"
+        case .planUpdateUnavailable:
+            completionError = "无法更新训练计划"
         }
+
+        return false
     }
 
     private func refresh() {

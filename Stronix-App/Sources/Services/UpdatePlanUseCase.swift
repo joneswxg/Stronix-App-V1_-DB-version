@@ -21,7 +21,7 @@ struct UpdatePlanUseCase: UpdatePlanExecuting {
     }
 }
 
-private extension UpdatePlanRequest {
+extension UpdatePlanRequest {
     init(draft: PlanDraft) {
         self.init(
             name: draft.name,
