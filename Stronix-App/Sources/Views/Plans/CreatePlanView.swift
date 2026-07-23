@@ -339,63 +339,34 @@ struct CreatePlanView: View {
         errorMessage = ""
         
         do {
-            // 构建请求数据
-            let planData = CreatePlanRequest(
+            let draft = PlanDraft(
                 name: planName,
                 description: planNote.isEmpty ? nil : planNote,
-                difficulty: nil, // 可以后续添加难度选择
-                duration: nil,   // 可以后续添加时长估算
-                actions: selectedActions.enumerated().map { (index, action) in
-                    CreatePlanAction(
-                        action_id: action.actionId, // 使用真正的动作ID
-                        order: index + 1,
+                actions: selectedActions.map { action in
+                    PlanActionDraft(
+                        actionID: action.actionId,
                         rest: action.restTime,
                         note: action.notes,
-                        record_bilateral: action.isLeftRightMode,
-                        sets: action.sets.enumerated().map { (setIndex, set) in
-                            CreatePlanSet(
-                                set_number: setIndex + 1,
+                        recordBilateral: action.isLeftRightMode,
+                        sets: action.sets.map { set in
+                            PlanSetDraft(
                                 weight: action.isLeftRightMode ? nil : set.weight,
                                 reps: set.reps,
-                                left_weight: action.isLeftRightMode ? set.leftWeight : nil,
-                                right_weight: action.isLeftRightMode ? set.rightWeight : nil
+                                leftWeight: action.isLeftRightMode ? set.leftWeight : nil,
+                                rightWeight: action.isLeftRightMode ? set.rightWeight : nil,
+                                notes: set.notes.isEmpty ? nil : set.notes
                             )
                         }
                     )
                 }
             )
             
-            // 调用本地服务保存计划
-            let planDict: [String: Any] = [
-                "name": planData.name,
-                "description": planData.description ?? "",
-                "difficulty": planData.difficulty ?? "",
-                "duration": planData.duration ?? 0,
-                "actions": planData.actions.map { action in
-                    [
-                        "action_id": action.action_id, // 这里已经是正确的actionId
-                        "rest": action.rest,
-                        "note": action.note ?? "",
-                        "record_bilateral": action.record_bilateral,
-                        "sets": action.sets.map { set in
-                            [
-                                "set_number": set.set_number,
-                                "weight": set.weight ?? 0.0,
-                                "reps": set.reps,
-                                "left_weight": set.left_weight ?? 0.0,
-                                "right_weight": set.right_weight ?? 0.0
-                            ]
-                        }
-                    ]
-                }
-            ]
-            
             // 获取当前用户ID
             guard let currentUser = LocalUserService.shared.currentUser else {
                 throw LocalPlanError.unauthorized("用户未登录")
             }
             
-            let response = try await localPlanService.createPlan(planDict, user_id: currentUser.id)
+            let response = try await localPlanService.createPlan(draft, user_id: currentUser.id)
             
             print("创建计划成功，计划ID: \(response.plan_id)")
             

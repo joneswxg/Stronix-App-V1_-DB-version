@@ -279,6 +279,94 @@ struct CreatePlanResponse {
     }
 }
 
+/// Typed User Plan input used at the persistence boundary.
+struct PlanDraft: Equatable {
+    let name: String
+    let description: String?
+    let difficulty: String?
+    let duration: Int?
+    let actions: [PlanActionDraft]
+
+    init(
+        name: String,
+        description: String? = nil,
+        difficulty: String? = nil,
+        duration: Int? = nil,
+        actions: [PlanActionDraft] = []
+    ) {
+        self.name = name
+        self.description = description
+        self.difficulty = difficulty
+        self.duration = duration
+        self.actions = actions
+    }
+
+    func validate(language: String = "zh_CN") throws {
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw LocalPlanError.planNameEmpty(get_error_message("PLAN_NAME_EMPTY", language: language))
+        }
+        guard !actions.isEmpty else {
+            throw LocalPlanError.noActions(get_error_message("NO_ACTIONS", language: language))
+        }
+        guard actions.allSatisfy({ action in
+            !action.sets.isEmpty &&
+                action.rest >= 0 &&
+                action.sets.allSatisfy { set in
+                    set.reps > 0 &&
+                        [set.weight, set.leftWeight, set.rightWeight]
+                        .compactMap { $0 }
+                        .allSatisfy { $0.isFinite && $0 >= 0 }
+                }
+        }) else {
+            throw LocalPlanError.invalidSetData(get_error_message("INVALID_SET_DATA", language: language))
+        }
+    }
+}
+
+struct PlanActionDraft: Equatable {
+    let actionID: Int
+    let rest: Int
+    let note: String?
+    let recordBilateral: Bool
+    let sets: [PlanSetDraft]
+
+    init(
+        actionID: Int,
+        rest: Int = 60,
+        note: String? = nil,
+        recordBilateral: Bool = false,
+        sets: [PlanSetDraft] = []
+    ) {
+        self.actionID = actionID
+        self.rest = rest
+        self.note = note
+        self.recordBilateral = recordBilateral
+        self.sets = sets
+    }
+}
+
+struct PlanSetDraft: Equatable {
+    let weight: Double?
+    let reps: Int
+    let leftWeight: Double?
+    let rightWeight: Double?
+    let notes: String?
+
+    init(
+        weight: Double? = nil,
+        reps: Int = 12,
+        leftWeight: Double? = nil,
+        rightWeight: Double? = nil,
+        notes: String? = nil
+    ) {
+        self.weight = weight
+        self.reps = reps
+        self.leftWeight = leftWeight
+        self.rightWeight = rightWeight
+        self.notes = notes
+    }
+}
+
 /// 创建计划请求
 struct CreatePlanRequest {
     let name: String
@@ -344,7 +432,7 @@ struct UpdatePlanRequest {
     let difficulty: String?
     let duration: Int?
     let actions: [UpdatePlanAction]
-    
+
     init(name: String, description: String? = nil, difficulty: String? = nil,
          duration: Int? = nil, actions: [UpdatePlanAction] = []) {
         self.name = name
@@ -352,6 +440,38 @@ struct UpdatePlanRequest {
         self.difficulty = difficulty
         self.duration = duration
         self.actions = actions
+    }
+}
+
+extension PlanDraft {
+    init(updateRequest: UpdatePlanRequest) {
+        self.init(
+            name: updateRequest.name,
+            description: updateRequest.description,
+            difficulty: updateRequest.difficulty,
+            duration: updateRequest.duration,
+            actions: updateRequest.actions
+                .sorted { $0.order < $1.order }
+                .map { action in
+                    PlanActionDraft(
+                        actionID: action.action_id,
+                        rest: action.rest,
+                        note: action.note,
+                        recordBilateral: action.record_bilateral,
+                        sets: action.sets
+                            .sorted { $0.order < $1.order }
+                            .map { set in
+                                PlanSetDraft(
+                                    weight: set.weight,
+                                    reps: set.reps,
+                                    leftWeight: set.left_weight,
+                                    rightWeight: set.right_weight,
+                                    notes: set.notes
+                                )
+                            }
+                    )
+                }
+        )
     }
 }
 

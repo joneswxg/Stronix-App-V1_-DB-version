@@ -104,31 +104,32 @@ final class PlanViewModel: ObservableObject {
         await loadPlanDetail(planId: plan.id)
         guard let detailedPlan = selectedPlan else { return }
 
-        let actionData = detailedPlan.actions?.map { action in
-            [
-                "action_id": action.id,
-                "rest": action.restTime,
-                "note": action.notes ?? "",
-                "record_bilateral": action.recordBilateral,
-                "sets": action.sets.map { set in
-                    [
-                        "weight": set.weight,
-                        "reps": set.reps,
-                        "left_weight": set.leftWeight,
-                        "right_weight": set.rightWeight
-                    ]
-                }
-            ] as [String: Any]
-        } ?? []
+        let draft = PlanDraft(
+            name: newName,
+            description: detailedPlan.description,
+            difficulty: detailedPlan.difficulty,
+            duration: detailedPlan.duration,
+            actions: detailedPlan.actions?.map { action in
+                PlanActionDraft(
+                    actionID: action.id,
+                    rest: action.restTime,
+                    note: action.notes,
+                    recordBilateral: action.recordBilateral,
+                    sets: action.sets.map { set in
+                        PlanSetDraft(
+                            weight: set.weight,
+                            reps: set.reps,
+                            leftWeight: set.leftWeight,
+                            rightWeight: set.rightWeight,
+                            notes: set.notes
+                        )
+                    }
+                )
+            } ?? []
+        )
 
         do {
-            let response = try await repository.createUserPlan([
-                "name": newName,
-                "description": detailedPlan.description ?? "",
-                "difficulty": detailedPlan.difficulty ?? "",
-                "duration": detailedPlan.duration ?? 0,
-                "actions": actionData
-            ])
+            let response = try await repository.createUserPlan(draft)
             personalPlans.insert(
                 TrainingPlan(
                     id: response.plan_id,

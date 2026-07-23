@@ -209,6 +209,61 @@ final class PlanViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.personalPlans.map(\.id), [copiedPlan.id])
         XCTAssertEqual(repository.userPlansCallCount, 1)
     }
+    func testCopyPersonalPlanSubmitsTypedDraft() async {
+        let source = TrainingPlan(
+            id: 7,
+            name: "原计划",
+            creator: "我",
+            createdDate: "2026-07-22T00:00:00Z",
+            lastTraining: "未开始",
+            volume: 0,
+            description: "描述",
+            isTemplate: false,
+            templateId: nil,
+            difficulty: "advanced",
+            duration: 45,
+            actions: [
+                TrainingAction(
+                    id: 2,
+                    name: "双侧动作",
+                    sets: [TrainingSet(id: 1, weight: 0, reps: 8, leftWeight: 10, rightWeight: 12, notes: "组备注")],
+                    restTime: 75,
+                    notes: "备注",
+                    recordBilateral: true,
+                    imageUrl: ""
+                )
+            ]
+        )
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([]),
+            userPlansResult: .success([]),
+            userPlanDetailResult: .success(source),
+            createUserPlanResult: .success(CreatePlanResponse(plan_id: 8))
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.copyPersonalPlan(source, newName: "副本")
+
+        XCTAssertEqual(
+            repository.createdDraft,
+            PlanDraft(
+                name: "副本",
+                description: "描述",
+                difficulty: "advanced",
+                duration: 45,
+                actions: [
+                    PlanActionDraft(
+                        actionID: 2,
+                        rest: 75,
+                        note: "备注",
+                        recordBilateral: true,
+                        sets: [PlanSetDraft(weight: 0, reps: 8, leftWeight: 10, rightWeight: 12, notes: "组备注")]
+                    )
+                ]
+            )
+        )
+    }
+
     private func makePlan(id: Int, name: String, isTemplate: Bool) -> TrainingPlan {
         TrainingPlan(
             id: id,
@@ -235,6 +290,9 @@ private final class MockPlanRepository: PlanRepository {
     var templatePlansResult: Result<[TrainingPlan], Error>
     var userPlansResult: Result<[TrainingPlan], Error>
     var copyTemplatePlanResult: Result<CreatePlanResponse, Error>
+    var userPlanDetailResult: Result<TrainingPlan, Error>
+    var createUserPlanResult: Result<CreatePlanResponse, Error>
+    var createdDraft: PlanDraft?
     var templatePlansCallCount = 0
     var userPlansCallCount = 0
     var copiedTemplateIDs: [Int] = []
@@ -244,11 +302,15 @@ private final class MockPlanRepository: PlanRepository {
         templatePlansResult: Result<[TrainingPlan], Error>,
         userPlansResult: Result<[TrainingPlan], Error>,
         copyTemplatePlanResult: Result<CreatePlanResponse, Error> = .success(CreatePlanResponse(plan_id: 0)),
+        userPlanDetailResult: Result<TrainingPlan, Error> = .failure(TestError.repositoryFailure),
+        createUserPlanResult: Result<CreatePlanResponse, Error> = .success(CreatePlanResponse(plan_id: 0)),
         delayNanoseconds: UInt64 = 0
     ) {
         self.templatePlansResult = templatePlansResult
         self.userPlansResult = userPlansResult
         self.copyTemplatePlanResult = copyTemplatePlanResult
+        self.userPlanDetailResult = userPlanDetailResult
+        self.createUserPlanResult = createUserPlanResult
         self.delayNanoseconds = delayNanoseconds
     }
 
@@ -269,7 +331,7 @@ private final class MockPlanRepository: PlanRepository {
     }
 
     func userPlanDetail(id: Int) async throws -> TrainingPlan {
-        fatalError("Not used by this test")
+        try userPlanDetailResult.get()
     }
 
     func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse {
@@ -277,8 +339,9 @@ private final class MockPlanRepository: PlanRepository {
         return try copyTemplatePlanResult.get()
     }
 
-    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse {
-        fatalError("Not used by this test")
+    func createUserPlan(_ draft: PlanDraft) async throws -> CreatePlanResponse {
+        createdDraft = draft
+        return try createUserPlanResult.get()
     }
 
     func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws {

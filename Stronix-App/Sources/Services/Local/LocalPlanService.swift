@@ -6,7 +6,7 @@ protocol PlanRepository {
     func templatePlanDetail(id: Int) async throws -> TrainingPlan
     func userPlans() async throws -> [TrainingPlan]
     func userPlanDetail(id: Int) async throws -> TrainingPlan
-    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse
+    func createUserPlan(_ draft: PlanDraft) async throws -> CreatePlanResponse
     func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse
     func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws
     func deleteUserPlan(id: Int) async throws
@@ -17,7 +17,7 @@ private protocol SQLitePlanStore {
     func templatePlanDetail(id: Int) throws -> TrainingPlan
     func userPlans(ownerID: Int) throws -> [TrainingPlan]
     func userPlanDetail(id: Int, ownerID: Int) throws -> TrainingPlan
-    func createUserPlan(_ planData: [String: Any], ownerID: Int) throws -> CreatePlanResponse
+    func createUserPlan(_ draft: PlanDraft, ownerID: Int) throws -> CreatePlanResponse
     func copyTemplatePlan(id: Int, ownerID: Int) throws -> CreatePlanResponse
     func updateUserPlan(id: Int, planData: UpdatePlanRequest, ownerID: Int) throws
     func deleteUserPlan(id: Int, ownerID: Int) throws
@@ -76,8 +76,8 @@ final class SQLitePlanRepository: SQLitePlanStore {
         )
     }
 
-    func createUserPlan(_ planData: [String: Any], ownerID: Int) throws -> CreatePlanResponse {
-        try validate(planData)
+    func createUserPlan(_ draft: PlanDraft, ownerID: Int) throws -> CreatePlanResponse {
+        try draft.validate()
         try requireUser(ownerID)
 
         let now = ISO8601DateFormatter().string(from: Date())
@@ -90,22 +90,17 @@ final class SQLitePlanRepository: SQLitePlanStore {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
-                    planData["name"] as? String ?? "",
-                    planData["description"] as? String ?? "",
-                    planData["difficulty"] as? String ?? "",
-                    planData["duration"] as? Int ?? 0,
+                    draft.name,
+                    draft.description ?? "",
+                    draft.difficulty ?? "",
+                    draft.duration ?? 0,
                     now,
                     now,
                     ownerID
                 ]
             )
             planID = Int(connection.lastInsertRowid)
-            try insertActions(
-                planID: planID,
-                ownerID: ownerID,
-                actionData: planData["actions"] as? [[String: Any]] ?? [],
-                now: now
-            )
+            try insertActions(planID: planID, actionDrafts: draft.actions, now: now)
         }
         return CreatePlanResponse(plan_id: planID)
     }
@@ -185,26 +180,7 @@ final class SQLitePlanRepository: SQLitePlanStore {
             )
             try connection.run("DELETE FROM plan_sets WHERE plan_id = ?", id)
             try connection.run("DELETE FROM plan_actions WHERE plan_id = ?", id)
-            let actionData = planData.actions.map { action in
-                [
-                    "action_id": action.action_id,
-                    "order": action.order,
-                    "rest": action.rest,
-                    "note": action.note as Any,
-                    "record_bilateral": action.record_bilateral,
-                    "sets": action.sets.map { set in
-                        [
-                            "set_number": set.order,
-                            "weight": set.weight as Any,
-                            "reps": set.reps,
-                            "left_weight": set.left_weight as Any,
-                            "right_weight": set.right_weight as Any,
-                            "notes": set.notes as Any
-                        ]
-                    }
-                ]
-            }
-            try insertActions(planID: id, ownerID: ownerID, actionData: actionData, now: now)
+            try insertUpdateActions(planID: id, actions: planData.actions, now: now)
         }
     }
 
@@ -287,7 +263,7 @@ final class SQLitePlanRepository: SQLitePlanStore {
             let actionID = int(action[0])
             let sets = try connection.prepare(
                 """
-                SELECT id, weight, reps, left_weight, right_weight
+                SELECT id, weight, reps, left_weight, right_weight, notes
                 FROM \(setTable)
                 WHERE \(identifier) = ? AND action_id = ?
                 ORDER BY set_number
@@ -300,7 +276,8 @@ final class SQLitePlanRepository: SQLitePlanStore {
                     weight: double(set[1]),
                     reps: int(set[2]),
                     leftWeight: double(set[3]),
-                    rightWeight: double(set[4])
+                    rightWeight: double(set[4]),
+                    notes: nullableString(set[5])
                 )
             }
             return TrainingAction(
@@ -357,38 +334,37 @@ final class SQLitePlanRepository: SQLitePlanStore {
         }
     }
 
-    private func insertActions(
+    private func insertUpdateActions(
         planID: Int,
-        ownerID: Int,
-        actionData: [[String: Any]],
+        actions: [UpdatePlanAction],
         now: String
     ) throws {
-        for (index, action) in actionData.enumerated() {
-            guard let actionID = action["action_id"] as? Int else {
-                throw LocalPlanError.actionNotFound(get_error_message("ACTION_NOT_FOUND"))
-            }
-            let sets = action["sets"] as? [[String: Any]] ?? []
-            guard !sets.isEmpty else {
-                throw LocalPlanError.invalidSetData(get_error_message("INVALID_SET_DATA"))
-            }
-            let bilateral = action["record_bilateral"] as? Bool ?? false
-            let order = action["order"] as? Int ?? index + 1
+        for action in actions {
             try connection.run(
                 """
                 INSERT INTO plan_actions (plan_id, action_id, "order", sets, rest, weight, note, record_bilateral)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 planID,
-                actionID,
-                order,
-                sets.count,
-                action["rest"] as? Int ?? 60,
-                actionVolume(sets, bilateral: bilateral),
-                action["note"] as? String,
-                bilateral ? 1 : 0
+                action.action_id,
+                action.order,
+                action.sets.count,
+                action.rest,
+                actionVolume(
+                    action.sets.map {
+                        PlanSetDraft(
+                            weight: $0.weight,
+                            reps: $0.reps,
+                            leftWeight: $0.left_weight,
+                            rightWeight: $0.right_weight
+                        )
+                    },
+                    bilateral: action.record_bilateral
+                ),
+                action.note,
+                action.record_bilateral ? 1 : 0
             )
-            for (setIndex, set) in sets.enumerated() {
-                let setNumber = set["set_number"] as? Int ?? setIndex + 1
+            for set in action.sets {
                 try connection.run(
                     """
                     INSERT INTO plan_sets (
@@ -396,35 +372,62 @@ final class SQLitePlanRepository: SQLitePlanStore {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     planID,
-                    actionID,
-                    setNumber,
-                    bilateral ? 0 : set["weight"] as? Double ?? 0,
-                    set["reps"] as? Int ?? 12,
+                    action.action_id,
+                    set.order,
+                    action.record_bilateral ? 0 : set.weight ?? 0,
+                    set.reps,
                     now,
-                    bilateral ? set["left_weight"] as? Double ?? 0 : 0,
-                    bilateral ? set["right_weight"] as? Double ?? 0 : 0,
-                    set["notes"] as? String
+                    action.record_bilateral ? set.left_weight ?? 0 : 0,
+                    action.record_bilateral ? set.right_weight ?? 0 : 0,
+                    set.notes
                 )
             }
         }
     }
 
-    private func validate(_ planData: [String: Any]) throws {
-        guard let name = planData["name"] as? String, !name.trimmingCharacters(in: .whitespaces).isEmpty else {
-            throw LocalPlanError.planNameEmpty(get_error_message("PLAN_NAME_EMPTY"))
-        }
-        guard let actions = planData["actions"] as? [[String: Any]], !actions.isEmpty else {
-            throw LocalPlanError.noActions(get_error_message("NO_ACTIONS"))
+    private func insertActions(
+        planID: Int,
+        actionDrafts: [PlanActionDraft],
+        now: String
+    ) throws {
+        for (actionIndex, action) in actionDrafts.enumerated() {
+            try connection.run(
+                """
+                INSERT INTO plan_actions (plan_id, action_id, "order", sets, rest, weight, note, record_bilateral)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                planID,
+                action.actionID,
+                actionIndex + 1,
+                action.sets.count,
+                action.rest,
+                actionVolume(action.sets, bilateral: action.recordBilateral),
+                action.note,
+                action.recordBilateral ? 1 : 0
+            )
+            for (setIndex, set) in action.sets.enumerated() {
+                try connection.run(
+                    """
+                    INSERT INTO plan_sets (
+                        plan_id, action_id, set_number, weight, reps, created_at, left_weight, right_weight, notes
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    planID,
+                    action.actionID,
+                    setIndex + 1,
+                    action.recordBilateral ? 0 : set.weight ?? 0,
+                    set.reps,
+                    now,
+                    action.recordBilateral ? set.leftWeight ?? 0 : 0,
+                    action.recordBilateral ? set.rightWeight ?? 0 : 0,
+                    set.notes
+                )
+            }
         }
     }
 
     private func validate(_ request: UpdatePlanRequest) throws {
-        guard !request.name.trimmingCharacters(in: .whitespaces).isEmpty else {
-            throw LocalPlanError.planNameEmpty(get_error_message("PLAN_NAME_EMPTY"))
-        }
-        guard !request.actions.isEmpty else {
-            throw LocalPlanError.noActions(get_error_message("NO_ACTIONS"))
-        }
+        try PlanDraft(updateRequest: request).validate()
     }
 
     private func requireUser(_ userID: Int) throws {
@@ -440,13 +443,13 @@ final class SQLitePlanRepository: SQLitePlanStore {
         return nil
     }
 
-    private func actionVolume(_ sets: [[String: Any]], bilateral: Bool) -> Double {
+    private func actionVolume(_ sets: [PlanSetDraft], bilateral: Bool) -> Double {
         sets.reduce(0) { result, set in
-            let reps = Double(set["reps"] as? Int ?? 0)
+            let reps = Double(set.reps)
             if bilateral {
-                return result + ((set["left_weight"] as? Double ?? 0) + (set["right_weight"] as? Double ?? 0)) * reps
+                return result + ((set.leftWeight ?? 0) + (set.rightWeight ?? 0)) * reps
             }
-            return result + (set["weight"] as? Double ?? 0) * reps
+            return result + (set.weight ?? 0) * reps
         }
     }
 
@@ -527,10 +530,10 @@ final class LocalPlanService: PlanRepository {
         }
     }
 
-    func createPlan(_ planData: [String: Any], user_id: Int, language: String = "zh_CN") async throws -> CreatePlanResponse {
+    func createPlan(_ draft: PlanDraft, user_id: Int, language: String = "zh_CN") async throws -> CreatePlanResponse {
         try execute {
             try repository(language: language).createUserPlan(
-                planData,
+                draft,
                 ownerID: try currentUserID(user_id, language: language)
             )
         }
@@ -580,8 +583,8 @@ final class LocalPlanService: PlanRepository {
         try await getUserPlanDetail(planId: id)
     }
 
-    func createUserPlan(_ planData: [String: Any]) async throws -> CreatePlanResponse {
-        try await createPlan(planData, user_id: try currentUserID(nil, language: "zh_CN"))
+    func createUserPlan(_ draft: PlanDraft) async throws -> CreatePlanResponse {
+        try await createPlan(draft, user_id: try currentUserID(nil, language: "zh_CN"))
     }
 
     func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse {
