@@ -186,6 +186,16 @@ final class PlanViewModel: ObservableObject {
         )
     }
 
+    func applyUpdatedPlan(_ plan: TrainingPlan) async {
+        if let index = personalPlans.firstIndex(where: { $0.id == plan.id }) {
+            personalPlans[index] = plan
+        }
+        if selectedPlan?.id == plan.id {
+            selectedPlan = plan
+        }
+        await refreshPersonalPlansOnly()
+    }
+
     func refreshPersonalPlansOnly() async {
         await loadPersonalPlans()
     }

@@ -4,68 +4,27 @@ import UIKit
 struct EditPlanView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
-    let plan: TrainingPlan
     let onSaveSuccess: ((TrainingPlan?) -> Void)?
-    
-    @State private var planName: String
-    @State private var planDescription: String
-    @State private var difficulty: String
-    @State private var isTemplate = false
+
+    @StateObject private var viewModel: EditPlanViewModel
     @State private var showActionSelect = false
-    @State private var isSaving = false
-    @State private var showSaveSuccess = false
     @State private var showToast = false
     @State private var toastMessage = ""
     @State private var preventDismiss = false
-    @State private var savedPlan: TrainingPlan?
-    
-    // 编辑中的动作数据
-    @State private var editingActions: [EditingAction] = []
-    
-    // 自定义键盘状态
+
     @StateObject private var keyboardManager = CustomKeyboardManager()
-    
-    // 隐藏系统键盘的方法
+
     private func hideSystemKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
-    
+
     init(plan: TrainingPlan, onSaveSuccess: ((TrainingPlan?) -> Void)? = nil) {
-        self.plan = plan
+        _viewModel = StateObject(wrappedValue: EditPlanViewModel(plan: plan))
         self.onSaveSuccess = onSaveSuccess
-        self._planName = State(initialValue: plan.name)
-        self._planDescription = State(initialValue: plan.description ?? "")
-        self._difficulty = State(initialValue: plan.difficulty ?? "初级")
-        
-        // 初始化编辑中的动作数据
-        let actions = plan.actions?.map { action in
-            EditingAction(
-                id: action.id,
-                actionId: action.id,
-                name: action.name,
-                imageUrl: action.imageUrl,
-                restTime: action.restTime,
-                note: action.notes ?? "",
-                recordBilateral: action.recordBilateral,
-                isExpanded: false,
-                sets: action.sets.enumerated().map { index, set in
-                    EditingSet(
-                        id: set.id,
-                        order: index + 1,
-                        weight: set.weight,
-                        reps: set.reps,
-                        leftWeight: set.leftWeight,
-                        rightWeight: set.rightWeight
-                    )
-                }
-            )
-        } ?? []
-        
-        self._editingActions = State(initialValue: actions)
     }
     
     var totalVolume: Double {
-        editingActions.reduce(0) { total, action in
+        viewModel.actions.reduce(0) { total, action in
             total + action.sets.reduce(0) { setTotal, set in
                 if action.recordBilateral {
                     let leftWeight = set.leftWeight.isNaN || set.leftWeight.isInfinite ? 0.0 : set.leftWeight
@@ -102,10 +61,10 @@ struct EditPlanView: View {
                                 .font(.system(size: 14, weight: .medium))
                                 .padding(.horizontal, 16)
                             
-                            TextField("输入计划名称", text: $planName)
+                            TextField("输入计划名称", text: $viewModel.name)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .padding(.horizontal, 16)
-                                .disabled(isSaving)
+                                .disabled(viewModel.isSaving)
                                 .onTapGesture {
                                     // 当点击计划名称输入框时，隐藏自定义键盘
                                     if keyboardManager.isShowing {
@@ -120,11 +79,11 @@ struct EditPlanView: View {
                                 .font(.system(size: 14, weight: .medium))
                                 .padding(.horizontal, 16)
                             
-                            TextField("输入计划描述", text: $planDescription, axis: .vertical)
+                            TextField("输入计划描述", text: $viewModel.description, axis: .vertical)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .lineLimit(3...6)
                                 .padding(.horizontal, 16)
-                                .disabled(isSaving)
+                                .disabled(viewModel.isSaving)
                                 .onTapGesture {
                                     // 当点击计划描述输入框时，隐藏自定义键盘
                                     if keyboardManager.isShowing {
@@ -142,19 +101,19 @@ struct EditPlanView: View {
                         .padding(.horizontal, 16)
                         
                         // 训练动作列表
-                        if !editingActions.isEmpty {
+                        if !viewModel.actions.isEmpty {
                             VStack(spacing: 12) {
-                                ForEach(editingActions, id: \.id) { action in
+                                ForEach(viewModel.actions, id: \.id) { action in
                                     EditingActionCardWrapper(
                                         action: action,
-                                        editingActions: $editingActions,
+                                        editingActions: $viewModel.actions,
                                         onDelete: {
                                             deleteAction(action)
                                         },
                                         onUpdate: { updatedAction in
                                             updateAction(updatedAction)
                                         },
-                                        isDisabled: isSaving,
+                                        isDisabled: viewModel.isSaving,
                                         keyboardManager: keyboardManager
                                     )
                                     .padding(.horizontal, 16)
@@ -175,7 +134,7 @@ struct EditPlanView: View {
                                     .cornerRadius(12)
                                 }
                                 .padding(.horizontal, 16)
-                                .disabled(isSaving)
+                                .disabled(viewModel.isSaving)
                             }
                         } else {
                             // 空状态
@@ -193,7 +152,7 @@ struct EditPlanView: View {
                                 .cornerRadius(12)
                             }
                             .padding(.horizontal, 16)
-                            .disabled(isSaving)
+                            .disabled(viewModel.isSaving)
                         }
                         
                         // 底部间距
@@ -244,16 +203,16 @@ struct EditPlanView: View {
                         }
                     }
                     .foregroundColor(theme.secondary)
-                    .disabled(isSaving || preventDismiss)
+                    .disabled(viewModel.isSaving || preventDismiss)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         Task {
-                            await savePlan()
+                            await save()
                         }
                     }) {
                         HStack {
-                            if isSaving {
+                            if viewModel.isSaving {
                                 ProgressView()
                                     .scaleEffect(0.8)
                             } else {
@@ -263,7 +222,7 @@ struct EditPlanView: View {
                     }
                     .foregroundColor(theme.primary)
                     .fontWeight(.medium)
-                    .disabled(isSaving || planName.isEmpty)
+                    .disabled(viewModel.isSaving || viewModel.name.isEmpty)
                 }
             })
             .sheet(isPresented: $showActionSelect) {
@@ -271,7 +230,7 @@ struct EditPlanView: View {
                     onActionSelected: { selectedAction in
                         addAction(selectedAction)
                     },
-                    existingActionIds: Set(editingActions.map { $0.actionId })
+                    existingActionIds: Set(viewModel.actions.map { $0.actionId })
                 )
             }
             .overlay(
@@ -298,194 +257,47 @@ struct EditPlanView: View {
         }
     }
     
-    private func deleteAction(_ action: EditingAction) {
-        // 立即删除，不使用动画，避免竞态条件
-        editingActions.removeAll { $0.id == action.id }
+    private func deleteAction(_ action: EditPlanAction) {
+        viewModel.actions.removeAll { $0.id == action.id }
     }
-    
-    private func updateAction(_ updatedAction: EditingAction) {
-        if let index = editingActions.firstIndex(where: { $0.id == updatedAction.id }) {
-            editingActions[index] = updatedAction
-        }
+
+    private func updateAction(_ updatedAction: EditPlanAction) {
+        guard let index = viewModel.actions.firstIndex(where: { $0.id == updatedAction.id }) else { return }
+        viewModel.actions[index] = updatedAction
     }
-    
+
     private func addAction(_ action: ActionInfo) {
-        let newAction = EditingAction(
-            id: Int.random(in: 100000...999999),
-            actionId: action.id,
-            name: action.name,
-            imageUrl: action.imageUrl,
-            restTime: 60,
-            note: "",
-            recordBilateral: false,
-            isExpanded: false,
-            sets: [EditingSet(id: Int.random(in: 100000...999999), order: 1, weight: 10.0, reps: 12, leftWeight: 0.0, rightWeight: 0.0)]
+        viewModel.actions.append(
+            EditPlanAction(
+                id: Int.random(in: 100000...999999),
+                actionId: action.id,
+                name: action.name,
+                imageUrl: action.imageUrl,
+                restTime: 60,
+                note: "",
+                recordBilateral: false,
+                isExpanded: false,
+                sets: [EditPlanSet(id: Int.random(in: 100000...999999), order: 1, weight: 10, reps: 12, leftWeight: 0, rightWeight: 0)]
+            )
         )
-        editingActions.append(newAction)
     }
-    
-    private func savePlan() async {
-        // 防止重复调用
-        guard !isSaving else {
-            print("⚠️ EditPlanView.savePlan() 正在保存中，跳过重复调用")
-            return
-        }
-        
-        print("🔄 EditPlanView.savePlan() 开始")
-        print("🔄 EditPlanView.savePlan() 当前登录状态: \(LocalUserService.shared.isLoggedIn)")
-        print("🔄 EditPlanView.savePlan() 当前用户: \(LocalUserService.shared.currentUser?.username ?? "无")")
-        print("🔄 EditPlanView.savePlan() 当前用户ID: \(LocalUserService.shared.currentUser?.id ?? 0)")
-        
-        isSaving = true
-        preventDismiss = true // 防止在保存过程中意外关闭
-        
-        let updateActions = editingActions.enumerated().map { index, action in
-            UpdatePlanAction(
-                action_id: action.actionId,
-                order: index + 1,
-                rest: action.restTime,
-                note: action.note.isEmpty ? nil : action.note,
-                record_bilateral: action.recordBilateral,
-                sets: action.sets.enumerated().map { setIndex, set in
-                    UpdatePlanSet(
-                        order: setIndex + 1,
-                        weight: action.recordBilateral ? nil : set.weight,
-                        reps: set.reps,
-                        left_weight: action.recordBilateral ? set.leftWeight : 0.0,
-                        right_weight: action.recordBilateral ? set.rightWeight : 0.0
-                    )
-                }
-            )
-        }
 
-        do {
-            print("🔄 EditPlanView.savePlan() 调用API")
-            // 使用PlanService，现在不会自动登出了
-            let request = UpdatePlanRequest(
-                name: planName,
-                description: planDescription.isEmpty ? nil : planDescription,
-                difficulty: plan.difficulty,
-                duration: nil,
-                actions: updateActions
-            )
-            
-            print("🔄 EditPlanView.savePlan() 请求数据:")
-            print("  - 计划ID: \(plan.id)")
-            print("  - 计划名称: \(planName)")
-            print("  - 计划描述: \(planDescription)")
-            print("  - 计划难度: \(plan.difficulty ?? "无")")
-            print("  - 动作数量: \(updateActions.count)")
-            
-            for (index, action) in updateActions.enumerated() {
-                print("  - 动作\(index + 1): action_id=\(action.action_id), order=\(action.order), 组数=\(action.sets.count)")
-                print("    休息时间: \(action.rest)秒, 双侧训练: \(action.record_bilateral)")
-                for (setIndex, set) in action.sets.enumerated() {
-                    if action.record_bilateral {
-                        print("    组\(setIndex + 1): 左\(set.left_weight ?? 0)kg, 右\(set.right_weight ?? 0)kg, \(set.reps)次")
-                    } else {
-                        print("    组\(setIndex + 1): \(set.weight ?? 0)kg, \(set.reps)次")
-                    }
-                }
-            }
-            
-            // 获取当前用户ID
-            let currentUserId = LocalUserService.shared.currentUser?.id ?? 0
-            try await LocalPlanService.shared.updatePlan(planId: plan.id, planData: request, user_id: currentUserId)
-            
-            print("🔄 EditPlanView.savePlan() API调用成功")
-            isSaving = false
-            
-            // 保存成功后创建更新的计划对象
-            await MainActor.run {
-                print("🔄 EditPlanView.savePlan() 创建更新的计划对象")
-                
-                // 创建更新后的TrainingAction数组
-                let updatedActions = editingActions.map { editingAction in
-                    TrainingAction(
-                        id: editingAction.actionId,
-                        name: editingAction.name,
-                        sets: editingAction.sets.map { editingSet in
-                            TrainingSet(
-                                id: editingSet.id,
-                                weight: editingAction.recordBilateral ? 0 : editingSet.weight,
-                                reps: editingSet.reps,
-                                leftWeight: editingAction.recordBilateral ? editingSet.leftWeight : 0.0,
-                                rightWeight: editingAction.recordBilateral ? editingSet.rightWeight : 0.0
-                            )
-                        },
-                        restTime: editingAction.restTime,
-                        notes: editingAction.note.isEmpty ? nil : editingAction.note,
-                        recordBilateral: editingAction.recordBilateral,
-                        imageUrl: editingAction.imageUrl
-                    )
-                }
-                
-                // 创建更新后的计划对象
-                savedPlan = TrainingPlan(
-                    id: plan.id,
-                    name: planName,
-                    creator: plan.creator,
-                    createdDate: plan.createdDate,
-                    lastTraining: plan.lastTraining,
-                    volume: Int(totalVolume),
-                    description: planDescription.isEmpty ? nil : planDescription,
-                    isTemplate: plan.isTemplate,
-                    templateId: plan.templateId,
-                    difficulty: plan.difficulty,
-                    duration: plan.duration,
-                    actions: updatedActions
-                )
-                
-                // 显示简单的成功提示
-                toastMessage = "保存成功！"
-                showToast = true
-                preventDismiss = false
-                
-                // 1秒后自动触发 onSaveSuccess 回调
-                // onSaveSuccess 将负责关闭当前视图并刷新数据
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    showToast = false
-                    // 调用回调，让父视图处理关闭和后续逻辑
-                    onSaveSuccess?(savedPlan)
-                    // 注意：此处不再直接 dismiss() 或 showPlanDetail = true，
-                    // 这些逻辑将由调用方（PlanListView）在 onSaveSuccess 中处理
-                }
-            }
-            
-        } catch {
-            print("🔄 EditPlanView.savePlan() 保存失败: \(error.localizedDescription)")
-            print("🔄 EditPlanView.savePlan() 错误类型: \(type(of: error))")
-            await MainActor.run {
-                toastMessage = "保存失败: \(AppError.map(error).userMessage)"
-                showToast = true
-                preventDismiss = false
-            }
-            isSaving = false
+    private func save() async {
+        preventDismiss = true
+        await viewModel.save()
+        preventDismiss = false
+
+        if let savedPlan = viewModel.savedPlan {
+            toastMessage = "保存成功！"
+            showToast = true
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            showToast = false
+            onSaveSuccess?(savedPlan)
+        } else if let errorMessage = viewModel.errorMessage {
+            toastMessage = "保存失败: \(errorMessage)"
+            showToast = true
         }
     }
-}
-
-// MARK: - 编辑中的数据模型
-
-struct EditingAction: Identifiable {
-    let id: Int
-    let actionId: Int
-    let name: String
-    let imageUrl: String
-    var restTime: Int
-    var note: String
-    var recordBilateral: Bool
-    var isExpanded: Bool
-    var sets: [EditingSet]
-}
-
-struct EditingSet: Identifiable {
-    let id: Int
-    let order: Int
-    var weight: Double
-    var reps: Int
-    var leftWeight: Double
-    var rightWeight: Double
 }
 
 // MARK: - 编辑动作卡片包装器

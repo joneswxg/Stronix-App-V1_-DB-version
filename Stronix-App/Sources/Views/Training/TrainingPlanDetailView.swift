@@ -140,15 +140,16 @@ struct TrainingPlanDetailView: View {
                 }
             }
         .fullScreenCover(isPresented: $showEditPlan) {
-            // 传递回调，保存成功后重新加载数据但保持在详情页
             EditPlanView(plan: plan, onSaveSuccess: { updatedPlan in
-                print("🔄 TrainingPlanDetailView EditPlanView onSaveSuccess 回调被触发")
-                
-                // 关闭编辑页面
                 showEditPlan = false
-                
-                // 重新加载计划数据
-                reloadPlanData()
+                if let updatedPlan {
+                    plan = updatedPlan
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("PlanUpdatedFromDetail"),
+                        object: nil,
+                        userInfo: ["updatedPlan": updatedPlan]
+                    )
+                }
             })
         }
         .alert("训练冲突", isPresented: $showTrainingConflictAlert) {
