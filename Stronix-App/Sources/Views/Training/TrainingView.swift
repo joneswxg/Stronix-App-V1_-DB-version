@@ -65,7 +65,7 @@ struct TrainingView: View {
                                 viewModel.updateActions(actions)
                             }
                         },
-                        onSetCompleted: viewModel.handleSetCompleted,
+                        onSetCompleted: viewModel.toggleSetCompletion,
                         onRestTimerTapped: viewModel.showRestTimer,
                         onShowActionHistory: { actionId, actionName in
                             selectedActionForHistory = (id: actionId, name: actionName)
@@ -861,13 +861,7 @@ struct TrainingActionCard: View {
                 
                 // 打勾框
                 Button(action: {
-                    if isCompleted {
-                        completedSets.remove(setId)
-                    } else {
-                        completedSets.insert(setId)
-                        // 开始倒计时，但不弹出浮动窗口
-                        onSetCompleted(setId, action.restTime)
-                    }
+                    onSetCompleted(setId, action.restTime)
                 }) {
                     Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                         .foregroundColor(isCompleted ? theme.primary : theme.secondary)

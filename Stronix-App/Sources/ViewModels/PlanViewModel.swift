@@ -376,11 +376,6 @@ final class TrainingViewModel: ObservableObject {
         refresh()
     }
 
-    func handleSetCompleted(setID: String, restTime: Int) {
-        session.handleSetCompleted(setId: setID, restTime: restTime)
-        refresh()
-    }
-
     func toggleSetCompletion(setID: String, restTime: Int) {
         session.toggleSetCompletion(setID: setID, restTime: restTime)
         refresh()

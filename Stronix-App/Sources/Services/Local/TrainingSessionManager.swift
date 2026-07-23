@@ -20,7 +20,6 @@ protocol TrainingSessionManaging: AnyObject {
     func completeTraining()
     func updateActions(_ actions: [MutableTrainingAction])
     func deleteAction(_ action: MutableTrainingAction)
-    func handleSetCompleted(setId: String, restTime: Int)
     func toggleSetCompletion(setID: String, restTime: Int)
     func handleRestTimerTapped(setId: String, restTime: Int)
     func toggleRestTimer()

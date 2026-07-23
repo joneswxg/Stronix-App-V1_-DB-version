@@ -37,6 +37,12 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertEqual(session.completedSets, ["1_10", "2_20"])
         XCTAssertEqual(session.completedVolume(), 850)
         XCTAssertEqual(viewModel.volumeText, "850/850 kg")
+
+        viewModel.toggleSetCompletion(setID: "1_10", restTime: 60)
+
+        XCTAssertFalse(session.completedSets.contains("1_10"))
+        XCTAssertNil(session.setRestTimers["1_10"])
+        XCTAssertEqual(viewModel.volumeText, "450/850 kg")
     }
 
     func testPlanChangeAndRestStateAreForwarded() {
@@ -123,8 +129,15 @@ private final class TrainingSessionMock: TrainingSessionManaging, ObservableObje
     func completeTraining() { completeTrainingCalls += 1; isTrainingActive = false }
     func updateActions(_ actions: [MutableTrainingAction]) { editingActions = actions; updatedActionBatches.append(actions); objectWillChange.send() }
     func deleteAction(_ action: MutableTrainingAction) { deletedActionIDs.append(action.id); editingActions.removeAll { $0.id == action.id }; objectWillChange.send() }
-    func handleSetCompleted(setId: String, restTime: Int) { setRestTimers[setId] = restTime; objectWillChange.send() }
-    func toggleSetCompletion(setID: String, restTime: Int) { if !completedSets.insert(setID).inserted { completedSets.remove(setID) }; objectWillChange.send() }
+    func toggleSetCompletion(setID: String, restTime: Int) {
+        if !completedSets.insert(setID).inserted {
+            completedSets.remove(setID)
+            setRestTimers[setID] = nil
+        } else {
+            setRestTimers[setID] = restTime
+        }
+        objectWillChange.send()
+    }
     func handleRestTimerTapped(setId: String, restTime: Int) { restTimerTappedIDs.append(setId); showRestTimer = true; currentRestTime = restTime; objectWillChange.send() }
     func toggleRestTimer() { restControlCalls.append("toggle") }
     func resetRestTimer() { restControlCalls.append("reset") }
