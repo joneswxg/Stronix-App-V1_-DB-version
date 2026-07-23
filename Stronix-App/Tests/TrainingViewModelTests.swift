@@ -89,6 +89,7 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertTrue(session.isTrainingActive)
         XCTAssertEqual(session.completeTrainingCalls, 0)
         XCTAssertNotNil(viewModel.completionError)
+        XCTAssertFalse(viewModel.canRetryPlanUpdate)
     }
 
     func testPartialFailureRetriesStoredSnapshotBeforeFinishing() async {
@@ -100,10 +101,13 @@ final class TrainingViewModelTests: XCTestCase {
         let viewModel = TrainingViewModel(session: session, completionUseCase: completionUseCase)
 
         let firstCompletion = await viewModel.saveHistoryAndUpdatePlan()
+        XCTAssertFalse(firstCompletion)
+        XCTAssertTrue(viewModel.canRetryPlanUpdate)
+
         let retryCompletion = await viewModel.retryCompletion()
 
-        XCTAssertFalse(firstCompletion)
         XCTAssertTrue(retryCompletion)
+        XCTAssertFalse(viewModel.canRetryPlanUpdate)
         XCTAssertEqual(session.completeTrainingCalls, 1)
         XCTAssertEqual(completionUseCase.calls.map(\.choice), [.saveHistoryAndUpdatePlan, .saveHistoryAndUpdatePlan])
         XCTAssertEqual(completionUseCase.calls[0].snapshot.id, completionUseCase.calls[1].snapshot.id)

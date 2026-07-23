@@ -170,7 +170,7 @@ struct TrainingView: View {
             Text("检测到训练计划有变动，是否更新训练计划？")
         }
         .alert("完成训练失败", isPresented: $showCompletionError) {
-            if viewModel.completionError?.hasPrefix("训练记录已保存") == true {
+            if viewModel.canRetryPlanUpdate {
                 Button("重试更新计划") {
                     Task {
                         if await viewModel.retryCompletion() {

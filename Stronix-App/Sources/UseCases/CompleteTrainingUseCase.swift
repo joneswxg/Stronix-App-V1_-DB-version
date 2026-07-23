@@ -35,6 +35,23 @@ enum TrainingCompletionResult {
     case planUpdateUnavailable
 }
 
+protocol UserPlanWriting {
+    func write(planID: Int, draft: PlanDraft) async throws
+}
+
+struct UserPlanWriter: UserPlanWriting {
+    private let repository: any PlanRepository
+
+    init(repository: any PlanRepository) {
+        self.repository = repository
+    }
+
+    func write(planID: Int, draft: PlanDraft) async throws {
+        try draft.validate()
+        try await repository.updateUserPlan(id: planID, planData: UpdatePlanRequest(draft: draft))
+    }
+}
+
 protocol CompleteTrainingExecuting: AnyObject {
     func execute(
         snapshot: TrainingCompletionSnapshot,
@@ -44,15 +61,15 @@ protocol CompleteTrainingExecuting: AnyObject {
 
 final class CompleteTrainingUseCase: CompleteTrainingExecuting {
     private let historyPersistence: any TrainingHistoryPersisting
-    private let planUpdater: any UpdatePlanExecuting
+    private let planWriter: any UserPlanWriting
     private var savedHistorySnapshotIDs: Set<UUID> = []
 
     init(
         historyPersistence: any TrainingHistoryPersisting,
-        planUpdater: any UpdatePlanExecuting
+        planWriter: any UserPlanWriting
     ) {
         self.historyPersistence = historyPersistence
-        self.planUpdater = planUpdater
+        self.planWriter = planWriter
     }
 
     func execute(
@@ -77,7 +94,7 @@ final class CompleteTrainingUseCase: CompleteTrainingExecuting {
         }
 
         do {
-            _ = try await planUpdater.execute(planID: snapshot.planID, draft: planDraft)
+            try await planWriter.write(planID: snapshot.planID, draft: planDraft)
             return .completed
         } catch {
             return .historySavedPlanUpdateFailed(error)

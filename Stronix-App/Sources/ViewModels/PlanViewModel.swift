@@ -315,6 +315,7 @@ final class TrainingViewModel: ObservableObject {
     @Published private(set) var isRestTimerPaused: Bool
     @Published private(set) var isCompleting = false
     @Published private(set) var completionError: String?
+    @Published private(set) var canRetryPlanUpdate = false
 
     private let session: any TrainingSessionManaging
     private let completionUseCase: any CompleteTrainingExecuting
@@ -325,7 +326,7 @@ final class TrainingViewModel: ObservableObject {
         session: any TrainingSessionManaging = TrainingSessionManager.shared,
         completionUseCase: any CompleteTrainingExecuting = CompleteTrainingUseCase(
             historyPersistence: TrainingHistoryService.shared,
-            planUpdater: UpdatePlanUseCase(repository: LocalPlanService.shared)
+            planWriter: UserPlanWriter(repository: LocalPlanService.shared)
         )
     ) {
         self.session = session
@@ -422,6 +423,7 @@ final class TrainingViewModel: ObservableObject {
 
     func cancelTraining() {
         pendingCompletionSnapshot = nil
+        canRetryPlanUpdate = false
         session.stopTraining()
     }
 
@@ -456,16 +458,19 @@ final class TrainingViewModel: ObservableObject {
 
         isCompleting = true
         completionError = nil
+        canRetryPlanUpdate = false
         defer { isCompleting = false }
 
         switch await completionUseCase.execute(snapshot: snapshot, choice: choice) {
         case .completed:
             pendingCompletionSnapshot = nil
+            canRetryPlanUpdate = false
             session.completeTraining()
             return true
         case .historySaveFailed(let error):
             completionError = "保存训练记录失败: \(AppError.map(error).userMessage)"
         case .historySavedPlanUpdateFailed(let error):
+            canRetryPlanUpdate = true
             completionError = "训练记录已保存，更新训练计划失败: \(AppError.map(error).userMessage)"
         case .planUpdateUnavailable:
             completionError = "无法更新训练计划"

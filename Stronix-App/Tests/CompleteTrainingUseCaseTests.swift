@@ -4,8 +4,8 @@ import XCTest
 final class CompleteTrainingUseCaseTests: XCTestCase {
     func testHistoryOnlySavesHistoryWithoutUpdatingPlan() async {
         let history = HistoryPersistenceStub()
-        let planUpdater = PlanUpdaterStub()
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub()
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
 
         let result = await useCase.execute(snapshot: makeSnapshot(), choice: .historyOnly)
 
@@ -17,8 +17,8 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
     func testSaveHistoryAndUpdatePlanWritesHistoryBeforePlan() async {
         var events: [String] = []
         let history = HistoryPersistenceStub { events.append("history") }
-        let planUpdater = PlanUpdaterStub { events.append("plan") }
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub { events.append("plan") }
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
         let snapshot = makeSnapshot()
 
         let result = await useCase.execute(snapshot: snapshot, choice: .saveHistoryAndUpdatePlan)
@@ -31,8 +31,8 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
 
     func testHistoryFailureDoesNotUpdatePlan() async {
         let history = HistoryPersistenceStub(result: .failure(TestError.failed))
-        let planUpdater = PlanUpdaterStub()
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub()
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
 
         let result = await useCase.execute(snapshot: makeSnapshot(), choice: .saveHistoryAndUpdatePlan)
 
@@ -42,8 +42,8 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
 
     func testPlanFailureReturnsRecoverableResultAfterHistorySaved() async {
         let history = HistoryPersistenceStub()
-        let planUpdater = PlanUpdaterStub(result: .failure(TestError.failed))
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub(result: .failure(TestError.failed))
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
 
         let result = await useCase.execute(snapshot: makeSnapshot(), choice: .saveHistoryAndUpdatePlan)
 
@@ -54,8 +54,8 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
 
     func testHistoryOnlyDoesNotUpdateAvailablePlanDraft() async {
         let history = HistoryPersistenceStub()
-        let planUpdater = PlanUpdaterStub()
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub()
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
 
         let result = await useCase.execute(snapshot: makeSnapshot(), choice: .historyOnly)
 
@@ -65,8 +65,8 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
 
     func testRetryAfterPlanFailureDoesNotSaveHistoryAgain() async {
         let history = HistoryPersistenceStub()
-        let planUpdater = PlanUpdaterStub(results: [.failure(TestError.failed), .success(makePlan())])
-        let useCase = CompleteTrainingUseCase(historyPersistence: history, planUpdater: planUpdater)
+        let planUpdater = PlanWriterStub(results: [.failure(TestError.failed), .success(())])
+        let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
         let snapshot = makeSnapshot()
 
         let firstResult = await useCase.execute(snapshot: snapshot, choice: .saveHistoryAndUpdatePlan)
@@ -157,32 +157,32 @@ private final class HistoryPersistenceStub: TrainingHistoryPersisting {
     }
 }
 
-private final class PlanUpdaterStub: UpdatePlanExecuting {
+private final class PlanWriterStub: UserPlanWriting {
     struct Call {
         let planID: Int
         let draft: PlanDraft
     }
 
     var calls: [Call] = []
-    private var results: [Result<TrainingPlan, Error>]
+    private var results: [Result<Void, Error>]
     private let onExecute: () -> Void
 
     init(
-        result: Result<TrainingPlan, Error> = .success(TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, description: nil, difficulty: nil, duration: nil, actions: [])),
+        result: Result<Void, Error> = .success(()),
         onExecute: @escaping () -> Void = {}
     ) {
         results = [result]
         self.onExecute = onExecute
     }
 
-    init(results: [Result<TrainingPlan, Error>]) {
+    init(results: [Result<Void, Error>]) {
         self.results = results
         onExecute = {}
     }
 
-    func execute(planID: Int, draft: PlanDraft) async throws -> TrainingPlan {
+    func write(planID: Int, draft: PlanDraft) async throws {
         calls.append(Call(planID: planID, draft: draft))
         onExecute()
-        return try results.removeFirst().get()
+        try results.removeFirst().get()
     }
 }
