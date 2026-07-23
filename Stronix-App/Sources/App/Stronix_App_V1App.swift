@@ -66,10 +66,14 @@ struct Stronix_App_V1App: App {
         databaseState = .preparing
         Task.detached(priority: .userInitiated) {
             let result = operation()
+            if case .ready = result {
+                await LocalUserService.shared.restoreSession()
+            } else if case .recovered = result {
+                await LocalUserService.shared.restoreSession()
+            }
             await MainActor.run {
                 switch result {
                 case .ready, .recovered:
-                    print("数据库生命周期准备完成: \(result.diagnostic.summary)")
                     databaseState = .ready
                 case .incompatible:
                     print("数据库生命周期不兼容: \(result.diagnostic.summary)")

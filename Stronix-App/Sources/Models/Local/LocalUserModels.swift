@@ -60,21 +60,6 @@ struct LoginRequest: Codable {
     let password: String
 }
 
-struct ForgotPasswordRequest: Codable {
-    let email: String
-}
-
-struct RefreshTokenRequest: Codable {
-    let refresh_token: String
-}
-
-struct RefreshTokenResponse: Codable {
-    let success: Bool
-    let message: String
-    let access_token: String?
-    let token: String?
-}
-
 // MARK: - 本地用户认证错误
 enum LocalUserError: Error {
     case databaseNotInitialized
@@ -100,38 +85,6 @@ enum LocalUserError: Error {
             return "数据库查询失败: \(error.localizedDescription)"
         }
     }
-}
-
-// MARK: - 密码重置验证码模型
-struct PasswordResetCode: Codable, Identifiable {
-    let id: Int
-    let email: String
-    let verificationCode: String
-    let expiresAt: Date
-    let isUsed: Bool
-    let createdAt: Date
-    let usedAt: Date?
-    
-    enum CodingKeys: String, CodingKey {
-        case id, email
-        case verificationCode = "verification_code"
-        case expiresAt = "expires_at"
-        case isUsed = "is_used"
-        case createdAt = "created_at"
-        case usedAt = "used_at"
-    }
-}
-
-// MARK: - 密码重置请求模型
-struct PasswordResetRequest {
-    let email: String
-}
-
-// MARK: - 密码重置验证模型
-struct PasswordResetVerification {
-    let email: String
-    let verificationCode: String
-    let newPassword: String
 }
 
 // TODO: 迁移User、UserProfile等模型

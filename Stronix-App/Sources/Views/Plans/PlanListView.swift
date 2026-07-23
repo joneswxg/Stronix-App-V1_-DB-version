@@ -228,11 +228,8 @@ struct PlanListView: View {
             }
         }
         .task {
-            guard !isEditPlanPresented else { return }
-            let _ = await authService.refreshTokenIfNeeded()
-            if authService.isLoggedIn {
-                await viewModel.loadInitialData()
-            }
+            guard !isEditPlanPresented, authService.isLoggedIn else { return }
+            await viewModel.loadInitialData()
         }
         .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
             if isLoggedIn {

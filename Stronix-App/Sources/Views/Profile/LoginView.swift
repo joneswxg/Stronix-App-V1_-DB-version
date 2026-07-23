@@ -8,7 +8,6 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
-    @State private var showForgotPassword = false
     @State private var errorMessage = ""
     @State private var showError = false
     
@@ -71,17 +70,6 @@ struct LoginView: View {
                             .cornerRadius(12)
                         }
                         
-                        // 忘记密码
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showForgotPassword = true
-                            }) {
-                                Text("忘记密码？")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(theme.primary)
-                            }
-                        }
                     }
                     .padding(.horizontal, 24)
                     
@@ -174,32 +162,6 @@ struct LoginView: View {
                     }
                     .padding(.top, 20)
                     
-                    // 测试账户提示
-                    VStack(spacing: 8) {
-                        Text("体验账户")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(theme.secondary)
-                        
-                        VStack(spacing: 4) {
-                            Text("邮箱: iostest@example.com")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondary)
-                            Text("密码: password123")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondary)
-                        }
-                        
-                        Button(action: {
-                            email = "iostest@example.com"
-                            password = "password123"
-                        }) {
-                            Text("使用体验账户直接登陆")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.primary)
-                        }
-                    }
-                    .padding(.top, 16)
-                    
                     Spacer()
                 }
             }
@@ -207,9 +169,6 @@ struct LoginView: View {
         }
         .sheet(isPresented: $showRegister) {
             RegisterView()
-        }
-        .sheet(isPresented: $showForgotPassword) {
-            AuthForgotPasswordView()
         }
         .alert("登录失败", isPresented: $showError) {
             Button("确定", role: .cancel) { }
@@ -224,36 +183,19 @@ struct LoginView: View {
     }
     
     private func loginWithEmail() {
-        print("🚀 开始本地登录流程")
-        print("📧 邮箱: \(email)")
-        print("🔒 密码长度: \(password.count)")
-        
-        // 先调试检查数据库
-        localUserService.debugCheckDatabase()
-        
         Task {
             do {
-                print("🗄️ 检查本地数据库...")
                 let response = try await localUserService.login(email: email, password: password)
-                print("📨 收到登录响应: success=\(response.success), message=\(response.message)")
-                
                 if !response.success {
                     await MainActor.run {
                         errorMessage = response.message
                         showError = true
-                        print("❌ 登录失败: \(response.message)")
                     }
-                } else {
-                    print("✅ 本地登录成功")
-                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
-                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
-                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
                 }
             } catch {
                 await MainActor.run {
                     errorMessage = error.localizedDescription
                     showError = true
-                    print("❌ 登录异常: \(error)")
                 }
             }
         }
