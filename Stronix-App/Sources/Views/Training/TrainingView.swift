@@ -3,36 +3,26 @@ import UIKit
 
 // MARK: - 可变的训练数据模型已移动到 MutableTrainingModels.swift
 
+@MainActor
 struct TrainingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     let plan: TrainingPlan
-    @ObservedObject var viewModel: PlanViewModel
-    @ObservedObject private var trainingManager = TrainingSessionManager.shared
-    @ObservedObject private var trainingHistoryService = TrainingHistoryService.shared
-    @ObservedObject private var notificationManager = NotificationManager.shared
-    
+    @StateObject private var viewModel: TrainingViewModel
+
     @State private var showActionSelect = false
     @State private var showCancelAlert = false
     @State private var showCompleteAlert = false
     @State private var showPlanUpdateAlert = false
-    @State private var isCompleting = false
-    @State private var completionError: String?
-    @State private var showCompletionError = false
     @State private var showActionHistory = false
     @State private var selectedActionForHistory: (id: Int, name: String)?
-    
-    // 计时器状态现在由TrainingSessionManager管理
-    
-    // 计划是否有变动
-    @State private var planHasChanges = false
-    
-    // 自定义键盘状态
+    @State private var showCompletionError = false
+
     @StateObject private var keyboardManager = CustomKeyboardManager()
-    
-    init(plan: TrainingPlan, viewModel: PlanViewModel) {
+
+    init(plan: TrainingPlan, viewModel: TrainingViewModel? = nil) {
         self.plan = plan
-        self.viewModel = viewModel
+        _viewModel = StateObject(wrappedValue: viewModel ?? TrainingViewModel())
     }
     
     // 隐藏系统键盘的方法
@@ -46,22 +36,37 @@ struct TrainingView: View {
                 VStack(spacing: 8) {
                     TrainingSessionHeader(
                         data: TrainingSessionHeaderData(
-                            volumeText: "\(Int(trainingManager.completedVolume()))/\(Int(trainingManager.totalVolume())) kg",
-                            elapsedTimeText: trainingManager.formattedTrainingTime(),
-                            planName: trainingManager.planName
+                            volumeText: viewModel.volumeText,
+                            elapsedTimeText: viewModel.elapsedTimeText,
+                            planName: viewModel.planName
                         )
                     )
                     TrainingActionList(
-                        editingActions: $trainingManager.editingActions,
-                        completedSets: $trainingManager.completedSets,
-                        setNotes: $trainingManager.setNotes,
+                        editingActions: Binding(
+                            get: { viewModel.editingActions },
+                            set: { actions in viewModel.updateActions(actions) }
+                        ),
+                        completedSets: Binding(
+                            get: { viewModel.completedSets },
+                            set: { completedSets in viewModel.updateCompletedSets(completedSets) }
+                        ),
+                        setNotes: Binding(
+                            get: { viewModel.setNotes },
+                            set: { setNotes in viewModel.updateSetNotes(setNotes) }
+                        ),
                         showNoteInput: .constant(Set<String>()),
-                        setRestTimers: $trainingManager.setRestTimers,
+                        setRestTimers: .constant(viewModel.setRestTimers),
                         onAdd: { showActionSelect = true },
-                        onDelete: deleteAction,
-                        onUpdate: updateAction,
-                        onSetCompleted: handleSetCompleted,
-                        onRestTimerTapped: handleRestTimerTapped,
+                        onDelete: viewModel.deleteAction,
+                        onUpdate: { action in
+                            var actions = viewModel.editingActions
+                            if let index = actions.firstIndex(where: { $0.id == action.id }) {
+                                actions[index] = action
+                                viewModel.updateActions(actions)
+                            }
+                        },
+                        onSetCompleted: viewModel.toggleSetCompletion,
+                        onRestTimerTapped: viewModel.showRestTimer,
                         onShowActionHistory: { actionId, actionName in
                             selectedActionForHistory = (id: actionId, name: actionName)
                             showActionHistory = true
@@ -105,9 +110,9 @@ struct TrainingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             TrainingSessionToolbar(
-                isCompleting: isCompleting,
+                isCompleting: viewModel.isCompleting,
                 onCancel: { showCancelAlert = true },
-                onComplete: handleComplete
+                onComplete: { showCompleteAlert = true }
             )
         }
         .sheet(isPresented: $showActionSelect) {
@@ -130,7 +135,7 @@ struct TrainingView: View {
         .alert("确认取消锻炼", isPresented: $showCancelAlert) {
             Button("恢复", role: .cancel) { }
             Button("取消锻炼", role: .destructive) {
-                trainingManager.stopTraining()
+                viewModel.cancelTraining()
                 dismiss()
             }
         } message: {
@@ -139,202 +144,81 @@ struct TrainingView: View {
         .alert("完成训练", isPresented: $showCompleteAlert) {
             Button("取消", role: .cancel) { }
             Button("确定") {
-                // 只检查计划是否有变动，不保存训练历史
-                checkPlanChangesAndProceed()
+                if viewModel.hasPlanChanges() {
+                    showPlanUpdateAlert = true
+                } else {
+                    saveHistoryOnly()
+                }
             }
         } message: {
             Text("确认完成本次训练？")
         }
         .alert("更新训练计划", isPresented: $showPlanUpdateAlert) {
             Button("不更新", role: .cancel) {
-                Task {
-                    await saveTrainingHistoryOnly()
-                }
+                saveHistoryOnly()
             }
             Button("更新") {
                 Task {
-                    await updatePlanFromTraining()
+                    if await viewModel.saveHistoryAndUpdatePlan(planID: plan.id) {
+                        dismiss()
+                    } else {
+                        showCompletionError = true
+                    }
                 }
             }
         } message: {
             Text("检测到训练计划有变动，是否更新训练计划？")
         }
         .alert("完成训练失败", isPresented: $showCompletionError) {
-            Button("确定") {
-                completionError = nil
-            }
+            Button("确定") { }
         } message: {
-            Text(completionError ?? "未知错误")
+            Text(viewModel.completionError ?? "未知错误")
         }
         .onAppear {
-            // 确保训练状态已经开始
-            if !trainingManager.isTrainingActive {
-                trainingManager.startTraining(with: plan)
-            }
+            viewModel.startIfNeeded(plan: plan)
         }
-    }
-    
-    // MARK: - 训练相关方法
-    
-    private func handleComplete() {
-        print("🔍 handleComplete() 被调用")
-        showCompleteAlert = true
-        print("🔍 showCompleteAlert 设置为 true")
-    }
-    
-    private func updatePlanFromTraining() async {
-        isCompleting = true
-        
-        do {
-            // 1. 保存训练历史
-            if let trainingHistoryData = trainingManager.prepareTrainingHistoryData() {
-                let response = try await TrainingHistoryService.shared.saveTrainingHistory(trainingHistoryData)
-                print("✅ 训练历史保存成功，ID: \(response.history_id)")
-            }
-            
-            // 2. 更新训练计划
-            if let planUpdateData = trainingManager.preparePlanUpdateData() {
-                try await TrainingHistoryService.shared.updatePlanFromTraining(
-                    planId: plan.id,
-                    request: planUpdateData
-                )
-                print("✅ 训练计划更新成功")
-            }
-            
-            isCompleting = false
-            finishTrainingAndDismiss()
-            
-        } catch {
-            isCompleting = false
-            completionError = "更新训练计划失败: \(error.localizedDescription)"
-            showCompletionError = true
-            print("❌ 更新训练计划失败: \(error)")
-        }
-    }
-    
-    private func finishTrainingAndDismiss() {
-        trainingManager.completeTraining()
-        dismiss()
-    }
-    
-    // MARK: - 动作管理方法
-    
-    private func deleteAction(_ action: MutableTrainingAction) {
-        // 使用更安全的删除方式，通过ID匹配而不是索引
-        trainingManager.editingActions.removeAll { $0.id == action.id }
-        
-        // 清理相关的状态数据
-        let actionIdString = String(action.id)
-        
-        // 清理 completedSets (Set)
-        trainingManager.completedSets = trainingManager.completedSets.filter { setId in
-            !setId.hasPrefix("\(actionIdString)_")
-        }
-        
-        // 清理 setNotes (Dictionary)
-        trainingManager.setNotes = trainingManager.setNotes.filter { key, _ in
-            !key.hasPrefix("\(actionIdString)_")
-        }
-        
-        // 清理 setRestTimers (Dictionary)
-        trainingManager.setRestTimers = trainingManager.setRestTimers.filter { key, _ in
-            !key.hasPrefix("\(actionIdString)_")
-        }
-        
-        // 清理 setTimers (Dictionary)
-        for setId in trainingManager.setRestTimers.keys {
-            if setId.hasPrefix("\(actionIdString)_") {
-                trainingManager.invalidateSetTimer(setId: setId)
-            }
-        }
-        
-        planHasChanges = true
-    }
-    
-    private func updateAction(_ updatedAction: MutableTrainingAction) {
-        if let index = trainingManager.editingActions.firstIndex(where: { $0.id == updatedAction.id }) {
-            trainingManager.editingActions[index] = updatedAction
-        }
-        planHasChanges = true
-    }
-    
-    private func addAction(_ action: ActionInfo) {
-        let newAction = MutableTrainingAction(
-            id: action.id,
-            name: action.name,
-            imageUrl: action.imageUrl,
-            sets: [MutableTrainingSet(id: Int.random(in: 100000...999999), weight: 10.0, reps: 12)],
-            restTime: 60,
-            recordBilateral: false
-        )
-        trainingManager.editingActions.append(newAction)
-        planHasChanges = true
-    }
-    
-    // MARK: - 组休息计时器方法
-    
-    private func handleSetCompleted(setId: String, restTime: Int) {
-        trainingManager.handleSetCompleted(setId: setId, restTime: restTime)
     }
 
-    private func handleRestTimerTapped(setId: String, restTime: Int) {
-        trainingManager.handleRestTimerTapped(setId: setId, restTime: restTime)
+    private func addAction(_ action: ActionInfo) {
+        var actions = viewModel.editingActions
+        actions.append(
+            MutableTrainingAction(
+                id: action.id,
+                name: action.name,
+                imageUrl: action.imageUrl,
+                sets: [MutableTrainingSet(id: Int.random(in: 100000...999999), weight: 10.0, reps: 12)],
+                restTime: 60,
+                recordBilateral: false
+            )
+        )
+        viewModel.updateActions(actions)
     }
-    
-    // Timer-related methods moved to TrainingSessionManager
-    
-    private func checkPlanChangesAndProceed() {
-        // 只检查计划是否有变动，不保存训练历史
-        planHasChanges = trainingManager.hasChangesFromOriginalPlan()
-        print("🔍 planHasChanges = \(planHasChanges)")
-        
-        if planHasChanges {
-            print("🔍 显示计划更新对话框")
-            showPlanUpdateAlert = true
-        } else {
-            print("🔍 直接完成训练")
-            Task {
-                await saveTrainingHistoryOnly()
+
+    private func saveHistoryOnly() {
+        Task {
+            if await viewModel.saveHistoryOnly() {
+                dismiss()
+            } else {
+                showCompletionError = true
             }
         }
     }
-    
-    private func saveTrainingHistoryOnly() async {
-        isCompleting = true
-        
-        do {
-            // 只保存训练历史，不更新计划
-            if let trainingHistoryData = trainingManager.prepareTrainingHistoryData() {
-                let response = try await TrainingHistoryService.shared.saveTrainingHistory(trainingHistoryData)
-                print("✅ 训练历史保存成功，ID: \(response.history_id)")
-            }
-            
-            isCompleting = false
-            finishTrainingAndDismiss()
-            
-        } catch {
-            isCompleting = false
-            completionError = "保存训练记录失败: \(error.localizedDescription)"
-            showCompletionError = true
-            print("❌ 保存训练历史失败: \(error)")
-        }
-    }
-    
+
     private var restTimerOverlay: some View {
         Group {
-            if trainingManager.showRestTimer {
+            if viewModel.showRestTimer {
                 RestTimerOverlay(
-                    restTime: $trainingManager.currentRestTime,
-                    isRunning: !trainingManager.isRestTimerPaused,
-                    onPause: { trainingManager.toggleRestTimer() },
-                    onReset: { trainingManager.resetRestTimer() },
-                    onSkip: { trainingManager.skipRestTimer() },
-                    onClose: { trainingManager.closeRestTimer() },
-                    onAddTime: { trainingManager.addRestTime(10) },
-                    onSubtractTime: { trainingManager.subtractRestTime(10) }
+                    restTime: .constant(viewModel.currentRestTime),
+                    isRunning: !viewModel.isRestTimerPaused,
+                    onPause: viewModel.toggleRestTimer,
+                    onReset: viewModel.resetRestTimer,
+                    onSkip: viewModel.skipRestTimer,
+                    onClose: viewModel.closeRestTimer,
+                    onAddTime: { viewModel.addRestTime(10) },
+                    onSubtractTime: { viewModel.subtractRestTime(10) }
                 )
                 .transition(.scale.combined(with: .opacity))
-                .animation(.spring(), value: trainingManager.showRestTimer)
+                .animation(.spring(), value: viewModel.showRestTimer)
             }
         }
     }
@@ -977,13 +861,7 @@ struct TrainingActionCard: View {
                 
                 // 打勾框
                 Button(action: {
-                    if isCompleted {
-                        completedSets.remove(setId)
-                    } else {
-                        completedSets.insert(setId)
-                        // 开始倒计时，但不弹出浮动窗口
-                        onSetCompleted(setId, action.restTime)
-                    }
+                    onSetCompleted(setId, action.restTime)
                 }) {
                     Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                         .foregroundColor(isCompleted ? theme.primary : theme.secondary)

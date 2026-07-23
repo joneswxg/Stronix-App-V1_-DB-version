@@ -2,8 +2,42 @@ import SwiftUI
 import Combine
 import Foundation
 
+protocol TrainingSessionManaging: AnyObject {
+    var objectWillChange: ObservableObjectPublisher { get }
+    var isTrainingActive: Bool { get }
+    var currentPlan: TrainingPlan? { get }
+    var editingActions: [MutableTrainingAction] { get set }
+    var completedSets: Set<String> { get set }
+    var setNotes: [String: String] { get set }
+    var planName: String { get }
+    var setRestTimers: [String: Int] { get }
+    var showRestTimer: Bool { get }
+    var currentRestTime: Int { get }
+    var isRestTimerPaused: Bool { get }
+
+    func startTraining(with plan: TrainingPlan)
+    func stopTraining()
+    func completeTraining()
+    func updateActions(_ actions: [MutableTrainingAction])
+    func deleteAction(_ action: MutableTrainingAction)
+    func toggleSetCompletion(setID: String, restTime: Int)
+    func handleRestTimerTapped(setId: String, restTime: Int)
+    func toggleRestTimer()
+    func resetRestTimer()
+    func skipRestTimer()
+    func closeRestTimer()
+    func addRestTime(_ seconds: Int)
+    func subtractRestTime(_ seconds: Int)
+    func formattedTrainingTime() -> String
+    func completedVolume() -> Double
+    func totalVolume() -> Double
+    func prepareTrainingHistoryData() -> SaveTrainingHistoryRequest?
+    func preparePlanUpdateData() -> UpdatePlanFromTrainingRequest?
+    func hasChangesFromOriginalPlan() -> Bool
+}
+
 /// 全局训练会话管理器
-class TrainingSessionManager: ObservableObject {
+final class TrainingSessionManager: ObservableObject, TrainingSessionManaging {
     static let shared = TrainingSessionManager()
     
     // MARK: - 训练状态
@@ -79,10 +113,35 @@ class TrainingSessionManager: ObservableObject {
     
     /// 完成训练
     func completeTraining() {
-        // 这里可以添加保存训练记录的逻辑
         stopTraining()
     }
-    
+
+    func updateActions(_ actions: [MutableTrainingAction]) {
+        editingActions = actions
+    }
+
+    func deleteAction(_ action: MutableTrainingAction) {
+        let actionPrefix = "\(action.id)_"
+        editingActions.removeAll { $0.id == action.id }
+        completedSets = completedSets.filter { !$0.hasPrefix(actionPrefix) }
+        setNotes = setNotes.filter { !$0.key.hasPrefix(actionPrefix) }
+
+        let affectedSetIDs = setRestTimers.keys.filter { $0.hasPrefix(actionPrefix) }
+        for setID in affectedSetIDs {
+            stopSetTimer(setId: setID)
+        }
+    }
+
+    func toggleSetCompletion(setID: String, restTime: Int) {
+        if completedSets.contains(setID) {
+            completedSets.remove(setID)
+            stopSetTimer(setId: setID)
+        } else {
+            completedSets.insert(setID)
+            handleSetCompleted(setId: setID, restTime: restTime)
+        }
+    }
+
     // MARK: - 计时器管理
     
     private func startTrainingTimer() {
