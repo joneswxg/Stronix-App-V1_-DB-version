@@ -3,6 +3,7 @@ import SwiftUI
 struct PlanListView: View {
     @Environment(\.theme) private var theme
     @ObservedObject var viewModel: PlanViewModel
+    @ObservedObject var createPlanViewModel: CreatePlanViewModel
     @ObservedObject private var authService = LocalUserService.shared
     @State private var showLogin = false
     @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
@@ -187,14 +188,12 @@ struct PlanListView: View {
             }
         }
         .fullScreenCover(isPresented: $navigateToCreatePlan) {
-            CreatePlanView()
-                .onDisappear {
-                    if authService.isLoggedIn {
-                        Task {
-                            await viewModel.refresh()
-                        }
-                    }
+            CreatePlanView(
+                viewModel: createPlanViewModel,
+                onSaveSucceeded: {
+                    await viewModel.refreshPersonalPlansOnly()
                 }
+            )
         }
         .sheet(isPresented: $showLogin) {
             LoginView()
@@ -604,5 +603,10 @@ struct PersonalPlanCard: View {
 }
 
 #Preview {
-    PlanListView(viewModel: PlanViewModel())
+    PlanListView(
+        viewModel: PlanViewModel(),
+        createPlanViewModel: CreatePlanViewModel(
+            useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
+        )
+    )
 }
