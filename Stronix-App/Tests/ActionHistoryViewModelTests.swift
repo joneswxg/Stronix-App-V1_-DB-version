@@ -22,13 +22,40 @@ final class ActionHistoryViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.phase, .empty)
     }
 
-    func testLoadPublishesFailure() async {
+    func testLoadPublishesUserSafeFailure() async {
         let repository = MockActionHistoryRepository(results: [.failure(TestError.loadFailed)])
         let viewModel = ActionHistoryViewModel(repository: repository)
 
         await viewModel.load(actionID: 42)
 
-        XCTAssertEqual(viewModel.phase, .failure(TestError.loadFailed.localizedDescription))
+        XCTAssertEqual(viewModel.phase, .failure("暂时无法完成请求，请稍后重试"))
+    }
+
+    func testLoadDoesNotExposeDatabaseFailureDetails() async {
+        let repository = MockActionHistoryRepository(results: [
+            .failure(DatabaseError.operationFailed(underlying: TestError.databaseFailure))
+        ])
+        let viewModel = ActionHistoryViewModel(repository: repository)
+
+        await viewModel.load(actionID: 42)
+
+        XCTAssertEqual(viewModel.phase, .failure("数据暂时无法读取，请稍后重试"))
+    }
+
+    func testLoadDoesNotExposeRepositoryFailureDetails() async {
+        let repository = MockActionHistoryRepository(results: [.failure(TestError.databaseFailure)])
+        let viewModel = ActionHistoryViewModel(repository: repository)
+
+        await viewModel.load(actionID: 42)
+
+        guard case .failure(let message) = viewModel.phase else {
+            return XCTFail("Expected a failure state")
+        }
+        XCTAssertEqual(message, "暂时无法完成请求，请稍后重试")
+        XCTAssertFalse(message.contains("SQLite"))
+        XCTAssertFalse(message.contains("SELECT"))
+        XCTAssertFalse(message.contains("/tmp/stronix.db"))
+        XCTAssertFalse(message.contains("LocalActionService"))
     }
 
     func testRetryLoadsAgainAfterFailure() async {
@@ -69,8 +96,14 @@ private final class MockActionHistoryRepository: ActionHistoryRepository, @unche
 
 private enum TestError: LocalizedError {
     case loadFailed
+    case databaseFailure
 
     var errorDescription: String? {
-        "Unable to load action history"
+        switch self {
+        case .loadFailed:
+            return "Unable to load action history"
+        case .databaseFailure:
+            return "SQLite error near SELECT at /tmp/stronix.db from LocalActionService"
+        }
     }
 }

@@ -102,7 +102,35 @@ final class PlanViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.templatePlans.map(\.id), [template.id])
         XCTAssertTrue(viewModel.personalPlans.isEmpty)
         XCTAssertTrue(viewModel.showError)
-        XCTAssertEqual(viewModel.errorMessage, "加载个人计划失败: 未登录")
+        XCTAssertEqual(viewModel.errorMessage, "加载个人计划失败: 请先登录后重试")
+    }
+
+    func testInitialLoadMapsUnauthorizedPlanErrorToCanonicalMessage() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([]),
+            userPlansResult: .failure(LocalPlanError.unauthorized("SQLite error near SELECT at /tmp/stronix.db from LocalPlanService"))
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.errorMessage, "加载个人计划失败: 请先登录后重试")
+        XCTAssertFalse(viewModel.errorMessage?.contains("SQLite") ?? true)
+        XCTAssertFalse(viewModel.errorMessage?.contains("SELECT") ?? true)
+        XCTAssertFalse(viewModel.errorMessage?.contains("/tmp/stronix.db") ?? true)
+        XCTAssertFalse(viewModel.errorMessage?.contains("LocalPlanService") ?? true)
+    }
+
+    func testInitialLoadMapsDatabaseErrorToSafeMessage() async {
+        let repository = MockPlanRepository(
+            templatePlansResult: .failure(DatabaseError.notReady),
+            userPlansResult: .success([])
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.errorMessage, "加载模板计划失败: 数据暂时无法读取，请稍后重试")
     }
 
     func testClearDataIgnoresACompletedCancelledLoad() async {

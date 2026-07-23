@@ -455,28 +455,10 @@ struct EditPlanView: View {
         } catch {
             print("🔄 EditPlanView.savePlan() 保存失败: \(error.localizedDescription)")
             print("🔄 EditPlanView.savePlan() 错误类型: \(type(of: error))")
-            if let localError = error as? LocalPlanError {
-                print("🔄 EditPlanView.savePlan() Local错误: \(localError)")
-                if case .unauthorized = localError {
-                    print("🔄 EditPlanView.savePlan() 认证失败")
-                    await MainActor.run {
-                        toastMessage = "登录已过期，请重新登录后再保存"
-                        showToast = true
-                        preventDismiss = false
-                    }
-                } else {
-                    await MainActor.run {
-                        toastMessage = "保存失败: \(localError.message)"
-                        showToast = true
-                        preventDismiss = false
-                    }
-                }
-            } else {
-                await MainActor.run {
-                    toastMessage = "保存失败: \(error.localizedDescription)"
-                    showToast = true
-                    preventDismiss = false
-                }
+            await MainActor.run {
+                toastMessage = "保存失败: \(AppError.map(error).userMessage)"
+                showToast = true
+                preventDismiss = false
             }
             isSaving = false
         }

@@ -492,58 +492,76 @@ final class LocalPlanService: PlanRepository {
     }
 
     func getTemplatePlans(language: String = "zh_CN") async throws -> [TrainingPlan] {
-        try repository(language: language).templatePlans()
+        try execute {
+            try repository(language: language).templatePlans()
+        }
     }
 
     func getTemplatePlanDetail(planId: Int, language: String = "zh_CN") async throws -> TrainingPlan {
-        try repository(language: language).templatePlanDetail(id: planId)
+        try execute {
+            try repository(language: language).templatePlanDetail(id: planId)
+        }
     }
 
     func getPersonalPlans(user_id: Int? = nil, language: String = "zh_CN") async throws -> [TrainingPlan] {
-        try repository(language: language).userPlans(ownerID: try currentUserID(user_id, language: language))
+        try execute {
+            try repository(language: language).userPlans(ownerID: try currentUserID(user_id, language: language))
+        }
     }
 
     func getUserPlanDetail(planId: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> TrainingPlan {
-        try repository(language: language).userPlanDetail(
-            id: planId,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).userPlanDetail(
+                id: planId,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func getPlanDetail(planId: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> TrainingPlan {
-        try repository(language: language).userPlanDetail(
-            id: planId,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).userPlanDetail(
+                id: planId,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func createPlan(_ planData: [String: Any], user_id: Int, language: String = "zh_CN") async throws -> CreatePlanResponse {
-        try repository(language: language).createUserPlan(
-            planData,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).createUserPlan(
+                planData,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func copyTemplatePlan(templateId: Int, user_id: Int, language: String = "zh_CN") async throws -> CreatePlanResponse {
-        try repository(language: language).copyTemplatePlan(
-            id: templateId,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).copyTemplatePlan(
+                id: templateId,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func deletePlan(planId: Int, user_id: Int, language: String = "zh_CN") async throws {
-        try repository(language: language).deleteUserPlan(
-            id: planId,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).deleteUserPlan(
+                id: planId,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func updatePlan(planId: Int, planData: UpdatePlanRequest, user_id: Int, language: String = "zh_CN") async throws {
-        try repository(language: language).updateUserPlan(
-            id: planId,
-            planData: planData,
-            ownerID: try currentUserID(user_id, language: language)
-        )
+        try execute {
+            try repository(language: language).updateUserPlan(
+                id: planId,
+                planData: planData,
+                ownerID: try currentUserID(user_id, language: language)
+            )
+        }
     }
 
     func templatePlans() async throws -> [TrainingPlan] {
@@ -578,9 +596,21 @@ final class LocalPlanService: PlanRepository {
         try await deletePlan(planId: id, user_id: try currentUserID(nil, language: "zh_CN"))
     }
 
+    private func execute<T>(_ operation: () throws -> T) throws -> T {
+        do {
+            return try operation()
+        } catch let error as LocalPlanError {
+            throw error
+        } catch let error as DatabaseError {
+            throw error
+        } catch {
+            throw DatabaseError.operationFailed(underlying: error)
+        }
+    }
+
     private func repository(language: String) throws -> SQLitePlanRepository {
         guard let connection = connectionProvider() else {
-            throw LocalPlanError.serverError(get_error_message("SERVER_ERROR", language: language))
+            throw DatabaseError.notReady
         }
         return SQLitePlanRepository(connection: connection)
     }

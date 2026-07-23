@@ -76,6 +76,7 @@
 				Theme/AppTheme.swift,
 				"Theme/Color+Theme.swift",
 				Theme/ThemeManager.swift,
+				Utilities/AppError.swift,
 				Utilities/Constants/APIConfig.swift,
 				Utilities/Constants/DBConfig.swift,
 				ViewModels/ActionHistoryViewModel.swift,
