@@ -8,10 +8,9 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
-    @State private var showForgotPassword = false
     @State private var errorMessage = ""
     @State private var showError = false
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -22,17 +21,17 @@ struct LoginView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(height: 80)
-                        
+
                         Text("STRONIX")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(theme.onSurface)
-                        
+
                         Text("欢迎回来")
                             .font(.system(size: 16))
                             .foregroundColor(theme.secondary)
                     }
                     .padding(.top, 40)
-                    
+
                     // 登录表单
                     VStack(spacing: 16) {
                         // 邮箱输入
@@ -40,7 +39,7 @@ struct LoginView: View {
                             Text("邮箱")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(theme.onSurface)
-                            
+
                             HStack {
                                 Image(systemName: "envelope")
                                     .foregroundColor(theme.secondary)
@@ -53,13 +52,13 @@ struct LoginView: View {
                             .background(theme.background)
                             .cornerRadius(12)
                         }
-                        
+
                         // 密码输入
                         VStack(alignment: .leading, spacing: 8) {
                             Text("密码")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(theme.onSurface)
-                            
+
                             HStack {
                                 Image(systemName: "lock")
                                     .foregroundColor(theme.secondary)
@@ -70,21 +69,10 @@ struct LoginView: View {
                             .background(theme.background)
                             .cornerRadius(12)
                         }
-                        
-                        // 忘记密码
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showForgotPassword = true
-                            }) {
-                                Text("忘记密码？")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(theme.primary)
-                            }
-                        }
+
                     }
                     .padding(.horizontal, 24)
-                    
+
                     // 登录按钮
                     VStack(spacing: 16) {
                         Button(action: {
@@ -104,13 +92,13 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
-                                (email.isEmpty || password.isEmpty || localUserService.isLoading) ? 
+                                (email.isEmpty || password.isEmpty || localUserService.isLoading) ?
                                     theme.disabled.opacity(0.5) : theme.primary
                             )
                             .cornerRadius(25)
                         }
                         .disabled(email.isEmpty || password.isEmpty || localUserService.isLoading)
-                        
+
                         // 分割线
                         HStack {
                             Rectangle()
@@ -124,7 +112,7 @@ struct LoginView: View {
                                 .fill(theme.secondary.opacity(0.3))
                                 .frame(height: 1)
                         }
-                        
+
                         // 微信登录按钮
                         Button(action: {
                             loginWithWechat()
@@ -146,7 +134,7 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
-                                localUserService.isLoading ? 
+                                localUserService.isLoading ?
                                     theme.background.opacity(0.7) : theme.background
                             )
                             .cornerRadius(25)
@@ -158,7 +146,7 @@ struct LoginView: View {
                         .disabled(localUserService.isLoading)
                     }
                     .padding(.horizontal, 24)
-                    
+
                     // 注册链接
                     HStack {
                         Text("还没有账号？")
@@ -173,7 +161,7 @@ struct LoginView: View {
                         }
                     }
                     .padding(.top, 20)
-                    
+
                     Spacer()
                 }
             }
@@ -181,9 +169,6 @@ struct LoginView: View {
         }
         .sheet(isPresented: $showRegister) {
             RegisterView()
-        }
-        .sheet(isPresented: $showForgotPassword) {
-            AuthForgotPasswordView()
         }
         .alert("登录失败", isPresented: $showError) {
             Button("确定", role: .cancel) { }
@@ -196,12 +181,11 @@ struct LoginView: View {
             }
         }
     }
-    
+
     private func loginWithEmail() {
         Task {
             do {
                 let response = try await localUserService.login(email: email, password: password)
-
                 if !response.success {
                     await MainActor.run {
                         errorMessage = response.message
@@ -210,7 +194,7 @@ struct LoginView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "登录失败，请稍后重试"
+                    errorMessage = error.localizedDescription
                     showError = true
                 }
             }
@@ -218,6 +202,8 @@ struct LoginView: View {
     }
 
     private func loginWithWechat() {
+        print("🚀 开始微信登录流程")
+
         Task {
             do {
                 let response = try await localUserService.loginWithWechat()
@@ -226,8 +212,15 @@ struct LoginView: View {
                     await MainActor.run {
                         errorMessage = response.message
                         showError = true
+                        print("❌ 微信登录失败: \(response.message)")
                     }
                 } else {
+                    print("✅ 微信登录成功")
+                    print("🔍 检查登录状态: isLoggedIn=\(localUserService.isLoggedIn)")
+                    print("🔍 当前用户: \(localUserService.currentUser?.username ?? "无")")
+                    print("🔍 用户ID: \(localUserService.currentUser?.id ?? 0)")
+
+                    // 微信登录成功后自动关闭登录页面
                     await MainActor.run {
                         if localUserService.isLoggedIn {
                             dismiss()
@@ -236,8 +229,9 @@ struct LoginView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "登录失败，请稍后重试"
+                    errorMessage = error.localizedDescription
                     showError = true
+                    print("❌ 微信登录异常: \(error)")
                 }
             }
         }
