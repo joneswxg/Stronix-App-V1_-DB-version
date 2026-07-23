@@ -7,8 +7,7 @@ final class CreatePlanViewModel: ObservableObject {
     @Published var planNote = ""
     @Published var showPlanNote = false
     @Published var selectedActions: [PlanAction] = []
-    @Published var weightUnit: CreatePlanView.WeightUnit = .kg
-    @Published private(set) var isSaving = false
+    @Published var isSaving = false
     @Published private(set) var errorMessage: String?
     @Published private(set) var savedPlanID: Int?
 

@@ -30,12 +30,20 @@ struct PlanSet: Identifiable {
     var hasNotes: Bool = false // 新增：是否有备注
 }
 
+enum PlanWeightUnit: String, CaseIterable {
+    case kg = "kg"
+    case lbs = "lbs"
+
+    var displayName: String { rawValue }
+}
+
 struct CreatePlanView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     @StateObject private var viewModel: CreatePlanViewModel
     @State private var showActionSelect = false
     @State private var showPlanMenu = false
+    @State private var weightUnit: PlanWeightUnit = .kg
     @State private var selectedTargetMuscleId = 0
     private let onSaveSucceeded: () async -> Void
 
@@ -50,16 +58,7 @@ struct CreatePlanView: View {
     private func hideSystemKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
-    
-    enum WeightUnit: String, CaseIterable {
-        case kg = "kg"
-        case lbs = "lbs"
-        
-        var displayName: String {
-            return self.rawValue
-        }
-    }
-    
+
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
@@ -166,15 +165,16 @@ struct CreatePlanView: View {
                 set: { if !$0 { viewModel.consumeSavedPlanID() } }
             )) {
                 Button("确定") {
-                    Task {
-                        await onSaveSucceeded()
-                        viewModel.consumeSavedPlanID()
-                        dismiss()
-                    }
+                    viewModel.consumeSavedPlanID()
+                    dismiss()
                 }
             } message: {
                 Text("计划保存成功！")
             }
+        }
+        .task(id: viewModel.savedPlanID) {
+            guard viewModel.savedPlanID != nil else { return }
+            await onSaveSucceeded()
         }
         .sheet(isPresented: $showActionSelect) {
             PlanActionSelectView(
@@ -275,7 +275,7 @@ struct CreatePlanView: View {
                 PlanActionCardWrapper(
                     action: action,
                     selectedActions: $viewModel.selectedActions,
-                    weightUnit: viewModel.weightUnit,
+                    weightUnit: weightUnit,
                     onDelete: {
                         deleteAction(action)
                     },
@@ -331,7 +331,7 @@ struct CreatePlanView: View {
     }
     
     private func toggleWeightUnit() {
-        viewModel.weightUnit = viewModel.weightUnit == .kg ? .lbs : .kg
+        weightUnit = weightUnit == .kg ? .lbs : .kg
         // 这里可以添加单位转换逻辑
     }
 }
@@ -340,7 +340,7 @@ struct CreatePlanView: View {
 struct PlanActionCardWrapper: View {
     let action: PlanAction
     @Binding var selectedActions: [PlanAction]
-    let weightUnit: CreatePlanView.WeightUnit
+    let weightUnit: PlanWeightUnit
     let onDelete: () -> Void
     let onToggleUnit: () -> Void
     let isDisabled: Bool
@@ -377,7 +377,7 @@ struct PlanActionCardWrapper: View {
 struct PlanActionCard: View {
     @Environment(\.theme) private var theme: AppTheme
     @Binding var action: PlanAction
-    let weightUnit: CreatePlanView.WeightUnit
+    let weightUnit: PlanWeightUnit
     let onDelete: () -> Void
     let onToggleUnit: () -> Void
     let isDisabled: Bool
@@ -982,12 +982,4 @@ struct PlanActionCard: View {
         
         return nil
     }
-}
-
-#Preview {
-    CreatePlanView(
-        viewModel: CreatePlanViewModel(
-            useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
-        )
-    )
 }

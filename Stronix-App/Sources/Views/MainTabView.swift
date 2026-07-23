@@ -5,6 +5,9 @@ struct MainTabView: View {
     @AppStorage("MainTabView_selectedTab") private var selectedTab = 0 // 持久化选中的Tab
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @StateObject private var planViewModel = PlanViewModel()
+    @StateObject private var createPlanViewModel = CreatePlanViewModel(
+        useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
+    )
     @AppStorage("MainTabView_lastUserSelectedTab") private var lastUserSelectedTab = 0 // 持久化用户最后选择的标签页
     @StateObject private var keyboardManager = CustomKeyboardManager()
     
@@ -30,7 +33,10 @@ struct MainTabView: View {
                             TrainingView(plan: currentPlan, viewModel: planViewModel)
                                 .id("training-active")
                         } else {
-                            PlanListView(viewModel: planViewModel)
+                            PlanListView(
+                                viewModel: planViewModel,
+                                createPlanViewModel: createPlanViewModel
+                            )
                                 .id("plan-list")
                         }
                     }
