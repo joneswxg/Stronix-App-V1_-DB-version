@@ -322,11 +322,12 @@ struct TrainingSet: Identifiable {
     let actualReps: Int?
     let leftWeight: Double
     let rightWeight: Double
+    let notes: String?
     
     // 便利构造函数，用于创建新的训练组
-    init(id: Int, weight: Double, reps: Int, isCompleted: Bool = false, 
-         actualWeight: Double? = nil, actualReps: Int? = nil, 
-         leftWeight: Double = 0.0, rightWeight: Double = 0.0) {
+    init(id: Int, weight: Double, reps: Int, isCompleted: Bool = false,
+         actualWeight: Double? = nil, actualReps: Int? = nil,
+         leftWeight: Double = 0.0, rightWeight: Double = 0.0, notes: String? = nil) {
         self.id = id
         self.weight = weight
         self.reps = reps
@@ -335,6 +336,7 @@ struct TrainingSet: Identifiable {
         self.actualReps = actualReps
         self.leftWeight = leftWeight
         self.rightWeight = rightWeight
+        self.notes = notes
     }
 }
 
