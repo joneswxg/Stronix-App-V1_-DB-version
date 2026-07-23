@@ -230,7 +230,7 @@ final class PlanRepositoryTests: XCTestCase {
             connectionProvider: { self.connection },
             authenticatedUserIDProvider: { self.ownerID }
         )
-        try connection.execute("DROP TABLE training_plans")
+        try connection.execute("DROP TABLE template_plans")
 
         do {
             _ = try await service.templatePlans()
