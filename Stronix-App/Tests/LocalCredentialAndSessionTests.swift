@@ -59,7 +59,7 @@ final class LocalCredentialAndSessionTests: XCTestCase {
     }
 
     func testSuccessfulLegacyLoginUpgradesOnlySupportedBase64Credential() async throws {
-        try insertUser(username: "legacy", email: "legacy@example.com", credential: Data("legacy-password".utf8).base64EncodedString())
+        try insertUser(username: "legacy", email: "legacy@example.com", credential: "legacy-base64$v=1$\(Data("legacy-password".utf8).base64EncodedString())")
         let service = makeService()
 
         let response = try await service.login(email: "legacy@example.com", password: "legacy-password")
@@ -75,12 +75,15 @@ final class LocalCredentialAndSessionTests: XCTestCase {
     func testMalformedAndPseudoScryptCredentialsFailWithoutSession() async throws {
         try insertUser(username: "malformed", email: "malformed@example.com", credential: "pbkdf2-sha256$v=99$i=1$l=1$s=bad$h=bad")
         try insertUser(username: "pseudo", email: "pseudo@example.com", credential: "scrypt:demonstration")
+        try insertUser(username: "unmarked", email: "unmarked@example.com", credential: Data("any-password".utf8).base64EncodedString())
         let service = makeService()
 
         let malformedResult = try await service.login(email: "malformed@example.com", password: "any-password")
         let pseudoResult = try await service.login(email: "pseudo@example.com", password: "any-password")
+        let unmarkedResult = try await service.login(email: "unmarked@example.com", password: "any-password")
         XCTAssertFalse(malformedResult.success)
         XCTAssertFalse(pseudoResult.success)
+        XCTAssertFalse(unmarkedResult.success)
         XCTAssertNil(try sessionStore.load())
     }
 

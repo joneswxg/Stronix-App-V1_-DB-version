@@ -51,7 +51,9 @@ struct PBKDF2PasswordCredentialing: PasswordCredentialing {
             return constantTimeEquals(actual, [UInt8](credential.key)) ? .valid : .invalid
         }
 
-        guard let decoded = Data(base64Encoded: storedCredential, options: []),
+        guard storedCredential.hasPrefix("legacy-base64$v=1$"),
+              let encodedPassword = storedCredential.split(separator: "$", maxSplits: 2).last,
+              let decoded = Data(base64Encoded: String(encodedPassword), options: []),
               let legacyPassword = String(data: decoded, encoding: .utf8) else {
             return .invalid
         }

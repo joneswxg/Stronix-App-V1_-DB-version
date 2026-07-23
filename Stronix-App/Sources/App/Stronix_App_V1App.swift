@@ -66,10 +66,11 @@ struct Stronix_App_V1App: App {
         databaseState = .preparing
         Task.detached(priority: .userInitiated) {
             let result = operation()
-            if case .ready = result {
+            switch result {
+            case .ready, .recovered:
                 await LocalUserService.shared.restoreSession()
-            } else if case .recovered = result {
-                await LocalUserService.shared.restoreSession()
+            default:
+                break
             }
             await MainActor.run {
                 switch result {

@@ -146,7 +146,13 @@ final class LocalUserService: ObservableObject {
               let credential = row[0] as? String else {
             throw UserServiceError.userNotFound
         }
-        guard (try? credentialing.verify(password: currentPassword, storedCredential: credential)) != .invalid else {
+        let verification: PasswordCredentialVerification
+        do {
+            verification = try credentialing.verify(password: currentPassword, storedCredential: credential)
+        } catch {
+            return AuthResponse(success: false, message: "当前密码错误", user: nil)
+        }
+        guard verification != .invalid else {
             return AuthResponse(success: false, message: "当前密码错误", user: nil)
         }
         try db.run("UPDATE user SET password_hash = ? WHERE id = ?", [try credentialing.makeCredential(password: newPassword), user.id])
@@ -178,30 +184,7 @@ final class LocalUserService: ObservableObject {
     }
 
     func loginWithWechat() async throws -> AuthResponse {
-        await setLoading(true)
-        defer { Task { await self.setLoading(false) } }
-        let response = try await WechatLoginService.shared.simulateWechatLogin()
-        guard response.success, let openID = response.openId, let nickname = response.nickname else {
-            return AuthResponse(success: false, message: response.message, user: nil)
-        }
-        if let existingUser = try user(wechatOpenID: openID) {
-            try await establishSession(for: existingUser)
-            return AuthResponse(success: true, message: "微信登录成功", user: existingUser)
-        }
-
-        guard let db = connectionProvider() else { throw UserServiceError.databaseNotInitialized }
-        let username = try uniqueUsername(base: nickname, database: db)
-        let email = "wechat_\(openID)"
-        try db.run(
-            """
-            INSERT INTO user (username, email, password_hash, role, is_admin, created_at, account_type, external_id, wechat_open_id)
-            VALUES (?, ?, '', 'regular', 0, datetime('now'), 'wechat', ?, ?)
-            """,
-            [username, email, openID, openID]
-        )
-        guard let user = try user(wechatOpenID: openID) else { throw UserServiceError.userNotFound }
-        try await establishSession(for: user)
-        return AuthResponse(success: true, message: "微信登录成功", user: user)
+        return AuthResponse(success: false, message: "微信登录暂不可用", user: nil)
     }
 
     private func establishSession(for user: User) async throws {
