@@ -9,59 +9,39 @@ final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showingAddSheet = false
-    
-    private let bodyMeasurementService = LocalBodyMeasurementService.shared
+
+    private let operations: any BodyMeasurementOperating
     private var loadGeneration = 0
     private var loadTask: Task<Void, Never>?
 
-    private var currentUserId: Int {
-        CurrentUserContext.shared.currentUserID ?? 0
-    }
-    
-    // MARK: - 计算属性
-    
-    /// 最新的体测记录
     var latestMeasurement: BodyMeasurement? {
         measurements.first
     }
-    
-    /// 当前显示的数据点（选中的或最新的）
+
     var displayDataPoint: BodyMeasurement? {
         selectedDataPoint ?? latestMeasurement
     }
-    
-    /// 获取图表数据
+
     var chartData: [BodyMeasurement] {
-        return measurements.reversed() // 图表需要按时间正序显示
+        measurements.reversed()
     }
-    
-    /// 获取Y轴范围
+
+    init(operations: any BodyMeasurementOperating = BodyMeasurementUseCases()) {
+        self.operations = operations
+    }
+
     func getYAxisDomain() -> ClosedRange<Double> {
         let values = measurements.map { selectedMetric.getValue(from: $0) }
         guard let minValue = values.min(), let maxValue = values.max() else {
             return 0...100
         }
-        
         let padding = max(1.0, (maxValue - minValue) * 0.1)
-        let lowerBound = max(0, minValue - padding)
-        let upperBound = maxValue + padding
-        
-        return lowerBound...upperBound
+        return max(0, minValue - padding)...maxValue + padding
     }
-    
-    // MARK: - 数据加载
-    
-    /// 加载用户的体测数据
+
     func loadMeasurements() async {
         loadTask?.cancel()
         let generation = loadGeneration
-        let ownerID = currentUserId
-        guard ownerID > 0 else {
-            clearData()
-            errorMessage = "用户未登录"
-            return
-        }
-
         let task = Task { [weak self] in
             guard let self else { return }
             isLoading = true
@@ -70,19 +50,17 @@ final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting
                 if generation == loadGeneration { isLoading = false }
             }
             do {
-                let response = try await bodyMeasurementService.getUserMeasurements(
-                    BodyMeasurementQuery(userId: ownerID, limit: 100)
-                )
-                guard !Task.isCancelled,
-                      generation == loadGeneration,
-                      ownerID == currentUserId else { return }
-                measurements = response.measurements
-                if selectedDataPoint == nil { selectedDataPoint = latestMeasurement }
+                let loadedMeasurements = try await operations.listMeasurements()
+                guard !Task.isCancelled, generation == loadGeneration else { return }
+                measurements = loadedMeasurements
+                if selectedDataPoint == nil {
+                    selectedDataPoint = latestMeasurement
+                }
             } catch is CancellationError {
                 return
             } catch {
                 guard generation == loadGeneration else { return }
-                errorMessage = "查询失败，请稍后重试"
+                errorMessage = message(for: error)
             }
         }
         loadTask = task
@@ -103,105 +81,117 @@ final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting
         errorMessage = nil
         showingAddSheet = false
     }
-    
-    /// 刷新数据
+
     func refreshData() async {
         await loadMeasurements()
     }
-    
-    // MARK: - 数据操作
-    
-    /// 添加新的体测记录
-    func addMeasurement(_ request: CreateBodyMeasurementRequest) async -> Bool {
+
+    func addMeasurement(_ draft: BodyMeasurementDraft) async -> Bool {
         do {
-            let response = try await bodyMeasurementService.createMeasurement(request)
-            print("成功创建体测记录，ID: \(response.measurementId ?? 0)")
-            
-            // 重新加载数据
-            await loadMeasurements()
+            let measurement = try await operations.createMeasurement(draft)
+            measurements.append(measurement)
+            sortMeasurements()
+            selectedDataPoint = measurement
             return true
-            
         } catch {
-            errorMessage = error.localizedDescription
-            print("创建体测记录失败: \(error)")
+            errorMessage = message(for: error)
             return false
         }
     }
-    
-    /// 删除体测记录
-    func deleteMeasurement(_ measurementId: Int) async -> Bool {
+
+    func updateMeasurement(id: Int, with draft: BodyMeasurementDraft) async -> Bool {
         do {
-            let response = try await bodyMeasurementService.deleteMeasurement(measurementId)
-            if response.success {
-                // 从本地数组中移除
-                measurements.removeAll { $0.id == measurementId }
-                
-                // 如果删除的是当前选中的数据点，重置选择
-                if selectedDataPoint?.id == measurementId {
-                    selectedDataPoint = latestMeasurement
-                }
+            let measurement = try await operations.updateMeasurement(id: id, with: draft)
+            guard let index = measurements.firstIndex(where: { $0.id == id }) else {
+                await loadMeasurements()
+                return true
             }
-            return response.success
-            
+            measurements[index] = measurement
+            sortMeasurements()
+            if selectedDataPoint?.id == id {
+                selectedDataPoint = measurement
+            }
+            return true
         } catch {
-            errorMessage = error.localizedDescription
-            print("删除体测记录失败: \(error)")
+            errorMessage = message(for: error)
             return false
         }
     }
-    
-    // MARK: - UI交互
-    
-    /// 选择指标类型
+
+    func deleteMeasurement(_ measurementID: Int) async -> Bool {
+        do {
+            try await operations.deleteMeasurement(id: measurementID)
+            measurements.removeAll { $0.id == measurementID }
+            if selectedDataPoint?.id == measurementID {
+                selectedDataPoint = latestMeasurement
+            }
+            return true
+        } catch {
+            errorMessage = message(for: error)
+            return false
+        }
+    }
+
     func selectMetric(_ metric: MetricType) {
         selectedMetric = metric
     }
-    
-    /// 选择数据点
+
     func selectDataPoint(_ measurement: BodyMeasurement) {
         selectedDataPoint = measurement
     }
-    
-    /// 处理图表点击
+
     func handleChartTap(at index: Int) {
         let reversedIndex = measurements.count - 1 - index
         if reversedIndex >= 0 && reversedIndex < measurements.count {
             selectedDataPoint = measurements[reversedIndex]
         }
     }
-    
-    /// 显示添加记录界面
+
     func showAddSheet() {
         showingAddSheet = true
     }
-    
-    /// 隐藏添加记录界面
+
     func hideAddSheet() {
         showingAddSheet = false
     }
-    
-    // MARK: - 格式化方法
-    
-    /// 格式化日期显示
+
     func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM.dd HH:mm"
-        return formatter.string(from: date)
+        BodyMeasurementDateFormatting.listDate(date)
     }
-    
-    /// 格式化数值显示
+
     func formatValue(_ value: Double, for metric: MetricType) -> String {
-        return "\(String(format: "%.1f", value))\(metric.unit)"
+        "\(String(format: "%.1f", value))\(metric.unit)"
     }
-    
-    /// 获取指标值
+
     func getValueForMetric(_ measurement: BodyMeasurement) -> Double {
-        return selectedMetric.getValue(from: measurement)
+        selectedMetric.getValue(from: measurement)
     }
-    
-    // MARK: - 初始化
-    
-    init() {
-        // 移除自动加载，让视图控制何时加载数据
+
+    private func sortMeasurements() {
+        measurements.sort {
+            if $0.measurementTimestamp != $1.measurementTimestamp {
+                return $0.measurementTimestamp > $1.measurementTimestamp
+            }
+            if $0.createdAt != $1.createdAt {
+                return $0.createdAt > $1.createdAt
+            }
+            return $0.id > $1.id
+        }
     }
-} 
+
+    private func message(for error: Error) -> String {
+        switch error as? BodyMeasurementRepositoryError {
+        case .unauthenticated:
+            return "用户未登录"
+        case .notFoundOrUnauthorized:
+            return "记录已不可用"
+        case .invalidMeasurementID, .invalidMeasurementTimestamp, .invalidWeight, .invalidHeight, .invalidBodyFatPercentage,
+             .invalidSkeletalMuscleMass, .invalidVisceralFatLevel:
+            return "体测数据无效"
+        case .malformedStoredTimestamp:
+            return "记录日期无效"
+        case nil:
+            return "操作失败，请稍后重试"
+        }
+    }
+}

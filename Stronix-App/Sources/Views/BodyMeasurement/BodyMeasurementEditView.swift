@@ -39,7 +39,7 @@ struct BodyMeasurementEditView: View {
                         .foregroundColor(theme.onSurface)
                     
                     HStack {
-                        Text(formatDate(selectedDate))
+                        Text(BodyMeasurementDateFormatting.editorDate(selectedDate))
                             .font(.system(size: 16))
                             .foregroundColor(theme.onSurface)
                         Spacer()
@@ -214,12 +214,6 @@ struct BodyMeasurementEditView: View {
         return value >= 1 && value <= 20
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd"
-        return formatter.string(from: date)
-    }
-    
     private func saveChanges() async {
         guard let weightValue = Double(weight),
               let heightValue = Double(height),
@@ -231,26 +225,18 @@ struct BodyMeasurementEditView: View {
         
         isSaving = true
         
-        // 这里需要调用更新API
-        // 暂时使用删除+添加的方式来模拟更新
-        let deleteSuccess = await viewModel.deleteMeasurement(record.id)
-        
-        if deleteSuccess {
-            let request = CreateBodyMeasurementRequest(
-                userId: CurrentUserContext.shared.currentUserID ?? 0,
-                measurementTimestamp: selectedDate,
-                weightKg: weightValue,
-                heightCm: heightValue,
-                bodyFatPercentage: bodyFatValue,
-                skeletalMuscleMassKg: muscleMassValue,
-                visceralFatLevel: visceralFatValue
-            )
-            
-            let addSuccess = await viewModel.addMeasurement(request)
-            
-            if addSuccess {
-                presentationMode.wrappedValue.dismiss()
-            }
+        let draft = BodyMeasurementDraft(
+            measurementTimestamp: selectedDate,
+            weightKg: weightValue,
+            heightCm: heightValue,
+            bodyFatPercentage: bodyFatValue,
+            skeletalMuscleMassKg: muscleMassValue,
+            visceralFatLevel: visceralFatValue
+        )
+
+        let success = await viewModel.updateMeasurement(id: record.id, with: draft)
+        if success {
+            presentationMode.wrappedValue.dismiss()
         }
         
         isSaving = false
@@ -305,7 +291,6 @@ struct EditInputField: View {
             viewModel: BodyMeasurementViewModel(),
             record: BodyMeasurement(
                 id: 1,
-                userId: 1,
                 measurementTimestamp: Date(),
                 weightKg: 75.5,
                 heightCm: 175.0,

@@ -119,7 +119,7 @@ struct MeasurementRowView: View {
         VStack(spacing: 12) {
             // 日期和操作按钮
             HStack {
-                Text(formatDate(record.measurementTimestamp))
+                Text(BodyMeasurementDateFormatting.detailDate(record.measurementTimestamp))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(theme.onSurface)
                 
@@ -167,11 +167,6 @@ struct MeasurementRowView: View {
         .shadow(color: theme.shadow, radius: 3, x: 0, y: 2)
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年MM月dd日"
-        return formatter.string(from: date)
-    }
 }
 
 // 数据项组件

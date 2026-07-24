@@ -11,6 +11,7 @@ struct MeasurementData {
 
 struct BodyMeasurementChange: View {
     @Environment(\.theme) private var theme
+    @EnvironmentObject private var userSession: UserSession
     @StateObject private var viewModel = BodyMeasurementViewModel()
     @State private var selectedStartDate = Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date()
     @State private var selectedEndDate = Date()
@@ -110,6 +111,9 @@ struct BodyMeasurementChange: View {
             .padding(.horizontal, 20)
         }
         .background(theme.background)
+        .task {
+            userSession.registerResetter(viewModel)
+        }
         .onAppear {
             Task {
                 await viewModel.loadMeasurements()
@@ -320,36 +324,26 @@ struct BodyMeasurementChange: View {
     }
     
     private func formatDateRange() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yy.MM.dd"
-        
-        // 检查结束日期是否是今天
         let calendar = Calendar.current
         let isToday = calendar.isDate(selectedEndDate, inSameDayAs: Date())
         
         if isToday {
-            return "\(formatter.string(from: selectedStartDate)) ~ 最近"
+            return "\(BodyMeasurementDateFormatting.changeRangeDate(selectedStartDate)) ~ 最近"
         } else {
-            return "\(formatter.string(from: selectedStartDate)) ~ \(formatter.string(from: selectedEndDate))"
+            return "\(BodyMeasurementDateFormatting.changeRangeDate(selectedStartDate)) ~ \(BodyMeasurementDateFormatting.changeRangeDate(selectedEndDate))"
         }
     }
     
     private func formatCurrentDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yy.MM.dd HH:mm"
-        return formatter.string(from: selectedEndDate)
+        BodyMeasurementDateFormatting.changeDateTime(selectedEndDate)
     }
-    
+
     private func formatSelectedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yy.MM.dd HH:mm"
-        return formatter.string(from: date)
+        BodyMeasurementDateFormatting.changeDateTime(date)
     }
-    
+
     private func formatChartDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM.dd"
-        return formatter.string(from: date)
+        BodyMeasurementDateFormatting.changeChartLabel(date)
     }
     
     // MARK: - 计算函数

@@ -208,7 +208,7 @@ struct BodyMeasurementOverview: View {
     private var selectedDataPointView: some View {
         if let selectedData = viewModel.selectedDataPoint {
             HStack {
-                Text(formatDateForDisplay(selectedData.measurementTimestamp))
+                Text(BodyMeasurementDateFormatting.detailDate(selectedData.measurementTimestamp))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(theme.secondary)
                 Spacer()
@@ -255,7 +255,7 @@ struct BodyMeasurementOverview: View {
                 AxisMarks(values: .automatic(desiredCount: min(5, sortedChartData.count))) { value in
                     AxisValueLabel {
                         if let index = value.as(Int.self), index < sortedChartData.count {
-                            Text(formatDateForChart(sortedChartData[index].measurementTimestamp))
+                            Text(BodyMeasurementDateFormatting.chartLabel(sortedChartData[index].measurementTimestamp))
                                 .font(.system(size: 10))
                                 .foregroundColor(theme.secondary)
                         }
@@ -287,19 +287,6 @@ struct BodyMeasurementOverview: View {
         }
     }
     
-    // 图表专用的日期格式化函数（月日）
-    private func formatDateForChart(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd"
-        return formatter.string(from: date)
-    }
-    
-    // 显示用的日期格式化函数（年月日）
-    private func formatDateForDisplay(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年MM月dd日"
-        return formatter.string(from: date)
-    }
     
     private var bottomButtons: some View {
         VStack {
