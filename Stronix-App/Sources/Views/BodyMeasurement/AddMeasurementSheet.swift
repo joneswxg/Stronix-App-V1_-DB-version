@@ -31,7 +31,7 @@ struct AddMeasurementSheet: View {
                             .foregroundColor(theme.onSurface)
                         
                         HStack {
-                            Text(formatDate(selectedDate))
+                            Text(BodyMeasurementDateFormatting.editorDate(selectedDate))
                                 .font(.system(size: 16))
                                 .foregroundColor(theme.onSurface)
                             Spacer()
@@ -212,12 +212,6 @@ struct AddMeasurementSheet: View {
         return value >= 1 && value <= 20
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd"
-        return formatter.string(from: date)
-    }
-    
     private func saveData() async {
         guard let weightValue = Double(weight),
               let heightValue = Double(height),
@@ -229,8 +223,7 @@ struct AddMeasurementSheet: View {
         
         isSaving = true
         
-        let request = CreateBodyMeasurementRequest(
-            userId: CurrentUserContext.shared.currentUserID ?? 0,
+        let draft = BodyMeasurementDraft(
             measurementTimestamp: selectedDate,
             weightKg: weightValue,
             heightCm: heightValue,
@@ -238,8 +231,8 @@ struct AddMeasurementSheet: View {
             skeletalMuscleMassKg: muscleMassValue,
             visceralFatLevel: visceralFatValue
         )
-        
-        let success = await viewModel.addMeasurement(request)
+
+        let success = await viewModel.addMeasurement(draft)
         
         isSaving = false
         

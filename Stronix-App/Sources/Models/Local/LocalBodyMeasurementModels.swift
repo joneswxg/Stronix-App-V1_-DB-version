@@ -7,9 +7,8 @@ import SQLite
 // MARK: - BodyMeasurement 数据模型
 /// 迁移自 Backend-Reference/src/stronix/models/BodyMeasurementModels.py
 
-struct BodyMeasurement: Codable, Identifiable, Equatable {
+struct BodyMeasurement: Codable, Identifiable, Equatable, Sendable {
     let id: Int
-    let userId: Int
     let measurementTimestamp: Date
     let weightKg: Double
     let heightCm: Double
@@ -21,7 +20,6 @@ struct BodyMeasurement: Codable, Identifiable, Equatable {
     
     enum CodingKeys: String, CodingKey {
         case id
-        case userId = "user_id"
         case measurementTimestamp = "measurement_timestamp"
         case weightKg = "weight_kg"
         case heightCm = "height_cm"
@@ -114,65 +112,15 @@ struct BodyMeasurement: Codable, Identifiable, Equatable {
     }
 }
 
-// MARK: - 创建/更新请求模型
+// MARK: - Measurement input
 
-struct CreateBodyMeasurementRequest: Codable {
-    let userId: Int
+struct BodyMeasurementDraft: Equatable, Sendable {
     let measurementTimestamp: Date
     let weightKg: Double
     let heightCm: Double
     let bodyFatPercentage: Double
     let skeletalMuscleMassKg: Double
     let visceralFatLevel: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
-        case measurementTimestamp = "measurement_timestamp"
-        case weightKg = "weight_kg"
-        case heightCm = "height_cm"
-        case bodyFatPercentage = "body_fat_percentage"
-        case skeletalMuscleMassKg = "skeletal_muscle_mass_kg"
-        case visceralFatLevel = "visceral_fat_level"
-    }
-}
-
-struct UpdateBodyMeasurementRequest: Codable {
-    let weightKg: Double?
-    let heightCm: Double?
-    let bodyFatPercentage: Double?
-    let skeletalMuscleMassKg: Double?
-    let visceralFatLevel: Int?
-    
-    enum CodingKeys: String, CodingKey {
-        case weightKg = "weight_kg"
-        case heightCm = "height_cm"
-        case bodyFatPercentage = "body_fat_percentage"
-        case skeletalMuscleMassKg = "skeletal_muscle_mass_kg"
-        case visceralFatLevel = "visceral_fat_level"
-    }
-}
-
-// MARK: - 响应模型
-
-struct BodyMeasurementResponse: Codable {
-    let success: Bool
-    let message: String
-    let measurementId: Int?
-    
-    enum CodingKeys: String, CodingKey {
-        case success, message
-        case measurementId = "measurement_id"
-    }
-}
-
-struct BodyMeasurementListResponse: Codable {
-    let measurements: [BodyMeasurement]
-    let totalCount: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case measurements
-        case totalCount = "total_count"
-    }
 }
 
 // MARK: - 统计模型
@@ -192,34 +140,6 @@ struct BodyMeasurementStatistics: Codable {
         case muscleMassTrend = "muscle_mass_trend"
         case measurementCount = "measurement_count"
         case dateRangeDays = "date_range_days"
-    }
-}
-
-// MARK: - 查询参数模型
-
-struct BodyMeasurementQuery {
-    let userId: Int
-    let limit: Int?
-    let offset: Int?
-    let startDate: Date?
-    let endDate: Date?
-    let orderBy: String
-    let orderDirection: String
-    
-    init(userId: Int, 
-         limit: Int? = nil, 
-         offset: Int? = nil, 
-         startDate: Date? = nil, 
-         endDate: Date? = nil, 
-         orderBy: String = "measurement_timestamp", 
-         orderDirection: String = "DESC") {
-        self.userId = userId
-        self.limit = limit
-        self.offset = offset
-        self.startDate = startDate
-        self.endDate = endDate
-        self.orderBy = orderBy
-        self.orderDirection = orderDirection
     }
 }
 
@@ -391,7 +311,6 @@ struct DetailedMeasurementData {
     static let sampleData = DetailedMeasurementData(
         current: BodyMeasurement(
             id: 1,
-            userId: 1,
             measurementTimestamp: Date(),
             weightKg: 75.5,
             heightCm: 175.0,

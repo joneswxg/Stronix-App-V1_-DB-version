@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BodyMeasurementDetail: View {
     @Environment(\.theme) private var theme
+    @EnvironmentObject private var userSession: UserSession
     @StateObject private var viewModel = BodyMeasurementViewModel()
     @State private var selectedDate = Date()
     @State private var currentData: DetailedMeasurementData = DetailedMeasurementData.sampleData
@@ -25,10 +26,10 @@ struct BodyMeasurementDetail: View {
                     Spacer()
                     
                     VStack(spacing: 2) {
-                        Text(formatDate(selectedDate))
+                        Text(BodyMeasurementDateFormatting.detailDate(selectedDate))
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(theme.onSurface)
-                        Text(formatTime(selectedDate))
+                        Text(BodyMeasurementDateFormatting.listDate(selectedDate))
                             .font(.system(size: 14))
                             .foregroundColor(theme.secondary)
                     }
@@ -147,6 +148,9 @@ struct BodyMeasurementDetail: View {
             }
         }
         .background(theme.background)
+        .task {
+            userSession.registerResetter(viewModel)
+        }
         .onAppear {
             Task {
                 await viewModel.loadMeasurements()
@@ -172,19 +176,6 @@ struct BodyMeasurementDetail: View {
         } message: {
             Text("使用 Katch-McArdle 公式计算：\n\n1. 首先计算瘦体重（LBM）\n   LBM = 体重 × (1 - 体脂百分比 ÷ 100)\n\n2. 然后计算基础代谢率\n   BMR = 370 + (21.6 × LBM)")
         }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yy.MM.dd (EEEE)"
-        formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: date)
-    }
-    
-    private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
     }
     
     // MARK: - 数据管理函数
