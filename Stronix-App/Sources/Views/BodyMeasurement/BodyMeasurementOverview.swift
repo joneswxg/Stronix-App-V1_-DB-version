@@ -3,7 +3,7 @@ import Charts
 
 struct BodyMeasurementOverview: View {
     @Environment(\.theme) private var theme
-    @StateObject private var viewModel = BodyMeasurementViewModel()
+    @ObservedObject var viewModel: BodyMeasurementViewModel
     @EnvironmentObject private var userSession: UserSession
     @State private var showLogin = false
     
@@ -22,36 +22,8 @@ struct BodyMeasurementOverview: View {
         .refreshable {
             await viewModel.refreshData()
         }
-        .task {
-            userSession.registerResetter(viewModel)
-        }
-        .onAppear {
-            if userSession.isAuthenticated {
-                Task {
-                    await viewModel.loadMeasurements()
-                }
-            }
-        }
-        .onChange(of: userSession.isAuthenticated) { _, isLoggedIn in
-            if isLoggedIn {
-                // 登录成功后刷新数据
-                Task {
-                    await viewModel.loadMeasurements()
-                }
-            } else {
-                viewModel.clearData()
-            }
-        }
         .sheet(isPresented: $showLogin) {
             LoginView()
-                .onDisappear {
-                    // 登录后刷新数据
-                    if userSession.isAuthenticated {
-                        Task {
-                            await viewModel.loadMeasurements()
-                        }
-                    }
-                }
         }
     }
     
@@ -397,7 +369,7 @@ struct MetricCard: View {
 }
 
 #Preview {
-    BodyMeasurementOverview()
+    BodyMeasurementOverview(viewModel: BodyMeasurementViewModel())
         .environmentObject(
             UserSession(
                 operations: AuthenticationUseCases(

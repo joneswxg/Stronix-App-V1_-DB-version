@@ -242,7 +242,26 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pass, verified by user on 2026-07-22
 
-### 11. App Relaunch Data Persistence
+### 11. Shared Body Measurement State and Profile
+
+**Steps**:
+
+1. Sign in as User A and add at least two body measurements.
+2. Open overview, list, detail, and change; edit one record's date and values, then confirm the same persisted record remains selected in detail and all screens refresh.
+3. Delete the selected record from detail; confirm overview, list, and change no longer show it and selection moves to a remaining record or the explicit empty state.
+4. Log out, sign in as User B, and confirm no User A measurements, charts, selections, or sheets appear. Log back in as User A and confirm persisted records reload.
+5. Open Profile → User Info for a user with populated and unset profile values. Confirm gender, height, and weight match the active user, unsupported fields are absent, and the screen explicitly states that editing is unavailable.
+
+**Expected**:
+
+- Overview, list, detail, edit, and change observe one user-scoped persisted record set.
+- Add, date/value edit, and delete immediately update all affected screens without stale or sample data.
+- Account transitions clear the outgoing scope before loading the next user.
+- Profile shows only actual persisted fields and does not expose a no-op save action.
+
+**Result**: Pending manual verification
+
+### 12. App Relaunch Data Persistence
 
 **Steps**:
 

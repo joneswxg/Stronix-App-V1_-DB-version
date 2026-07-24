@@ -2,8 +2,10 @@ import SwiftUI
 
 struct BodyMeasurementTabView: View {
     @Environment(\.theme) private var theme: AppTheme
+    @EnvironmentObject private var userSession: UserSession
+    @ObservedObject var viewModel: BodyMeasurementViewModel
     @State private var selectedTab = 0
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Logo区域
@@ -43,19 +45,36 @@ struct BodyMeasurementTabView: View {
             // 内容区域
             VStack {
                 if selectedTab == 0 {
-                    BodyMeasurementOverview()
+                    BodyMeasurementOverview(viewModel: viewModel)
                 } else if selectedTab == 1 {
-                    BodyMeasurementDetail()
+                    BodyMeasurementDetail(viewModel: viewModel)
                 } else if selectedTab == 2 {
-                    BodyMeasurementChange()
+                    BodyMeasurementChange(viewModel: viewModel)
                 } else if selectedTab == 3 {
                     NutritionView()
                 } else {
-                    BodyMeasurementOverview()
+                    BodyMeasurementOverview(viewModel: viewModel)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .task {
+            userSession.registerResetter(viewModel)
+            await loadMeasurements(for: userSession.currentUserID)
+        }
+        .onChange(of: userSession.currentUserID) { _, userID in
+            Task {
+                await loadMeasurements(for: userID)
+            }
+        }
+    }
+
+    private func loadMeasurements(for userID: Int?) async {
+        guard userID != nil else {
+            viewModel.clearData()
+            return
+        }
+        await viewModel.loadMeasurements()
     }
 }
 
@@ -84,5 +103,13 @@ struct TabButton: View {
 }
 
 #Preview {
-    BodyMeasurementTabView()
+    BodyMeasurementTabView(viewModel: BodyMeasurementViewModel())
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }
