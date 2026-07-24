@@ -17,7 +17,7 @@ struct HistoryListView: View {
     init(
         selectedDateString: String,
         repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
-        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id },
+        ownerIDProvider: @escaping () -> Int? = { CurrentUserContext.shared.currentUserID },
         deleteHistory: @escaping (Int) async throws -> Void = { _ in }
     ) {
         let formatter = DateFormatter()
@@ -34,7 +34,7 @@ struct HistoryListView: View {
     init(
         selectedDate: Date,
         repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
-        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id },
+        ownerIDProvider: @escaping () -> Int? = { CurrentUserContext.shared.currentUserID },
         deleteHistory: @escaping (Int) async throws -> Void = { _ in }
     ) {
         var calendar = Calendar.current

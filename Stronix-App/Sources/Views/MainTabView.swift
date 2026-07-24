@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.theme) private var theme: AppTheme
-    @AppStorage("MainTabView_selectedTab") private var selectedTab = 0 // 持久化选中的Tab
+    @State private var selectedTab = 0
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
     @StateObject private var planViewModel = PlanViewModel()
     @StateObject private var createPlanViewModel = CreatePlanViewModel(
         useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
     )
-    @AppStorage("MainTabView_lastUserSelectedTab") private var lastUserSelectedTab = 0 // 持久化用户最后选择的标签页
     @StateObject private var keyboardManager = CustomKeyboardManager()
     
     var body: some View {
@@ -72,14 +72,18 @@ struct MainTabView: View {
                 keyboardManager: keyboardManager
             )
         )
+        .task {
+            userSession.registerResetter(planViewModel)
+            userSession.registerResetter(trainingManager)
+        }
         .onChange(of: selectedTab) { oldValue, newValue in
             print("🔄 MainTabView selectedTab 变化: \(oldValue) -> \(newValue)")
-            // 记录用户选择的标签页（包括体测页面）
-            lastUserSelectedTab = newValue
+        }
+        .onChange(of: userSession.scopeID) { _, _ in
+            selectedTab = 0
         }
         .onAppear {
             print("🔄 MainTabView onAppear - selectedTab: \(selectedTab)")
-            print("🔄 MainTabView onAppear - lastUserSelectedTab: \(lastUserSelectedTab)")
             print("🔄 MainTabView onAppear - trainingManager.isTrainingActive: \(trainingManager.isTrainingActive)")
             print("🔄 MainTabView onAppear - 视图被重建了！")
         }
@@ -93,4 +97,12 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }

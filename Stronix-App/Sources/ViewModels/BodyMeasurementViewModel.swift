@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class BodyMeasurementViewModel: ObservableObject {
+final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting {
     @Published var measurements: [BodyMeasurement] = []
     @Published var selectedMetric: MetricType = .weight
     @Published var selectedDataPoint: BodyMeasurement?
@@ -11,10 +11,11 @@ class BodyMeasurementViewModel: ObservableObject {
     @Published var showingAddSheet = false
     
     private let bodyMeasurementService = LocalBodyMeasurementService.shared
-    
-    // 获取当前用户ID
+    private var loadGeneration = 0
+    private var loadTask: Task<Void, Never>?
+
     private var currentUserId: Int {
-        return LocalUserService.shared.currentUser?.id ?? 0
+        CurrentUserContext.shared.currentUserID ?? 0
     }
     
     // MARK: - 计算属性
@@ -52,37 +53,55 @@ class BodyMeasurementViewModel: ObservableObject {
     
     /// 加载用户的体测数据
     func loadMeasurements() async {
-        // 检查用户是否已登录
-        guard currentUserId > 0 else {
-            print("❌ 用户未登录，无法加载体测数据，currentUserId: \(currentUserId)")
-            measurements = []
+        loadTask?.cancel()
+        let generation = loadGeneration
+        let ownerID = currentUserId
+        guard ownerID > 0 else {
+            clearData()
             errorMessage = "用户未登录"
             return
         }
-        
-        print("🔍 开始加载用户 \(currentUserId) 的体测数据")
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            let query = BodyMeasurementQuery(userId: currentUserId, limit: 100)
-            let response = try await bodyMeasurementService.getUserMeasurements(query)
-            measurements = response.measurements
-            
-            print("✅ 成功加载 \(measurements.count) 条体测记录")
-            
-            // 设置默认选中最新的数据点
-            if selectedDataPoint == nil {
-                selectedDataPoint = latestMeasurement
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            isLoading = true
+            errorMessage = nil
+            defer {
+                if generation == loadGeneration { isLoading = false }
             }
-            
-        } catch {
-            let errorDesc = error.localizedDescription
-            errorMessage = "查询失败: \(errorDesc)"
-            print("❌ 加载体测数据失败: \(error)")
+            do {
+                let response = try await bodyMeasurementService.getUserMeasurements(
+                    BodyMeasurementQuery(userId: ownerID, limit: 100)
+                )
+                guard !Task.isCancelled,
+                      generation == loadGeneration,
+                      ownerID == currentUserId else { return }
+                measurements = response.measurements
+                if selectedDataPoint == nil { selectedDataPoint = latestMeasurement }
+            } catch is CancellationError {
+                return
+            } catch {
+                guard generation == loadGeneration else { return }
+                errorMessage = "查询失败，请稍后重试"
+            }
         }
-        
+        loadTask = task
+        await task.value
+    }
+
+    func resetUserScopedState() {
+        clearData()
+    }
+
+    func clearData() {
+        loadGeneration += 1
+        loadTask?.cancel()
+        loadTask = nil
+        measurements = []
+        selectedDataPoint = nil
         isLoading = false
+        errorMessage = nil
+        showingAddSheet = false
     }
     
     /// 刷新数据

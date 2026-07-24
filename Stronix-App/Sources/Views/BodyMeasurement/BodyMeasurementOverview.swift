@@ -4,7 +4,7 @@ import Charts
 struct BodyMeasurementOverview: View {
     @Environment(\.theme) private var theme
     @StateObject private var viewModel = BodyMeasurementViewModel()
-    @ObservedObject private var authService = LocalUserService.shared
+    @EnvironmentObject private var userSession: UserSession
     @State private var showLogin = false
     
     var body: some View {
@@ -22,30 +22,31 @@ struct BodyMeasurementOverview: View {
         .refreshable {
             await viewModel.refreshData()
         }
+        .task {
+            userSession.registerResetter(viewModel)
+        }
         .onAppear {
-            if authService.isLoggedIn {
+            if userSession.isAuthenticated {
                 Task {
                     await viewModel.loadMeasurements()
                 }
             }
         }
-        .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
+        .onChange(of: userSession.isAuthenticated) { _, isLoggedIn in
             if isLoggedIn {
                 // 登录成功后刷新数据
                 Task {
                     await viewModel.loadMeasurements()
                 }
             } else {
-                // 登出后清空数据
-                viewModel.measurements = []
-                viewModel.selectedDataPoint = nil
+                viewModel.clearData()
             }
         }
         .sheet(isPresented: $showLogin) {
             LoginView()
                 .onDisappear {
                     // 登录后刷新数据
-                    if authService.isLoggedIn {
+                    if userSession.isAuthenticated {
                         Task {
                             await viewModel.loadMeasurements()
                         }
@@ -59,7 +60,7 @@ struct BodyMeasurementOverview: View {
             VStack(spacing: 20) {
                 headerSection
                 
-                if !authService.isLoggedIn {
+                if !userSession.isAuthenticated {
                     // 未登录状态视图
                     VStack(spacing: 20) {
                         Spacer()
@@ -133,10 +134,10 @@ struct BodyMeasurementOverview: View {
             Spacer()
             
             // 登录状态指示器
-            if authService.isLoggedIn {
+            if userSession.isAuthenticated {
                 Button(action: {
                     Task {
-                        await authService.logout()
+                        try? await userSession.logout()
                     }
                 }) {
                     Image(systemName: "person.circle.fill")
@@ -303,7 +304,7 @@ struct BodyMeasurementOverview: View {
     private var bottomButtons: some View {
         VStack {
             Spacer()
-            if authService.isLoggedIn {
+            if userSession.isAuthenticated {
                 HStack(spacing: 15) {
                     // 查看记录按钮 - 改为NavigationLink
                     if !viewModel.measurements.isEmpty {
@@ -410,4 +411,12 @@ struct MetricCard: View {
 
 #Preview {
     BodyMeasurementOverview()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }

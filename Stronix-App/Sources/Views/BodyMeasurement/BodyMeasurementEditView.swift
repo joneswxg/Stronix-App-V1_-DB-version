@@ -237,7 +237,7 @@ struct BodyMeasurementEditView: View {
         
         if deleteSuccess {
             let request = CreateBodyMeasurementRequest(
-                userId: LocalUserService.shared.currentUser?.id ?? 0,
+                userId: CurrentUserContext.shared.currentUserID ?? 0,
                 measurementTimestamp: selectedDate,
                 weightKg: weightValue,
                 heightCm: heightValue,

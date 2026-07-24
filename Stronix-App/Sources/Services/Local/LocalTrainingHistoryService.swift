@@ -86,14 +86,15 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
-                print("❌ LocalTrainingHistoryService.saveTrainingHistory: 用户未登录，无法获取当前用户ID。")
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
-            print("✅ LocalTrainingHistoryService.saveTrainingHistory: 获取到当前用户ID: \(currentUserId)")
         }
         
         // 转换为本地请求模型
@@ -178,9 +179,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -290,30 +294,16 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
-            print("🎯 使用提供的用户ID: \(currentUserId)")
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 print("❌ 用户未登录，无法获取训练历史")
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
-            print("🎯 使用当前登录用户ID: \(currentUserId)")
-            print("🔍 当前用户信息: username=\(currentUser.username), email=\(currentUser.email)")
-        }
-        
-        // 添加调试：查看数据库中实际的用户记录
-        do {
-            let debugQuery = "SELECT user_id, COUNT(*) as count FROM training_history GROUP BY user_id"
-            let debugStatement = try db.prepare(debugQuery)
-            print("📊 数据库中训练历史记录的用户分布:")
-            for row in debugStatement {
-                let userId = Int(row[0] as? Int64 ?? 0)
-                let count = Int(row[1] as? Int64 ?? 0)
-                print("  用户ID \(userId): \(count) 条记录")
-            }
-        } catch {
-            print("⚠️ 调试查询失败: \(error)")
         }
         
         do {
@@ -453,9 +443,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -507,9 +500,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -593,9 +589,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -664,9 +663,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -709,9 +711,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -1144,9 +1149,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -1196,9 +1204,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -1250,9 +1261,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -1326,9 +1340,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id
@@ -1402,9 +1419,12 @@ class LocalTrainingHistoryService {
         // 获取当前用户ID
         let currentUserId: Int
         if let providedUserId = user_id {
+            guard CurrentUserContext.shared.currentUserID == providedUserId else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
             currentUserId = providedUserId
         } else {
-            guard let currentUser = LocalUserService.shared.currentUser else {
+            guard let currentUser = CurrentUserContext.shared.currentUser else {
                 throw LocalTrainingHistoryError.unauthorized("用户未登录")
             }
             currentUserId = currentUser.id

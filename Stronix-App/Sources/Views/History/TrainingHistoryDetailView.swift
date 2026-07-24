@@ -13,7 +13,7 @@ struct TrainingHistoryDetailView: View {
     init(
         historyId: Int,
         repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
-        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id }
+        ownerIDProvider: @escaping () -> Int? = { CurrentUserContext.shared.currentUserID }
     ) {
         self.historyId = historyId
         self.repository = repository

@@ -4,8 +4,16 @@ import SwiftUI
 struct Stronix_App_V1App: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var databaseState = DatabaseStartupState.preparing
+    @StateObject private var userSession: UserSession
 
     init() {
+        let repository = SQLiteAuthRepository()
+        let useCases = AuthenticationUseCases(
+            repository: repository,
+            sessionStore: KeychainLocalSessionStore()
+        )
+        _userSession = StateObject(wrappedValue: UserSession(operations: useCases))
+
         guard !Self.isRunningUnitTests else { return }
         DispatchQueue.main.async {
             NotificationManager.shared.requestPermissionIfNeeded()
@@ -19,8 +27,14 @@ struct Stronix_App_V1App: App {
                 case .preparing:
                     ProgressView("正在准备本地数据库…")
                 case .ready:
-                    MainTabView()
-                        .withAppTheme()
+                    switch userSession.state {
+                    case .restoring:
+                        ProgressView("正在恢复登录状态…")
+                    case .unauthenticated, .authenticated:
+                        MainTabView()
+                            .id(userSession.scopeID)
+                            .withAppTheme()
+                    }
                 case .failed(let message):
                     DatabaseStartupFailureView(
                         message: message,
@@ -30,6 +44,7 @@ struct Stronix_App_V1App: App {
                     DatabaseStartupIncompatibilityView(message: message)
                 }
             }
+            .environmentObject(userSession)
             .task {
                 guard !Self.isRunningUnitTests else { return }
                 guard case .preparing = databaseState else { return }
@@ -66,12 +81,6 @@ struct Stronix_App_V1App: App {
         databaseState = .preparing
         Task.detached(priority: .userInitiated) {
             let result = operation()
-            switch result {
-            case .ready, .recovered:
-                await LocalUserService.shared.restoreSession()
-            default:
-                break
-            }
             await MainActor.run {
                 switch result {
                 case .ready, .recovered:
@@ -88,6 +97,12 @@ struct Stronix_App_V1App: App {
                     print("数据库恢复失败: \(result.diagnostic.summary)")
                     databaseState = .failed("本地数据库恢复失败，请重试或联系支持。")
                 }
+            }
+            switch result {
+            case .ready, .recovered:
+                await userSession.restore()
+            default:
+                break
             }
         }
     }

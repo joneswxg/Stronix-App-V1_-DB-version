@@ -277,6 +277,40 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending manual Release verification
 
+## Phase 5.3: User Session And Account Switching
+
+### Authentication and restoration
+
+1. Launch after clearing the app container and confirm the restoring UI settles to unauthenticated without briefly exposing protected data.
+2. Register a local account, force-quit, and relaunch; confirm the protected session restores the same user.
+3. Verify correct login succeeds and wrong-password/unknown-email attempts show the same safe message.
+4. Verify duplicate email and username registration errors are clear and invalid registration input does not create an account.
+5. Open “忘记密码？” and confirm only the local-account unavailable disclosure is shown.
+
+### Logout and account isolation
+
+1. As User A, create a User Plan, training history, and body measurement, then start an active training session.
+2. Load plans, history/statistics, and body-measurement views, then log out.
+3. Confirm the protected session clears, active training/timers stop, and all User A lists, selections, sheets, and navigation state disappear.
+4. Log in as User B and confirm no User A plan, history, measurement, or active training state appears.
+5. Log out User B and log back in as User A; confirm User A’s database-backed business data is still present.
+6. Force-quit and relaunch after each account transition to confirm the persisted session matches the last successful login/logout.
+
+### Production authentication gate
+
+1. Build and launch Release configuration.
+2. Confirm no WeChat/social login, fixed OpenID, demo credential, deterministic token, or simulated authentication success is reachable.
+3. Review the console during registration, login, restoration, logout, and account switching; confirm it contains no passwords, stored credentials, session references, or cross-user data.
+
+**Expected**:
+
+- `UserSession` is the consistent authentication source across Profile, plans, training, history, and body measurements.
+- A failed protected-session clear does not present a false successful logout.
+- Logout clears only the persisted session and in-memory user scope; it never deletes account or business rows.
+- No late User A request repopulates state after logout or User B login.
+
+**Result**: Pending manual Release verification
+
 ## Phase Completion Rule
 
 For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.

@@ -9,7 +9,7 @@ extension Date {
 }
 
 @MainActor
-final class PlanViewModel: ObservableObject {
+final class PlanViewModel: ObservableObject, UserScopedStateResetting {
     @Published var templatePlans: [TrainingPlan] = []
     @Published var personalPlans: [TrainingPlan] = []
     @Published var selectedPlan: TrainingPlan?
@@ -203,6 +203,10 @@ final class PlanViewModel: ObservableObject {
 
     func refreshPersonalPlansOnly() async {
         await loadPersonalPlans()
+    }
+
+    func resetUserScopedState() {
+        clearData()
     }
 
     func clearData() {

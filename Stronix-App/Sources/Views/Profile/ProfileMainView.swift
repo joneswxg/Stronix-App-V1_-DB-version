@@ -7,7 +7,7 @@ struct ProfileMainView: View {
     @State private var showArticles = false
     @State private var showTools = false
     @State private var showGuide = false
-    @ObservedObject private var localUserService = LocalUserService.shared
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.theme) private var theme: AppTheme
     
     var body: some View {
@@ -39,11 +39,11 @@ struct ProfileMainView: View {
                                 .foregroundColor(theme.primary)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(localUserService.currentUser?.username ?? "未登录")
+                                Text(userSession.currentUser?.username ?? "未登录")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(theme.onSurface)
                                 
-                                if !localUserService.isLoggedIn {
+                                if !userSession.isAuthenticated {
                                     Text("点击登录")
                                         .font(.system(size: 14))
                                         .foregroundColor(theme.primary)
@@ -52,7 +52,7 @@ struct ProfileMainView: View {
                             
                             Spacer()
                             
-                            if !localUserService.isLoggedIn {
+                            if !userSession.isAuthenticated {
                                 Button(action: {
                                     showLogin = true
                                 }) {
@@ -123,7 +123,7 @@ struct ProfileMainView: View {
                         }
                         
                         // 退出登录按钮（仅在已登录时显示）
-                        if localUserService.isLoggedIn {
+                        if userSession.isAuthenticated {
                             Button(action: {
                                 logout()
                             }) {
@@ -170,7 +170,11 @@ struct ProfileMainView: View {
     
     private func logout() {
         Task {
-            await localUserService.logout()
+            do {
+                try await userSession.logout()
+            } catch {
+                // Keep the authenticated state when the protected session cannot be cleared.
+            }
         }
     }
     
@@ -225,4 +229,12 @@ struct ProfileMenuItem: View {
 
 #Preview {
     ProfileMainView()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }

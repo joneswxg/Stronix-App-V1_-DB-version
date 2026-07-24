@@ -488,7 +488,7 @@ final class LocalPlanService: PlanRepository {
 
     init(
         connectionProvider: @escaping () -> Connection? = { DatabaseManager.shared.getConnection() },
-        authenticatedUserIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id }
+        authenticatedUserIDProvider: @escaping () -> Int? = { CurrentUserContext.shared.currentUserID }
     ) {
         self.connectionProvider = connectionProvider
         self.authenticatedUserIDProvider = authenticatedUserIDProvider
