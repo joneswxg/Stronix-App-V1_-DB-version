@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var themeManager: ThemeManager
     @State private var selectedHistoryTab: HistoryTab = .calendar
@@ -26,7 +27,8 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            if userSession.isAuthenticated {
+                VStack(spacing: 0) {
                 // 自定义顶部Logo和标题
                 VStack(spacing: 8) {
                     HStack {
@@ -83,12 +85,33 @@ struct HistoryView: View {
                 }
                 Spacer()
             }
-            .background(theme.background)
-            .navigationBarHidden(true)
+                .background(theme.background)
+                .navigationBarHidden(true)
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "person.circle")
+                        .font(.system(size: 56))
+                        .foregroundColor(theme.secondary)
+                    Text("请先登录")
+                        .font(.headline)
+                    Text("登录后可以查看您的训练历史")
+                        .foregroundColor(theme.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(theme.background)
+            }
         }
     }
 }
 
 #Preview {
     HistoryView()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }

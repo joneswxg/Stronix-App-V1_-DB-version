@@ -38,7 +38,7 @@ struct CalendarView: View {
 
     init(
         repository: TrainingHistoryRepository = SQLiteTrainingHistoryRepository(),
-        ownerIDProvider: @escaping () -> Int? = { LocalUserService.shared.currentUser?.id },
+        ownerIDProvider: @escaping () -> Int? = { CurrentUserContext.shared.currentUserID },
         deleteHistory: @escaping (Int) async throws -> Void = { _ in }
     ) {
         self.repository = repository

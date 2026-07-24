@@ -4,7 +4,7 @@ struct PlanListView: View {
     @Environment(\.theme) private var theme
     @ObservedObject var viewModel: PlanViewModel
     @ObservedObject var createPlanViewModel: CreatePlanViewModel
-    @ObservedObject private var authService = LocalUserService.shared
+    @EnvironmentObject private var userSession: UserSession
     @State private var showLogin = false
     @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
     @State private var isEditPlanPresented = false // 添加标记，跟踪EditPlan是否打开
@@ -24,10 +24,10 @@ struct PlanListView: View {
                     .foregroundColor(theme.primary)
                 
                 // 登录状态指示器
-                if authService.isLoggedIn {
+                if userSession.isAuthenticated {
                     Button(action: {
                         Task {
-                            await authService.logout()
+                            try? await userSession.logout()
                         }
                     }) {
                         Image(systemName: "person.circle.fill")
@@ -49,7 +49,7 @@ struct PlanListView: View {
             .background(theme.surface)
             .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
             
-            if !authService.isLoggedIn {
+            if !userSession.isAuthenticated {
                 // 未登录状态视图
                 VStack(spacing: 20) {
                     Spacer()
@@ -198,7 +198,7 @@ struct PlanListView: View {
         .sheet(isPresented: $showLogin) {
             LoginView()
                 .onDisappear {
-                    if authService.isLoggedIn {
+                    if userSession.isAuthenticated {
                         Task {
                             await viewModel.refresh()
                         }
@@ -214,7 +214,7 @@ struct PlanListView: View {
                     await viewModel.refresh()
                 }
             }
-            if !authService.isLoggedIn {
+            if !userSession.isAuthenticated {
                 Button("登录") {
                     showLogin = true
                 }
@@ -223,15 +223,15 @@ struct PlanListView: View {
             Text(viewModel.errorMessage ?? "未知错误")
         }
         .refreshable {
-            if authService.isLoggedIn {
+            if userSession.isAuthenticated {
                 await viewModel.refresh()
             }
         }
         .task {
-            guard !isEditPlanPresented, authService.isLoggedIn else { return }
+            guard !isEditPlanPresented, userSession.isAuthenticated else { return }
             await viewModel.loadInitialData()
         }
-        .onChange(of: authService.isLoggedIn) { _, isLoggedIn in
+        .onChange(of: userSession.isAuthenticated) { _, isLoggedIn in
             if isLoggedIn {
                 Task {
                     await viewModel.refresh()

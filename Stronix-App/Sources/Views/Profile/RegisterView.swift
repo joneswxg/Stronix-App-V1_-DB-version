@@ -2,18 +2,10 @@ import SwiftUI
 
 struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var userService = LocalUserService.shared
+    @EnvironmentObject private var userSession: UserSession
+    @StateObject private var viewModel = AuthViewModel()
     @Environment(\.theme) private var theme: AppTheme
-    @State private var username = ""
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
-    @State private var gender = "男"
-    @State private var height = ""
-    @State private var weight = ""
-    @State private var errorMessage = ""
     @State private var showError = false
-    @State private var agreeToTerms = false
     
     private let genderOptions = ["男", "女", "其他"]
     
@@ -50,7 +42,7 @@ struct RegisterView: View {
                                 Image(systemName: "person")
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
-                                TextField("请输入用户名", text: $username)
+                                TextField("请输入用户名", text: $viewModel.registrationUsername)
                             }
                             .padding()
                             .background(theme.background)
@@ -67,7 +59,7 @@ struct RegisterView: View {
                                 Image(systemName: "envelope")
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
-                                TextField("请输入邮箱", text: $email)
+                                TextField("请输入邮箱", text: $viewModel.registrationEmail)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                             }
@@ -86,7 +78,7 @@ struct RegisterView: View {
                                 Image(systemName: "lock")
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
-                                SecureField("请输入密码（至少6位）", text: $password)
+                                SecureField("请输入密码（至少6位）", text: $viewModel.registrationPassword)
                                     .textContentType(.none)
                             }
                             .padding()
@@ -104,14 +96,14 @@ struct RegisterView: View {
                                 Image(systemName: "lock")
                                     .foregroundColor(theme.secondary)
                                     .frame(width: 20)
-                                SecureField("请再次输入密码", text: $confirmPassword)
+                                SecureField("请再次输入密码", text: $viewModel.registrationConfirmation)
                                     .textContentType(.none)
                             }
                             .padding()
                             .background(theme.background)
                             .cornerRadius(12)
                             
-                            if !password.isEmpty && !confirmPassword.isEmpty && password != confirmPassword {
+                            if !viewModel.registrationPassword.isEmpty && !viewModel.registrationConfirmation.isEmpty && viewModel.registrationPassword != viewModel.registrationConfirmation {
                                 Text("密码不匹配")
                                     .font(.system(size: 12))
                                     .foregroundColor(theme.error)
@@ -128,20 +120,20 @@ struct RegisterView: View {
                             HStack(spacing: 12) {
                                 ForEach(genderOptions, id: \.self) { option in
                                     Button(action: {
-                                        gender = option
+                                        viewModel.registrationGender = option
                                     }) {
                                         HStack {
-                                            Image(systemName: gender == option ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(gender == option ? theme.primary : theme.secondary)
+                                            Image(systemName: viewModel.registrationGender == option ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(viewModel.registrationGender == option ? theme.primary : theme.secondary)
                                             Text(option)
                                                 .font(.system(size: 14))
-                                                .foregroundColor(gender == option ? theme.primary : theme.onSurface)
+                                                .foregroundColor(viewModel.registrationGender == option ? theme.primary : theme.onSurface)
                                         }
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
                                         .background(
-                                            gender == option ? 
-                                                theme.primary.opacity(0.1) : 
+                                            viewModel.registrationGender == option ?
+                                                theme.primary.opacity(0.1) :
                                                 theme.background
                                         )
                                         .cornerRadius(20)
@@ -163,7 +155,7 @@ struct RegisterView: View {
                                     Image(systemName: "ruler")
                                         .foregroundColor(theme.secondary)
                                         .frame(width: 20)
-                                    TextField("170", text: $height)
+                                    TextField("170", text: $viewModel.registrationHeight)
                                         .keyboardType(.numberPad)
                                 }
                                 .padding()
@@ -181,7 +173,7 @@ struct RegisterView: View {
                                     Image(systemName: "scalemass")
                                         .foregroundColor(theme.secondary)
                                         .frame(width: 20)
-                                    TextField("70", text: $weight)
+                                    TextField("70", text: $viewModel.registrationWeight)
                                         .keyboardType(.numberPad)
                                 }
                                 .padding()
@@ -193,10 +185,10 @@ struct RegisterView: View {
                         // 服务条款
                         HStack(alignment: .top, spacing: 12) {
                             Button(action: {
-                                agreeToTerms.toggle()
+                                viewModel.agreesToTerms.toggle()
                             }) {
-                                Image(systemName: agreeToTerms ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(agreeToTerms ? theme.primary : theme.secondary)
+                                Image(systemName: viewModel.agreesToTerms ? "checkmark.square.fill" : "square")
+                                    .foregroundColor(viewModel.agreesToTerms ? theme.primary : theme.secondary)
                                     .font(.system(size: 18))
                             }
                             
@@ -232,7 +224,7 @@ struct RegisterView: View {
                         registerUser()
                     }) {
                         HStack {
-                            if userService.isLoading {
+                            if viewModel.isRegistering {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
@@ -245,11 +237,11 @@ struct RegisterView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            isFormValid ? theme.primary : theme.secondary.opacity(0.5)
+                            viewModel.canRegister ? theme.primary : theme.secondary.opacity(0.5)
                         )
                         .cornerRadius(25)
                     }
-                    .disabled(!isFormValid || userService.isLoading)
+                    .disabled(!viewModel.canRegister)
                     .padding(.horizontal, 24)
                     
                     // 登录链接
@@ -281,52 +273,32 @@ struct RegisterView: View {
         .alert("注册失败", isPresented: $showError) {
             Button("确定", role: .cancel) { }
         } message: {
-            Text(errorMessage)
+            Text(viewModel.errorMessage ?? "暂时无法完成注册，请稍后重试")
         }
-        .onChange(of: userService.isLoggedIn) { _, newValue in
+        .onChange(of: userSession.isAuthenticated) { _, newValue in
             if newValue {
                 dismiss()
             }
         }
     }
     
-    private var isFormValid: Bool {
-        !username.isEmpty &&
-        !email.isEmpty &&
-        !password.isEmpty &&
-        password.count >= 6 &&
-        password == confirmPassword &&
-        agreeToTerms
-    }
-    
     private func registerUser() {
         Task {
-            do {
-                let response = try await userService.register(
-                    username: username,
-                    email: email,
-                    password: password,
-                    gender: gender,
-                    height: height.isEmpty ? nil : height,
-                    weight: weight.isEmpty ? nil : weight
-                )
-                if !response.success {
-                    await MainActor.run {
-                        errorMessage = response.message
-                        showError = true
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    showError = true
-                }
-            }
+            await viewModel.register(using: userSession)
+            showError = viewModel.errorMessage != nil
         }
     }
 }
 
 #Preview {
     RegisterView()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
         .environment(\.theme, BlueTheme())
 }

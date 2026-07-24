@@ -36,7 +36,7 @@ protocol TrainingSessionManaging: AnyObject {
 }
 
 /// 全局训练会话管理器
-final class TrainingSessionManager: ObservableObject, TrainingSessionManaging {
+final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, UserScopedStateResetting {
     static let shared = TrainingSessionManager()
     
     // MARK: - 训练状态
@@ -92,6 +92,10 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging {
         startTrainingTimer()
     }
     
+    func resetUserScopedState() {
+        stopTraining()
+    }
+
     /// 停止训练
     func stopTraining() {
         isTrainingActive = false
