@@ -19,6 +19,24 @@ final class UserSessionTests: XCTestCase {
         XCTAssertEqual(resetter.resetCount, 1)
     }
 
+    func testSwitchingAuthenticatedUsersResetsUserScopedStateAndAdvancesScope() async throws {
+        let userA = sessionTestUser(id: 9)
+        let userB = sessionTestUser(id: 10)
+        let operations = AuthenticationOperationsStub(restoredUser: userA)
+        operations.loggedInUser = userB
+        let resetter = RecordingUserScopedResetter()
+        let session = UserSession(operations: operations, resetters: [resetter])
+
+        await session.restore()
+        let initialScopeID = session.scopeID
+
+        try await session.login(email: userB.email, password: "password")
+
+        XCTAssertEqual(session.currentUserID, userB.id)
+        XCTAssertEqual(resetter.resetCount, 1)
+        XCTAssertEqual(session.scopeID, initialScopeID + 1)
+    }
+
     func testFailedLogoutKeepsAuthenticatedUserAndDoesNotResetState() async throws {
         let user = sessionTestUser(id: 8)
         let operations = AuthenticationOperationsStub(restoredUser: user)
@@ -41,6 +59,7 @@ final class UserSessionTests: XCTestCase {
 
 private final class AuthenticationOperationsStub: AuthenticationOperating {
     let restoredUser: User?
+    var loggedInUser: User?
     var logoutError: Error?
 
     init(restoredUser: User?) {
@@ -52,7 +71,7 @@ private final class AuthenticationOperationsStub: AuthenticationOperating {
     }
 
     func login(email: String, password: String) async throws -> User {
-        try XCTUnwrap(restoredUser)
+        try XCTUnwrap(loggedInUser ?? restoredUser)
     }
 
     func restoreSession() async throws -> User? { restoredUser }

@@ -11,23 +11,23 @@ struct MeasurementData {
 
 struct BodyMeasurementChange: View {
     @Environment(\.theme) private var theme
-    @EnvironmentObject private var userSession: UserSession
-    @StateObject private var viewModel = BodyMeasurementViewModel()
+    @ObservedObject var viewModel: BodyMeasurementViewModel
     @State private var selectedStartDate = Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date()
     @State private var selectedEndDate = Date()
     @State private var showingDatePicker = false
     @State private var selectedDataIndex: Int? = nil
     
-    // 从真实数据转换为图表数据，按日期排序并过滤
-    private var chartData: [MeasurementData] {
-        return viewModel.measurements
+    private var measurementsInDateRange: [BodyMeasurement] {
+        viewModel.measurements
             .filter { record in
-                // 过滤在选定日期范围内的数据
                 record.measurementTimestamp >= selectedStartDate && record.measurementTimestamp <= selectedEndDate
             }
-            .sorted { $0.measurementTimestamp < $1.measurementTimestamp } // 按日期从早到晚排序
-            .map { record in
-                MeasurementData(
+            .sorted { $0.measurementTimestamp < $1.measurementTimestamp }
+    }
+
+    private var chartData: [MeasurementData] {
+        measurementsInDateRange.map { record in
+            MeasurementData(
                     date: record.measurementTimestamp,
                     weight: record.weightKg,
                     muscleMass: record.skeletalMuscleMassKg,
@@ -86,7 +86,7 @@ struct BodyMeasurementChange: View {
                         title: "BMI",
                         unit: "kg/m²",
                         currentValue: calculateCurrentBMI(),
-                        data: chartData.map { calculateBMI(weight: $0.weight, height: getLatestHeight()) }
+                        data: measurementsInDateRange.map(\.bmi)
                     )
                     
                     // 体脂百分比图表
@@ -111,14 +111,6 @@ struct BodyMeasurementChange: View {
             .padding(.horizontal, 20)
         }
         .background(theme.background)
-        .task {
-            userSession.registerResetter(viewModel)
-        }
-        .onAppear {
-            Task {
-                await viewModel.loadMeasurements()
-            }
-        }
         .refreshable {
             await viewModel.refreshData()
         }
@@ -346,23 +338,12 @@ struct BodyMeasurementChange: View {
         BodyMeasurementDateFormatting.changeChartLabel(date)
     }
     
-    // MARK: - 计算函数
-    private func getLatestHeight() -> Double {
-        return getLatestMeasurement()?.heightCm ?? 175.0
-    }
-    
     private func getLatestVisceralFatLevel() -> Int {
         return getLatestMeasurement()?.visceralFatLevel ?? 3
     }
-    
+
     private func getVisceralFatLevelData() -> [Double] {
-        // 创建一个映射，将过滤和排序后的数据与原始数据匹配
-        let filteredAndSortedMeasurements = viewModel.measurements
-            .filter { record in
-                record.measurementTimestamp >= selectedStartDate && record.measurementTimestamp <= selectedEndDate
-            }
-            .sorted { $0.measurementTimestamp < $1.measurementTimestamp }
-        return filteredAndSortedMeasurements.map { Double($0.visceralFatLevel) }
+        measurementsInDateRange.map { Double($0.visceralFatLevel) }
     }
     
     private func calculateCurrentBMR() -> Double {
@@ -404,10 +385,6 @@ struct BodyMeasurementChange: View {
         return 370 + (21.6 * leanBodyMass)
     }
     
-    private func calculateBMI(weight: Double, height: Double) -> Double {
-        let heightInMeters = height / 100
-        return weight / (heightInMeters * heightInMeters)
-    }
 }
 
 // MARK: - 日期范围选择器
@@ -588,5 +565,5 @@ struct QuickDateButton: View {
 }
 
 #Preview {
-    BodyMeasurementChange()
+    BodyMeasurementChange(viewModel: BodyMeasurementViewModel())
 }

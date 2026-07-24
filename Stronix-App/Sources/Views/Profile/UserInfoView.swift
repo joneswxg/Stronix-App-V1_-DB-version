@@ -3,85 +3,35 @@ import SwiftUI
 struct UserInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
-    @State private var height = "175"
-    @State private var weight = "70"
-    @State private var age = "25"
-    @State private var gender = "男"
-    @State private var fitnessGoal = "增肌"
-    
-    let genderOptions = ["男", "女"]
-    let goalOptions = ["增肌", "减脂", "塑形", "力量训练", "耐力训练"]
-    
+    @EnvironmentObject private var userSession: UserSession
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 头像区域
-                    VStack(spacing: 16) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundColor(theme.primary)
-                        
-                        Button("更换头像") {
-                            // 更换头像功能
-                        }
-                        .font(.system(size: 14))
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 80))
                         .foregroundColor(theme.primary)
-                    }
-                    .padding(.top, 20)
-                    
-                    // 基本信息
+                        .padding(.top, 20)
+
                     VStack(spacing: 16) {
                         Text("基本信息")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(theme.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        
+
                         VStack(spacing: 12) {
-                            UserInfoRow(title: "身高", value: $height, unit: "cm")
-                            UserInfoRow(title: "体重", value: $weight, unit: "kg")
-                            UserInfoRow(title: "年龄", value: $age, unit: "岁")
-                            
-                            // 性别选择
-                            HStack {
-                                Text("性别")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(theme.onSurface)
-                                    .frame(width: 60, alignment: .leading)
-                                
-                                Picker("性别", selection: $gender) {
-                                    ForEach(genderOptions, id: \.self) { option in
-                                        Text(option).tag(option)
-                                    }
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(theme.surface)
-                            .cornerRadius(12)
-                            
-                            
+                            ProfileInfoRow(title: "性别", value: userSession.currentUser?.gender ?? "未填写")
+                            ProfileInfoRow(title: "身高", value: formatted(userSession.currentUser?.height), unit: "cm")
+                            ProfileInfoRow(title: "体重", value: formatted(userSession.currentUser?.weight), unit: "kg")
                         }
                     }
                     .padding(.horizontal, 16)
-                    
-                    
-                    
-                    // 保存按钮
-                    Button(action: {
-                        saveUserInfo()
-                    }) {
-                        Text("保存信息")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(theme.onPrimary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(theme.primary)
-                            .cornerRadius(25)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 30)
+
+                    Text("当前版本暂不支持修改个人资料")
+                        .font(.system(size: 14))
+                        .foregroundColor(theme.secondary)
+                        .padding(.bottom, 30)
                 }
             }
             .background(theme.background)
@@ -96,35 +46,37 @@ struct UserInfoView: View {
             }
         }
     }
-    
-    private func saveUserInfo() {
-        // 保存用户信息
-        dismiss()
+
+    private func formatted(_ value: Double?) -> String {
+        guard let value else { return "未填写" }
+        return String(format: "%.1f", value)
     }
 }
 
-// 用户信息行
-struct UserInfoRow: View {
+struct ProfileInfoRow: View {
     @Environment(\.theme) private var theme: AppTheme
     let title: String
-    @Binding var value: String
-    let unit: String
-    
+    let value: String
+    var unit: String? = nil
+
     var body: some View {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.onSurface)
                 .frame(width: 60, alignment: .leading)
-            
-            TextField("请输入\(title)", text: $value)
-                .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            Text(unit)
-                .font(.system(size: 14))
-                .foregroundColor(theme.secondary)
-                .frame(width: 30, alignment: .leading)
+
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(theme.onSurface)
+
+            if let unit {
+                Text(unit)
+                    .font(.system(size: 14))
+                    .foregroundColor(theme.secondary)
+            }
+
+            Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -169,4 +121,12 @@ struct StatCard: View {
 
 #Preview {
     UserInfoView()
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }

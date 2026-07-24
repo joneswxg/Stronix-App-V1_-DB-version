@@ -10,10 +10,11 @@ struct MainTabView: View {
         useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
     )
     @StateObject private var keyboardManager = CustomKeyboardManager()
-    
+    @StateObject private var bodyMeasurementViewModel = BodyMeasurementViewModel()
+
     var body: some View {
         TabView(selection: $selectedTab) {
-                BodyMeasurementTabView()
+                BodyMeasurementTabView(viewModel: bodyMeasurementViewModel)
                     .tabItem {
                         Image(systemName: "figure.mixed.cardio")
                         Text("体测")

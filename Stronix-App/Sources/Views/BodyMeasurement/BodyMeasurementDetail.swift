@@ -3,8 +3,9 @@ import SwiftUI
 struct BodyMeasurementDetail: View {
     @Environment(\.theme) private var theme
     @EnvironmentObject private var userSession: UserSession
-    @StateObject private var viewModel = BodyMeasurementViewModel()
+    @ObservedObject var viewModel: BodyMeasurementViewModel
     @State private var selectedDate = Date()
+    @State private var selectedMeasurementID: Int?
     @State private var currentData: DetailedMeasurementData = DetailedMeasurementData.sampleData
     @State private var currentIndex = 0
     @State private var showingDeleteAlert = false
@@ -12,7 +13,14 @@ struct BodyMeasurementDetail: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            if viewModel.isLoading {
+                ProgressView("加载中...")
+                    .frame(maxWidth: .infinity, minHeight: 300)
+            } else if viewModel.measurements.isEmpty {
+                ContentUnavailableView("暂无体测数据", systemImage: "chart.line.uptrend.xyaxis", description: Text("请先添加体测记录"))
+                    .frame(maxWidth: .infinity, minHeight: 300)
+            } else {
+                VStack(spacing: 0) {
                 // 日期导航
                 HStack {
                     Button(action: {
@@ -145,19 +153,15 @@ struct BodyMeasurementDetail: View {
                 }
                 
                 Spacer(minLength: 50)
+                }
             }
         }
         .background(theme.background)
-        .task {
-            userSession.registerResetter(viewModel)
-        }
         .onAppear {
-            Task {
-                await viewModel.loadMeasurements()
-                updateCurrentData()
-            }
+            updateCurrentData()
         }
         .onChange(of: viewModel.measurements) {
+            synchronizeSelection()
             updateCurrentData()
         }
         .onChange(of: currentIndex) {
@@ -179,19 +183,36 @@ struct BodyMeasurementDetail: View {
     }
     
     // MARK: - 数据管理函数
-    private func updateCurrentData() {
-        guard !viewModel.measurements.isEmpty, currentIndex < viewModel.measurements.count else {
+    private func synchronizeSelection() {
+        guard !viewModel.measurements.isEmpty else {
+            currentIndex = 0
+            selectedMeasurementID = nil
             return
         }
-        
+
+        if let selectedMeasurementID,
+           let index = viewModel.measurements.firstIndex(where: { $0.id == selectedMeasurementID }) {
+            currentIndex = index
+        } else {
+            currentIndex = min(currentIndex, viewModel.measurements.count - 1)
+            selectedMeasurementID = viewModel.measurements[currentIndex].id
+        }
+    }
+
+    private func updateCurrentData() {
+        guard !viewModel.measurements.isEmpty else {
+            return
+        }
+
+        synchronizeSelection()
         let current = viewModel.measurements[currentIndex]
         let previous = currentIndex > 0 ? viewModel.measurements[currentIndex - 1] : nil
         
         currentData = DetailedMeasurementData(
             current: current,
             previous: previous,
-            userAge: 25, // TODO: 从用户信息获取
-            userGender: "male" // TODO: 从用户信息获取
+            userAge: 0,
+            userGender: userSession.currentUser?.gender ?? ""
         )
         
         selectedDate = current.measurementTimestamp
@@ -200,12 +221,14 @@ struct BodyMeasurementDetail: View {
     private func navigateToPrevious() {
         if currentIndex > 0 {
             currentIndex -= 1
+            selectedMeasurementID = viewModel.measurements[currentIndex].id
         }
     }
-    
+
     private func navigateToNext() {
         if currentIndex < viewModel.measurements.count - 1 {
             currentIndex += 1
+            selectedMeasurementID = viewModel.measurements[currentIndex].id
         }
     }
     
@@ -357,5 +380,13 @@ struct MetricRow: View {
 
 
 #Preview {
-    BodyMeasurementDetail()
+    BodyMeasurementDetail(viewModel: BodyMeasurementViewModel())
+        .environmentObject(
+            UserSession(
+                operations: AuthenticationUseCases(
+                    repository: SQLiteAuthRepository(),
+                    sessionStore: InMemoryLocalSessionStore()
+                )
+            )
+        )
 }
