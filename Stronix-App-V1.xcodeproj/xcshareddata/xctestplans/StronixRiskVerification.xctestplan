@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "B5CAAF1E-176C-4E5A-9B35-6DCA1C956176",
+      "name" : "Serial Risk Verification",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:Stronix-App-V1.xcodeproj",
+        "identifier" : "A10000000000000000000004",
+        "name" : "StronixTests"
+      }
+    }
+  ],
+  "version" : 1
+}

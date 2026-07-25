@@ -3,7 +3,7 @@ import SQLite
 @testable import Stronix
 
 final class BodyMeasurementRepositoryTests: XCTestCase {
-    private var root: URL!
+    private var fixture: IsolatedDatabaseFixture!
     private var connection: Connection!
     private var currentUser: TestCurrentUser!
     private var repository: SQLiteBodyMeasurementRepository!
@@ -12,23 +12,22 @@ final class BodyMeasurementRepositoryTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 1_784_959_200.987)
 
     override func setUpWithError() throws {
-        root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let databaseURL = root.appendingPathComponent("measurements.db")
-        try FileManager.default.copyItem(at: try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL), to: databaseURL)
-        connection = try Connection(databaseURL.path)
-        try connection.execute("PRAGMA foreign_keys = ON")
-        ownerID = try insertUser("owner")
-        otherID = try insertUser("other")
-        currentUser = TestCurrentUser(id: ownerID)
+        fixture = try IsolatedDatabaseFixture()
+        connection = try fixture.prepareRepositoryDatabase(named: "measurements.db")
+        let owner = try TestUserFixture(username: "owner", email: "owner@example.com").insert(into: connection)
+        let other = try TestUserFixture(username: "other", email: "other@example.com").insert(into: connection)
+        ownerID = owner.id
+        otherID = other.id
+        currentUser = TestCurrentUser(user: owner)
         repository = SQLiteBodyMeasurementRepository(connectionProvider: { self.connection }, currentUserProvider: currentUser, now: { self.now })
     }
 
     override func tearDownWithError() throws {
         repository = nil
+        currentUser = nil
         connection = nil
-        try? FileManager.default.removeItem(at: root)
-        root = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testListIsOwnerScopedAndDeterministicallyOrdered() throws {
@@ -117,11 +116,6 @@ final class BodyMeasurementRepositoryTests: XCTestCase {
         BodyMeasurementDraft(measurementTimestamp: timestamp, weightKg: 72.5, heightCm: 175, bodyFatPercentage: 18, skeletalMuscleMassKg: 34, visceralFatLevel: 5)
     }
 
-    private func insertUser(_ username: String) throws -> Int {
-        try connection.run("INSERT INTO user (username, email, password_hash, created_at) VALUES (?, ?, 'hash', '2026-07-20T00:00:00Z')", username, "\(username)@example.com")
-        return Int(connection.lastInsertRowid)
-    }
-
     private func insertMeasurement(ownerID: Int, timestamp: String, createdAt: String = "2026-07-20T00:00:00.000Z") throws -> Int {
         try connection.run(
             "INSERT INTO body_measurements (user_id, measurement_timestamp, weight_kg, height_cm, body_fat_percentage, skeletal_muscle_mass_kg, visceral_fat_level, created_at, updated_at) VALUES (?, ?, 70, 170, 20, 30, 5, ?, ?)",
@@ -149,12 +143,4 @@ final class BodyMeasurementRepositoryTests: XCTestCase {
         guard let value = try connection.prepare(sql, id).makeIterator().next()?[0] as? String else { throw NSError(domain: "Test", code: 1) }
         return value
     }
-}
-
-private final class TestCurrentUser: CurrentUserProviding {
-    var currentUser: User? { nil }
-    var currentUserID: Int? { id }
-    var id: Int?
-
-    init(id: Int?) { self.id = id }
 }

@@ -330,6 +330,28 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending manual Release verification
 
+## Phase 8.1: Risk Verification Gate
+
+The P0/P1 traceability matrix is maintained in [`phase-8.1-risk-verification-matrix.md`](phase-8.1-risk-verification-matrix.md). It maps database readiness, plans, training/history, authentication/session, and body-measurement outcomes to automated seams and the manual paths in this checklist.
+
+Run the CI-oriented XCTest plan serially:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+xcodebuild \
+  -project Stronix-App-V1.xcodeproj \
+  -scheme Stronix-App-V1 \
+  -testPlan StronixRiskVerification \
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+  -parallel-testing-enabled NO \
+  -maximum-concurrent-test-simulator-destinations 1 \
+  -derivedDataPath /tmp/stronix-phase-8-1-tests \
+  CODE_SIGNING_ALLOWED=NO \
+  test
+```
+
+Do not install or build the app against the same simulator while the test plan is running. A concurrent install can replace the hosted test bundle and invalidates the run, even if no assertion failure is reported. Serial execution remains required until parallel safety is proven separately.
+
 ## Phase Completion Rule
 
 For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.

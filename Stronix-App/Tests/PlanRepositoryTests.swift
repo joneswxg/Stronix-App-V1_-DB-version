@@ -3,32 +3,25 @@ import SQLite
 @testable import Stronix
 
 final class PlanRepositoryTests: XCTestCase {
-    private var temporaryRoot: URL!
+    private var fixture: IsolatedDatabaseFixture!
     private var connection: Connection!
     private var repository: SQLitePlanRepository!
     private var ownerID: Int!
     private var otherOwnerID: Int!
 
     override func setUpWithError() throws {
-        temporaryRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
-        let databaseURL = temporaryRoot.appendingPathComponent("plans.db")
-        try FileManager.default.copyItem(at: try bundledBaselineURL(), to: databaseURL)
-        connection = try Connection(databaseURL.path)
-        try connection.execute("PRAGMA foreign_keys = ON")
-        ownerID = try insertUser(username: "owner", email: "owner@example.com")
-        otherOwnerID = try insertUser(username: "other", email: "other@example.com")
+        fixture = try IsolatedDatabaseFixture()
+        connection = try fixture.prepareRepositoryDatabase(named: "plans.db")
+        ownerID = try TestUserFixture(username: "owner", email: "owner@example.com").insert(into: connection).id
+        otherOwnerID = try TestUserFixture(username: "other", email: "other@example.com").insert(into: connection).id
         repository = SQLitePlanRepository(connection: connection)
     }
 
     override func tearDownWithError() throws {
         repository = nil
         connection = nil
-        if let temporaryRoot {
-            try? FileManager.default.removeItem(at: temporaryRoot)
-        }
-        temporaryRoot = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testBrowseTemplatePlansReturnsSeededOrderedContent() throws {
@@ -387,20 +380,5 @@ final class PlanRepositoryTests: XCTestCase {
                 return XCTFail("Expected DatabaseError.operationFailed, got \(error)")
             }
         }
-    }
-
-    private func bundledBaselineURL() throws -> URL {
-        try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
-    }
-
-    private func insertUser(username: String, email: String) throws -> Int {
-        try connection.run(
-            """
-            INSERT INTO user (username, email, password_hash, created_at)
-            VALUES (?, ?, 'test-hash', '2026-07-22T00:00:00Z')
-            """,
-            [username, email]
-        )
-        return Int(connection.lastInsertRowid)
     }
 }

@@ -1,16 +1,17 @@
-import SQLite
 import XCTest
 @testable import Stronix
 
 final class AuthenticationUseCasesTests: XCTestCase {
     func testLoginPersistsSessionBeforeReturningAuthenticatedUser() async throws {
         let user = makeUser(id: 42)
-        let repository = AuthRepositoryStub(authenticatedUser: user)
+        let repository = ResultAuthRepository(authenticatedUser: user)
         let sessionStore = RecordingSessionStore()
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
         let useCases = AuthenticationUseCases(
             repository: repository,
             sessionStore: sessionStore,
-            legacyDefaults: UserDefaults(suiteName: UUID().uuidString)!
+            legacyDefaults: defaults.defaults
         )
 
         let authenticatedUser = try await useCases.login(
@@ -23,13 +24,15 @@ final class AuthenticationUseCasesTests: XCTestCase {
     }
 
     func testLogoutFailureDoesNotPretendThePersistentSessionWasCleared() async throws {
-        let repository = AuthRepositoryStub(authenticatedUser: makeUser(id: 1))
+        let repository = ResultAuthRepository(authenticatedUser: makeUser(id: 1))
         let sessionStore = RecordingSessionStore()
         sessionStore.clearError = TestError.expected
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
         let useCases = AuthenticationUseCases(
             repository: repository,
             sessionStore: sessionStore,
-            legacyDefaults: UserDefaults(suiteName: UUID().uuidString)!
+            legacyDefaults: defaults.defaults
         )
 
         do {
@@ -39,32 +42,38 @@ final class AuthenticationUseCasesTests: XCTestCase {
             XCTAssertEqual(error as? AuthError, .sessionUnavailable)
         }
     }
+
     func testRestoreClearsStaleProtectedReference() async throws {
-        let repository = AuthRepositoryStub(authenticatedUser: makeUser(id: 1))
-        repository.restoredUser = nil
+        let repository = ResultAuthRepository(
+            authenticatedUser: makeUser(id: 1),
+            userResult: .success(nil)
+        )
         let sessionStore = RecordingSessionStore()
         sessionStore.loadedSession = LocalSessionReference(userID: 999)
-        let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        defaults.set(999, forKey: "current_user_id")
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
+        defaults.defaults.set(999, forKey: "current_user_id")
         let useCases = AuthenticationUseCases(
             repository: repository,
             sessionStore: sessionStore,
-            legacyDefaults: defaults
+            legacyDefaults: defaults.defaults
         )
 
         let restored = try await useCases.restoreSession()
 
         XCTAssertNil(restored)
         XCTAssertNil(sessionStore.loadedSession)
-        XCTAssertNil(defaults.object(forKey: "current_user_id"))
+        XCTAssertNil(defaults.defaults.object(forKey: "current_user_id"))
     }
 
     func testRegistrationValidationRunsBeforeRepositoryMutation() async throws {
-        let repository = AuthRepositoryStub(authenticatedUser: makeUser(id: 1))
+        let repository = ResultAuthRepository(authenticatedUser: makeUser(id: 1))
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
         let useCases = AuthenticationUseCases(
             repository: repository,
-            sessionStore: RecordingSessionStore(),
-            legacyDefaults: UserDefaults(suiteName: UUID().uuidString)!
+            sessionStore: InMemoryLocalSessionStore(),
+            legacyDefaults: defaults.defaults
         )
 
         do {
@@ -75,26 +84,8 @@ final class AuthenticationUseCasesTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? AuthError, .invalidUsername)
         }
-        XCTAssertEqual(repository.registerCallCount, 0)
+        XCTAssertTrue(repository.registrations.isEmpty)
     }
-}
-
-private final class AuthRepositoryStub: AuthRepository {
-    let authenticatedUser: User
-    var restoredUser: User?
-    var registerCallCount = 0
-
-    init(authenticatedUser: User) {
-        self.authenticatedUser = authenticatedUser
-        restoredUser = authenticatedUser
-    }
-
-    func register(_ registration: AuthRegistration) async throws -> User {
-        registerCallCount += 1
-        return authenticatedUser
-    }
-    func authenticate(email: String, password: String) async throws -> User { authenticatedUser }
-    func user(id: Int) async throws -> User? { restoredUser?.id == id ? restoredUser : nil }
 }
 
 private final class RecordingSessionStore: LocalSessionStore {
