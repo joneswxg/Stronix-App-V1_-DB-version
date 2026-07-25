@@ -45,7 +45,11 @@ struct BodyMeasurementTabView: View {
             // 内容区域
             VStack {
                 if selectedTab == 0 {
-                    BodyMeasurementOverview(viewModel: viewModel)
+                    BodyMeasurementOverview(
+                        viewModel: viewModel,
+                        isAuthenticated: userSession.isAuthenticated,
+                        logout: logout
+                    )
                 } else if selectedTab == 1 {
                     BodyMeasurementDetail(viewModel: viewModel)
                 } else if selectedTab == 2 {
@@ -53,7 +57,11 @@ struct BodyMeasurementTabView: View {
                 } else if selectedTab == 3 {
                     NutritionView()
                 } else {
-                    BodyMeasurementOverview(viewModel: viewModel)
+                    BodyMeasurementOverview(
+                        viewModel: viewModel,
+                        isAuthenticated: userSession.isAuthenticated,
+                        logout: logout
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -67,6 +75,10 @@ struct BodyMeasurementTabView: View {
                 await loadMeasurements(for: userID)
             }
         }
+    }
+
+    private func logout() async {
+        try? await userSession.logout()
     }
 
     private func loadMeasurements(for userID: Int?) async {

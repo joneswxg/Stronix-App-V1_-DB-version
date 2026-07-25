@@ -33,6 +33,28 @@ final class BodyMeasurementViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.selectedDataPoint, newer)
     }
 
+    func testLoadFailureClearsLoadingAndRecoveryClearsError() async {
+        let expected = measurement(id: 1, timestamp: Date(), weight: 70)
+        let operations = BodyMeasurementOperationsStub(
+            measurements: [expected],
+            listError: BodyMeasurementRepositoryError.unauthenticated
+        )
+        let viewModel = BodyMeasurementViewModel(operations: operations)
+
+        await viewModel.loadMeasurements()
+
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertTrue(viewModel.measurements.isEmpty)
+        XCTAssertEqual(viewModel.errorMessage, AppStrings.text("bodyMeasurement.error.unauthenticated"))
+
+        operations.listError = nil
+        await viewModel.loadMeasurements()
+
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.errorMessage)
+        XCTAssertEqual(viewModel.measurements, [expected])
+    }
+
     func testResetUserScopedStateClearsAllUserSpecificUIState() async {
         let record = measurement(id: 1, timestamp: Date(), weight: 70)
         let viewModel = BodyMeasurementViewModel(
@@ -54,21 +76,27 @@ final class BodyMeasurementViewModelTests: XCTestCase {
 
 private final class BodyMeasurementOperationsStub: BodyMeasurementOperating, @unchecked Sendable {
     var measurements: [BodyMeasurement]
+    var listError: Error?
     let createdMeasurement: BodyMeasurement?
     let updatedMeasurement: BodyMeasurement?
 
     init(
         measurements: [BodyMeasurement],
+        listError: Error? = nil,
         createdMeasurement: BodyMeasurement? = nil,
         updatedMeasurement: BodyMeasurement? = nil
     ) {
         self.measurements = measurements
+        self.listError = listError
         self.createdMeasurement = createdMeasurement
         self.updatedMeasurement = updatedMeasurement
     }
 
     func listMeasurements() async throws -> [BodyMeasurement] {
-        measurements
+        if let listError {
+            throw listError
+        }
+        return measurements
     }
 
     func measurement(id: Int) async throws -> BodyMeasurement {
