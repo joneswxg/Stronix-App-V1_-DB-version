@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 		9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */; };
+		9D70A8A12DDD84590085BAAF /* action_images.json in Resources */ = {isa = PBXBuildFile; fileRef = 9D70A8A02DDD84590085BAAF /* action_images.json */; };
 		9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */ = {isa = PBXBuildFile; fileRef = 9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */; };
 		A10000000000000000000001 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 /* End PBXBuildFile section */
@@ -31,6 +32,7 @@
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stronix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		9D70A8A02DDD84590085BAAF /* action_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = action_images.json; sourceTree = "<group>"; };
 		9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Stronix-App/Resources/Images"; sourceTree = "<group>"; };
 		A10000000000000000000002 /* StronixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StronixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -63,6 +65,7 @@
 				Services/Local/ActionHistoryRepository.swift,
 				Services/Local/TrainingHistoryRepository.swift,
 				Services/Local/LocalActionService.swift,
+				Services/Local/ActionImageResolver.swift,
 				Services/Local/BodyMeasurementRepository.swift,
 				Services/Local/LocalCredentialSecurity.swift,
 				Services/Local/SQLiteAuthRepository.swift,
@@ -155,6 +158,7 @@
 			sourceTree = "<group>";
 			children = (
 				9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */,
+				9D70A8A02DDD84590085BAAF /* action_images.json */,
 			);
 		};
 		9D70A7E72DDDC24C0085BAAF /* Tests */ = {
@@ -318,6 +322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */,
+				9D70A8A12DDD84590085BAAF /* action_images.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

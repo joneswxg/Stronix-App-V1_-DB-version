@@ -366,7 +366,11 @@ struct ActionListView: View {
                                                     GridItem(.flexible())
                                                 ], spacing: 16) {
                                                     ForEach(actions) { action in
-                                                        ActionCard(action: action, selectedTargetMuscleId: $selectedTargetMuscleId)
+                                                        ActionCard(
+                                                            action: action,
+                                                            imageResolution: viewModel.actionImageResolution(for: action),
+                                                            selectedTargetMuscleId: $selectedTargetMuscleId
+                                                        )
                                                     }
                                                 }
                                                 .padding(.horizontal, 16)
@@ -485,6 +489,7 @@ struct ActionListView: View {
 // MARK: - 动作卡片视图
 struct ActionCard: View {
     let action: Action
+    let imageResolution: ActionImageResolution
     @Binding var selectedTargetMuscleId: Int
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -492,7 +497,7 @@ struct ActionCard: View {
         NavigationLink(destination: ActionDetailView(action: action, selectedTargetMuscleId: $selectedTargetMuscleId)) {
             VStack(alignment: .leading, spacing: 8) {
                 // 动作图片 - 使用本地图片资源
-                AsyncImageView(imageName: action.localImageName)
+                AsyncImageView(resolution: imageResolution)
                 
                 // 动作信息
                 VStack(alignment: .leading, spacing: 4) {
@@ -520,7 +525,7 @@ struct ActionCard: View {
 
 // MARK: - 异步图片加载视图（支持新的目录结构）
 struct AsyncImageView: View {
-    let imageName: String
+    let resolution: ActionImageResolution
     @State private var image: Image?
     @State private var isLoading = true
     @EnvironmentObject private var themeManager: ThemeManager
@@ -552,22 +557,27 @@ struct AsyncImageView: View {
     }
     
     private func loadImage() {
-        // 尝试加载图片，支持新的目录结构
-        guard let url = Bundle.main.url(forResource: imageName, withExtension: "gif") else {
-            print("❌ ActionListView: 找不到GIF文件: \(imageName).gif")
+        guard case let .mapped(resourcePath) = resolution else {
             isLoading = false
             return
         }
-        
+
+        let resourceName = resourcePath.replacingOccurrences(of: ".gif", with: "")
+        guard let url = Bundle.main.url(forResource: resourceName, withExtension: "gif") else {
+            print("❌ ActionListView: 找不到GIF文件: \(resourcePath)")
+            isLoading = false
+            return
+        }
+
         DispatchQueue.global(qos: .userInitiated).async {
             guard let data = try? Data(contentsOf: url) else {
-                print("❌ ActionListView: 图片加载失败: \(imageName)")
+                print("❌ ActionListView: 图片加载失败: \(resourcePath)")
                 DispatchQueue.main.async {
                     self.isLoading = false
                 }
                 return
             }
-            
+
             DispatchQueue.main.async {
                 #if canImport(UIKit)
                 if let uiImage = UIImage(data: data) {

@@ -204,7 +204,8 @@ class ActionListViewModel: ObservableObject {
     @Published var error: Error?
     
     private let actionService = LocalActionService.shared
-    
+    private let actionImageResolver = ActionImageResolver()
+
     init() {
         loadInitialData()
     }
@@ -268,6 +269,10 @@ class ActionListViewModel: ObservableObject {
         await loadActions(targetMuscleId: targetMuscleId, equipmentId: equipmentId, bodyPartId: bodyPartId, searchText: searchText)
     }
     
+    func actionImageResolution(for action: Action) -> ActionImageResolution {
+        actionImageResolver.resolve(actionID: action.id, externalID: action.external_id)
+    }
+
     private func handleError(_ error: Error, context: String) {
         print("[\(context)] 错误: \(error.localizedDescription)")
         

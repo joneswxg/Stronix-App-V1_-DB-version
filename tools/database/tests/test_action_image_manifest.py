@@ -148,6 +148,26 @@ class ActionImageManifestTests(unittest.TestCase):
             ["mapping.resource-path-mismatch"],
         )
 
+    def test_packaged_manifest_matches_canonical_manifest(self) -> None:
+        repository_root = Path(__file__).resolve().parents[3]
+        canonical_path = repository_root / "tools/database/seeds/action_images.json"
+        packaged_path = repository_root / "Stronix-App/Resources/action_images.json"
+        actions_path = repository_root / "tools/database/seeds/actions.json"
+        resources_path = repository_root / "Stronix-App/Resources"
+
+        self.assertEqual(
+            json.loads(packaged_path.read_text(encoding="utf-8")),
+            json.loads(canonical_path.read_text(encoding="utf-8")),
+        )
+
+        _, diagnostics = validate_manifest(
+            json.loads(actions_path.read_text(encoding="utf-8")),
+            packaged_path,
+            resources_path,
+        )
+
+        self.assertEqual(diagnostics, [])
+
 
 if __name__ == "__main__":
     unittest.main()
