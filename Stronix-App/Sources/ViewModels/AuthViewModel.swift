@@ -54,26 +54,26 @@ final class AuthViewModel: ObservableObject {
     func register(using session: any AuthSessionIntending) async {
         errorMessage = nil
         guard registrationPassword == registrationConfirmation else {
-            errorMessage = "两次输入的密码不一致"
+            errorMessage = AppStrings.text("auth.validation.passwordMismatch")
             return
         }
         guard agreesToTerms else {
-            errorMessage = "请先阅读并同意用户协议和隐私政策"
+            errorMessage = AppStrings.text("auth.validation.termsRequired")
             return
         }
         guard canRegister else {
-            errorMessage = "请检查注册信息后重试"
+            errorMessage = AppStrings.text("auth.validation.checkRegistration")
             return
         }
         isRegistering = true
         defer { isRegistering = false }
 
         guard let height = optionalNumber(registrationHeight) else {
-            errorMessage = "请输入有效的身高"
+            errorMessage = AppStrings.text("auth.error.invalidHeight")
             return
         }
         guard let weight = optionalNumber(registrationWeight) else {
-            errorMessage = "请输入有效的体重"
+            errorMessage = AppStrings.text("auth.error.invalidWeight")
             return
         }
         do {
@@ -101,19 +101,19 @@ final class AuthViewModel: ObservableObject {
 
     private func userMessage(for error: Error) -> String {
         guard let authError = error as? AuthError else {
-            return "暂时无法完成请求，请稍后重试"
+            return AppStrings.text("auth.error.generic")
         }
         return switch authError {
-        case .invalidCredentials: "邮箱或密码错误"
-        case .emailAlreadyExists: "邮箱已被注册"
-        case .usernameTaken: "用户名已被使用"
-        case .invalidUsername: "请输入有效的用户名"
-        case .invalidEmail: "请输入有效的邮箱"
-        case .invalidPassword: "密码至少需要 6 位"
-        case .invalidHeight: "请输入有效的身高"
-        case .invalidWeight: "请输入有效的体重"
-        case .sessionUnavailable: "无法安全保存登录状态，请重试"
-        case .databaseUnavailable, .requestFailed: "暂时无法完成请求，请稍后重试"
+        case .invalidCredentials: AppStrings.text("auth.error.invalidCredentials")
+        case .emailAlreadyExists: AppStrings.text("auth.error.emailAlreadyExists")
+        case .usernameTaken: AppStrings.text("auth.error.usernameTaken")
+        case .invalidUsername: AppStrings.text("auth.error.invalidUsername")
+        case .invalidEmail: AppStrings.text("auth.error.invalidEmail")
+        case .invalidPassword: AppStrings.text("auth.error.invalidPassword")
+        case .invalidHeight: AppStrings.text("auth.error.invalidHeight")
+        case .invalidWeight: AppStrings.text("auth.error.invalidWeight")
+        case .sessionUnavailable: AppStrings.text("auth.error.sessionUnavailable")
+        case .databaseUnavailable, .requestFailed: AppStrings.text("auth.error.generic")
         }
     }
 }

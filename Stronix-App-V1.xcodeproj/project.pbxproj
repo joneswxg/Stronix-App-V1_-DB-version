@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
+		9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */; };
 		9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */ = {isa = PBXBuildFile; fileRef = 9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */; };
 		A10000000000000000000001 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 /* End PBXBuildFile section */
@@ -29,6 +30,7 @@
 /* Begin PBXFileReference section */
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stronix.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Stronix-App/Resources/Images"; sourceTree = "<group>"; };
 		A10000000000000000000002 /* StronixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StronixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -75,7 +77,9 @@
 				Services/Update/UpdateService.swift,
 				Services/Update/VersionService.swift,
 				Theme/AppTheme.swift,
+				Theme/AppStrings.swift,
 				"Theme/Color+Theme.swift",
+				Theme/DesignTokens.swift,
 				Theme/ThemeManager.swift,
 				Utilities/AppError.swift,
 				Utilities/Constants/APIConfig.swift,
@@ -128,6 +132,7 @@
 				Views/Profile/SettingsView.swift,
 				Views/Profile/ToolsView.swift,
 				Views/Profile/UserInfoView.swift,
+				Views/Shared/AuthControls.swift,
 				Views/Shared/CustomNumberKeyboard.swift,
 				Views/Training/TrainingFloatingIndicator.swift,
 				Views/Training/TrainingPlanDetailView.swift,
@@ -153,6 +158,9 @@
 			);
 			path = Resources;
 			sourceTree = "<group>";
+			children = (
+				9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */,
+			);
 		};
 		9D70A7E72DDDC24C0085BAAF /* Tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -290,6 +298,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = 9D70A7BD2DDD84580085BAAF;
@@ -313,6 +322,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -4,284 +4,171 @@ struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userSession: UserSession
     @StateObject private var viewModel = AuthViewModel()
-    @Environment(\.theme) private var theme: AppTheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var showError = false
-    
+
     private let genderOptions = ["男", "女", "其他"]
-    
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    // 标题区域
-                    VStack(spacing: 16) {
-                        Image("StronixLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 60)
-                        
-                        Text("创建账号")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(theme.onSurface)
-                        
-                        Text("加入STRONIX，开始您的健身之旅")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.secondary)
-                    }
-                    .padding(.top, 20)
-                    
-                    // 注册表单
-                    VStack(spacing: 16) {
-                        // 用户名
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("用户名")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.onSurface)
-                            
-                            HStack {
-                                Image(systemName: "person")
-                                    .foregroundColor(theme.secondary)
-                                    .frame(width: 20)
-                                TextField("请输入用户名", text: $viewModel.registrationUsername)
-                            }
-                            .padding()
-                            .background(theme.background)
-                            .cornerRadius(12)
-                        }
-                        
-                        // 邮箱
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("邮箱")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.onSurface)
-                            
-                            HStack {
-                                Image(systemName: "envelope")
-                                    .foregroundColor(theme.secondary)
-                                    .frame(width: 20)
-                                TextField("请输入邮箱", text: $viewModel.registrationEmail)
-                                    .keyboardType(.emailAddress)
-                                    .autocapitalization(.none)
-                            }
-                            .padding()
-                            .background(theme.background)
-                            .cornerRadius(12)
-                        }
-                        
-                        // 密码
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("密码")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.onSurface)
-                            
-                            HStack {
-                                Image(systemName: "lock")
-                                    .foregroundColor(theme.secondary)
-                                    .frame(width: 20)
-                                SecureField("请输入密码（至少6位）", text: $viewModel.registrationPassword)
-                                    .textContentType(.none)
-                            }
-                            .padding()
-                            .background(theme.background)
-                            .cornerRadius(12)
-                        }
-                        
-                        // 确认密码
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("确认密码")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.onSurface)
-                            
-                            HStack {
-                                Image(systemName: "lock")
-                                    .foregroundColor(theme.secondary)
-                                    .frame(width: 20)
-                                SecureField("请再次输入密码", text: $viewModel.registrationConfirmation)
-                                    .textContentType(.none)
-                            }
-                            .padding()
-                            .background(theme.background)
-                            .cornerRadius(12)
-                            
-                            if !viewModel.registrationPassword.isEmpty && !viewModel.registrationConfirmation.isEmpty && viewModel.registrationPassword != viewModel.registrationConfirmation {
-                                Text("密码不匹配")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(theme.error)
-                                    .padding(.top, 5)
-                            }
-                        }
-                        
-                        // 性别选择
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("性别")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.onSurface)
-                            
-                            HStack(spacing: 12) {
-                                ForEach(genderOptions, id: \.self) { option in
-                                    Button(action: {
-                                        viewModel.registrationGender = option
-                                    }) {
-                                        HStack {
-                                            Image(systemName: viewModel.registrationGender == option ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(viewModel.registrationGender == option ? theme.primary : theme.secondary)
-                                            Text(option)
-                                                .font(.system(size: 14))
-                                                .foregroundColor(viewModel.registrationGender == option ? theme.primary : theme.onSurface)
-                                        }
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            viewModel.registrationGender == option ?
-                                                theme.primary.opacity(0.1) :
-                                                theme.background
-                                        )
-                                        .cornerRadius(20)
-                                    }
-                                }
-                                Spacer()
-                            }
-                        }
-                        
-                        // 身高体重
-                        HStack(spacing: 12) {
-                            // 身高
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("身高 (cm)")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(theme.onSurface)
-                                
-                                HStack {
-                                    Image(systemName: "ruler")
-                                        .foregroundColor(theme.secondary)
-                                        .frame(width: 20)
-                                    TextField("170", text: $viewModel.registrationHeight)
-                                        .keyboardType(.numberPad)
-                                }
-                                .padding()
-                                .background(theme.background)
-                                .cornerRadius(12)
-                            }
-                            
-                            // 体重
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("体重 (kg)")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(theme.onSurface)
-                                
-                                HStack {
-                                    Image(systemName: "scalemass")
-                                        .foregroundColor(theme.secondary)
-                                        .frame(width: 20)
-                                    TextField("70", text: $viewModel.registrationWeight)
-                                        .keyboardType(.numberPad)
-                                }
-                                .padding()
-                                .background(theme.background)
-                                .cornerRadius(12)
-                            }
-                        }
-                        
-                        // 服务条款
-                        HStack(alignment: .top, spacing: 12) {
-                            Button(action: {
-                                viewModel.agreesToTerms.toggle()
-                            }) {
-                                Image(systemName: viewModel.agreesToTerms ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(viewModel.agreesToTerms ? theme.primary : theme.secondary)
-                                    .font(.system(size: 18))
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("我已阅读并同意")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(theme.onSurface)
-                                HStack(spacing: 4) {
-                                    Button("《用户协议》") {
-                                        // TODO: 显示用户协议
-                                    }
-                                    .font(.system(size: 14))
-                                    .foregroundColor(theme.primary)
-                                    
-                                    Text("和")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(theme.onSurface)
-                                    
-                                    Button("《隐私政策》") {
-                                        // TODO: 显示隐私政策
-                                    }
-                                    .font(.system(size: 14))
-                                    .foregroundColor(theme.primary)
-                                }
-                            }
-                            Spacer()
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    
-                    // 注册按钮
-                    Button(action: {
-                        registerUser()
-                    }) {
-                        HStack {
-                            if viewModel.isRegistering {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                            } else {
-                                Text("注册")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(theme.onPrimary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            viewModel.canRegister ? theme.primary : theme.secondary.opacity(0.5)
-                        )
-                        .cornerRadius(25)
-                    }
-                    .disabled(!viewModel.canRegister)
-                    .padding(.horizontal, 24)
-                    
-                    // 登录链接
-                    HStack {
-                        Text("已有账号？")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.secondary)
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            Text("立即登录")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(theme.primary)
-                        }
-                    }
-                    .padding(.bottom, 20)
+                VStack(spacing: DesignTokens.Spacing.xLarge) {
+                    header
+                    form
+                    AuthActionButton(
+                        title: "auth.action.register",
+                        loadingTitle: "auth.register.loading",
+                        style: .primary,
+                        isEnabled: viewModel.canRegister,
+                        isLoading: viewModel.isRegistering,
+                        action: registerUser
+                    )
+                    loginLink
                 }
+                .padding(.horizontal, DesignTokens.Spacing.xLarge)
+                .padding(.bottom, DesignTokens.Spacing.xLarge)
             }
-            .navigationTitle("注册")
+            .background { DesignTokenBackground() }
+            .navigationTitle("auth.action.register")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("auth.action.cancel") { dismiss() }
                 }
             }
         }
-        .alert("注册失败", isPresented: $showError) {
-            Button("确定", role: .cancel) { }
+        .alert("auth.feedback.registerFailed", isPresented: $showError) {
+            Button("auth.action.confirm", role: .cancel) { }
         } message: {
-            Text(viewModel.errorMessage ?? "暂时无法完成注册，请稍后重试")
+            Text(viewModel.errorMessage ?? AppStrings.text("auth.error.generic"))
         }
-        .onChange(of: userSession.isAuthenticated) { _, newValue in
-            if newValue {
-                dismiss()
+        .onChange(of: userSession.isAuthenticated) { _, authenticated in
+            if authenticated { dismiss() }
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: DesignTokens.Spacing.large) {
+            Image("StronixLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(maxHeight: 60)
+                .accessibilityHidden(true)
+            Text("auth.register.title")
+                .font(DesignTokens.Typography.pageTitle)
+            Text("auth.register.subtitle")
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.top, DesignTokens.Spacing.large)
+    }
+
+    private var form: some View {
+        VStack(spacing: DesignTokens.Spacing.large) {
+            AuthTextField(text: $viewModel.registrationUsername, label: "auth.field.username.label", placeholder: "auth.field.username.placeholder", symbol: "person")
+            AuthTextField(text: $viewModel.registrationEmail, label: "auth.field.email.label", placeholder: "auth.field.email.placeholder", symbol: "envelope", kind: .email)
+            AuthTextField(text: $viewModel.registrationPassword, label: "auth.field.password.label", placeholder: "auth.field.passwordRegistration.placeholder", symbol: "lock", kind: .password)
+            AuthTextField(
+                text: $viewModel.registrationConfirmation,
+                label: "auth.field.passwordConfirmation.label",
+                placeholder: "auth.field.passwordConfirmation.placeholder",
+                symbol: "lock",
+                kind: .password,
+                error: passwordsMismatch ? "auth.feedback.passwordMismatch" : nil
+            )
+            genderPicker
+            measurements
+            termsAgreement
+        }
+    }
+
+    private var passwordsMismatch: Bool {
+        !viewModel.registrationPassword.isEmpty &&
+            !viewModel.registrationConfirmation.isEmpty &&
+            viewModel.registrationPassword != viewModel.registrationConfirmation
+    }
+
+    private var genderPicker: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+            Text("auth.field.gender")
+                .font(.subheadline.weight(.medium))
+            ForEach(genderOptions, id: \.self) { option in
+                Button {
+                    viewModel.registrationGender = option
+                } label: {
+                    HStack {
+                        Image(systemName: viewModel.registrationGender == option ? "largecircle.fill.circle" : "circle")
+                            .accessibilityHidden(true)
+                        Text(genderLabel(for: option))
+                        Spacer()
+                    }
+                    .frame(minHeight: DesignTokens.Metric.minimumTapSize)
+                }
+                .accessibilityLabel(genderLabel(for: option))
+                .accessibilityValue(viewModel.registrationGender == option ? Text("auth.accessibility.selected") : Text("auth.accessibility.unselected"))
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("auth.field.gender")
+    }
+
+    @ViewBuilder
+    private var measurements: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: DesignTokens.Spacing.large) {
+                heightField
+                weightField
+            }
+        } else {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.medium) {
+                heightField
+                weightField
             }
         }
     }
-    
+
+    private var heightField: some View {
+        AuthTextField(text: $viewModel.registrationHeight, label: "auth.field.height.label", placeholder: "auth.field.height.placeholder", symbol: "ruler", kind: .number)
+    }
+
+    private var weightField: some View {
+        AuthTextField(text: $viewModel.registrationWeight, label: "auth.field.weight.label", placeholder: "auth.field.weight.placeholder", symbol: "scalemass", kind: .number)
+    }
+
+    private var termsAgreement: some View {
+        Toggle(isOn: $viewModel.agreesToTerms) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
+                Text("auth.register.agreement")
+                HStack(spacing: DesignTokens.Spacing.xSmall) {
+                    Button("auth.register.terms") { }
+                    Text("auth.register.termsConnector")
+                    Button("auth.register.privacyPolicy") { }
+                }
+                .font(.footnote)
+            }
+        }
+        .accessibilityHint("auth.accessibility.registrationReady")
+    }
+
+    private var loginLink: some View {
+        HStack(spacing: DesignTokens.Spacing.small) {
+            Text("auth.register.alreadyHaveAccount")
+                .foregroundStyle(.secondary)
+            Button("auth.action.loginNow") { dismiss() }
+                .fontWeight(.semibold)
+        }
+        .font(DesignTokens.Typography.supporting)
+    }
+
+    private func genderLabel(for option: String) -> LocalizedStringKey {
+        switch option {
+        case "男": "auth.gender.male"
+        case "女": "auth.gender.female"
+        default: "auth.gender.other"
+        }
+    }
+
     private func registerUser() {
         Task {
             await viewModel.register(using: userSession)
@@ -300,5 +187,5 @@ struct RegisterView: View {
                 )
             )
         )
-        .environment(\.theme, BlueTheme())
+        .withAppTheme()
 }

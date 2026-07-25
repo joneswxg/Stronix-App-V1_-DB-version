@@ -3,80 +3,76 @@ import SwiftUI
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userSession: UserSession
-    @Environment(\.theme) private var theme: AppTheme
     @StateObject private var viewModel = AuthViewModel()
     @State private var showRegister = false
     @State private var showForgotPassword = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    VStack(spacing: 16) {
+                VStack(spacing: DesignTokens.Spacing.xLarge) {
+                    VStack(spacing: DesignTokens.Spacing.large) {
                         Image("StronixLogo")
                             .resizable()
                             .scaledToFit()
-                            .frame(height: 80)
+                            .frame(maxHeight: 80)
+                            .accessibilityHidden(true)
                         Text("STRONIX")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(theme.onSurface)
-                        Text("欢迎回来")
-                            .font(.system(size: 16))
-                            .foregroundColor(theme.secondary)
+                            .font(DesignTokens.Typography.screenTitle)
+                        Text("auth.login.subtitle")
+                            .font(DesignTokens.Typography.body)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.top, 40)
+                    .padding(.top, DesignTokens.Spacing.xxLarge)
 
-                    VStack(spacing: 16) {
-                        authField(title: "邮箱", icon: "envelope") {
-                            TextField("请输入邮箱", text: $viewModel.loginEmail)
-                                .keyboardType(.emailAddress)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                        }
-                        authField(title: "密码", icon: "lock") {
-                            SecureField("请输入密码", text: $viewModel.loginPassword)
-                        }
+                    VStack(spacing: DesignTokens.Spacing.large) {
+                        AuthTextField(
+                            text: $viewModel.loginEmail,
+                            label: "auth.field.email.label",
+                            placeholder: "auth.field.email.placeholder",
+                            symbol: "envelope",
+                            kind: .email
+                        )
+                        AuthTextField(
+                            text: $viewModel.loginPassword,
+                            label: "auth.field.password.label",
+                            placeholder: "auth.field.password.placeholder",
+                            symbol: "lock",
+                            kind: .password
+                        )
                     }
-                    .padding(.horizontal, 24)
 
-                    Button {
+                    AuthActionButton(
+                        title: "auth.action.login",
+                        loadingTitle: "auth.login.loading",
+                        style: .primary,
+                        isEnabled: viewModel.canLogin,
+                        isLoading: viewModel.isLoggingIn
+                    ) {
                         Task { await viewModel.login(using: userSession) }
-                    } label: {
-                        HStack {
-                            if viewModel.isLoggingIn {
-                                ProgressView()
-                                    .tint(theme.onPrimary)
-                            } else {
-                                Text("登录")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
-                        }
-                        .foregroundColor(theme.onPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(viewModel.canLogin ? theme.primary : theme.disabled.opacity(0.5))
-                        .cornerRadius(25)
                     }
-                    .disabled(!viewModel.canLogin)
-                    .padding(.horizontal, 24)
 
-                    Button("忘记密码？") {
-                        showForgotPassword = true
-                    }
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.primary)
+                    AuthActionButton(
+                        title: "auth.login.forgotPassword",
+                        loadingTitle: "auth.login.forgotPassword",
+                        style: .secondary,
+                        isEnabled: true,
+                        isLoading: false,
+                        action: { showForgotPassword = true }
+                    )
 
-                    HStack {
-                        Text("还没有账号？")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.secondary)
-                        Button("立即注册") { showRegister = true }
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(theme.primary)
+                    HStack(spacing: DesignTokens.Spacing.small) {
+                        Text("auth.login.noAccount")
+                            .foregroundStyle(.secondary)
+                        Button("auth.action.registerNow") { showRegister = true }
+                            .fontWeight(.semibold)
                     }
-                    .padding(.top, 8)
+                    .font(.subheadline)
+                    .padding(.bottom, DesignTokens.Spacing.xLarge)
                 }
+                .padding(.horizontal, DesignTokens.Spacing.xLarge)
             }
+            .background { DesignTokenBackground() }
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showRegister) {
@@ -86,8 +82,8 @@ struct LoginView: View {
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
-        .alert("登录失败", isPresented: errorBinding) {
-            Button("确定", role: .cancel) { viewModel.errorMessage = nil }
+        .alert("auth.feedback.loginFailed", isPresented: errorBinding) {
+            Button("auth.action.confirm", role: .cancel) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -102,52 +98,44 @@ struct LoginView: View {
             set: { if !$0 { viewModel.errorMessage = nil } }
         )
     }
-
-    private func authField<Content: View>(
-        title: String,
-        icon: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(theme.onSurface)
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(theme.secondary)
-                    .frame(width: 20)
-                content()
-            }
-            .padding()
-            .background(theme.background)
-            .cornerRadius(12)
-        }
-    }
 }
 
 struct ForgotPasswordView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.theme) private var theme: AppTheme
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
+        NavigationStack {
+            VStack(spacing: DesignTokens.Spacing.xLarge) {
                 Image(systemName: "lock.slash")
-                    .font(.system(size: 48))
-                    .foregroundColor(theme.secondary)
-                Text("暂不支持密码重置")
+                    .font(.largeTitle)
+                    .accessibilityHidden(true)
+                Text("auth.forgotPassword.unavailable")
                     .font(.title3.bold())
-                    .foregroundColor(theme.onSurface)
-                Text("此设备上的本地账户暂不支持密码重置。请使用原密码登录或联系支持人员。")
-                    .foregroundColor(theme.secondary)
+                Text("auth.forgotPassword.message")
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                Button("返回登录") { dismiss() }
-                    .buttonStyle(.borderedProminent)
+                AuthActionButton(
+                    title: "auth.action.backToLogin",
+                    loadingTitle: "auth.action.backToLogin",
+                    style: .primary,
+                    isEnabled: true,
+                    isLoading: false,
+                    action: { dismiss() }
+                )
             }
-            .padding(24)
-            .navigationTitle("忘记密码")
+            .padding(DesignTokens.Spacing.xLarge)
+            .background { DesignTokenBackground() }
+            .navigationTitle("auth.forgotPassword.title")
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+struct DesignTokenBackground: View {
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        tokens.canvas.ignoresSafeArea()
     }
 }
 
@@ -161,4 +149,5 @@ struct ForgotPasswordView: View {
                 )
             )
         )
+        .withAppTheme()
 }
