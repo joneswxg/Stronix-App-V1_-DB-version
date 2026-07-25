@@ -26,12 +26,13 @@ final class DatabaseLifecycleTests: XCTestCase {
             DatabaseEnvironment.application().sourceDatabaseURL,
             "Expected the generated baseline database in the app bundle"
         )
+        let documentsDirectory = temporaryRoot.appendingPathComponent(
+            "Documents",
+            isDirectory: true
+        )
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
-                    "Documents",
-                    isDirectory: true
-                ),
+                documentsDirectory: documentsDirectory,
                 databaseFilename: "baseline.db",
                 sourceDatabaseURL: sourceDatabaseURL
             )
@@ -41,6 +42,12 @@ final class DatabaseLifecycleTests: XCTestCase {
             return XCTFail("Expected the bundled baseline to initialize successfully")
         }
 
+        XCTAssertEqual(sourceDatabaseURL.lastPathComponent, "database_stronix.db")
+        XCTAssertEqual(
+            readyDatabase.databaseURL,
+            documentsDirectory.appendingPathComponent("baseline.db")
+        )
+        XCTAssertNotEqual(readyDatabase.databaseURL, sourceDatabaseURL)
         XCTAssertEqual(readyDatabase.preparation, .initialized)
         XCTAssertEqual(readyDatabase.diagnostic.databaseLocation, readyDatabase.databaseURL.path)
         XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260722_0003_split_template_and_user_plans")
