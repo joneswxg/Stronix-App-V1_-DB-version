@@ -32,6 +32,10 @@ _Avoid_: Template copy, system plan
 The database remediation scope focused on the iOS app's bundled and Documents SQLite databases, excluding Supabase migration work.
 _Avoid_: Supabase migration scope, cloud database remediation
 
+## Local SQLite lifecycle
+
+`Stronix-App/Resources/Database/database_stronix.db` is the immutable baseline bundled with the app. On first launch, `DatabaseLifecycle` validates and copies that baseline to the sole mutable database at `<App Documents>/database_stronix.db`. Normal startup retains and migrates the Documents database in place; the bundled baseline never automatically overwrites existing user data. `-StronixRebuildLocalDatabase` is an explicit, destructive, DEBUG-only recovery action.
+
 **Plural Table Names**:
 The long-term database naming convention where tables use plural nouns such as users, actions, training_plans, and template_plans.
 _Avoid_: Mixed singular/plural table names

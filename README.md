@@ -61,10 +61,6 @@ Stronix-App-V1/
 │   │   │   └── Array+SafeAccess.swift
 │   │   │
 │   │   ├── 📁 Models/                     # 数据模型层
-│   │   │   ├── 📁 Database/               # 数据库模型
-│   │   │   │   ├── UpdateData.swift      # 更新数据
-│   │   │   │   └── VersionControl.swift  # 版本控制
-│   │   │   │
 │   │   │   └── 📁 Local/                  # ✅ 本地模型（已合并和统一）
 │   │   │       ├── LocalActionModels.swift           # 动作模型 (已合并ActionInfo)
 │   │   │       ├── LocalBodyMeasurementModels.swift  # 体测模型
@@ -85,14 +81,8 @@ Stronix-App-V1/
 │   │   │   │   ├── LocalUserService.swift
 │   │   │   │   └── TrainingSessionManager.swift
 │   │   │   │
-│   │   │   └── 📁 Update/                 # 更新服务
-│   │   │       ├── UpdateService.swift
-│   │   │       └── VersionService.swift
-│   │   │
 │   │   ├── 📁 Utilities/                  # 工具类
-│   │   │   └── 📁 Constants/              # 常量定义
-│   │   │       ├── APIConfig.swift       # API配置（虽然已迁移，但文件可能保留用于其他常量）
-│   │   │       └── DBConfig.swift        # 数据库配置
+│   │   │   └── AppError.swift
 │   │   │
 │   │   ├── 📁 ViewModels/                 # 视图模型层
 │   │   │   ├── BodyMeasurementViewModel.swift
@@ -110,19 +100,20 @@ Stronix-App-V1/
 │   │
 │   └── 📁 Resources/                      # 资源目录
 │       ├── 📁 Assets.xcassets/            # 应用程序资产（图片、颜色等）
-│       ├── 📁 Database/                   # 数据库目录 (现在只包含 PreloadData/)
-│       │   └── 📁 PreloadData/
-│       ├── 📁 Images/                     # ✅ 统一的图片资源 (已删除Media/Actions/的重复内容)
-│       └── database_stronix.db           # ✅ 主数据库文件
+│       ├── 📁 Database/
+│       │   └── database_stronix.db        # SQLite 基线数据库
+│       └── 📁 Images/                     # ✅ 统一的图片资源 (已删除Media/Actions/的重复内容)
 │
 ├── 📁 Tests/                              # 测试目录
 │   ├── 📁 UITests/
 │   └── 📁 UnitTests/
 │
 ├── 📁 Stronix-App-V1-Info.plist           # 项目信息文件
-├── 迁移方案.md                             # 迁移方案文档
-└── database-bak/                         # 数据库备份目录
-    └── database_stronix.db.bak           # 数据库备份文件
+└── 迁移方案.md                             # 迁移方案文档
+
+## Local SQLite lifecycle
+
+See [`CONTEXT.md`](CONTEXT.md#local-sqlite-lifecycle) for the supported bundled-baseline and Documents-database lifecycle.
 
 数据库表格说明
 1.记录训练动作 (对应训练动作模块) : app提供的训练动作所需要的信息.
