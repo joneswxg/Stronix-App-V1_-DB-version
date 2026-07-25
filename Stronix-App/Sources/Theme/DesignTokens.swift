@@ -15,6 +15,7 @@ struct DesignTokens {
     var disabledFill: Color { colorScheme == .dark ? Color.white.opacity(0.16) : Color.black.opacity(0.12) }
     var disabledContent: Color { colorScheme == .dark ? Color.white.opacity(0.55) : Color.black.opacity(0.45) }
     var error: Color { colorScheme == .dark ? Color(red: 1, green: 0.52, blue: 0.49) : Color(red: 0.73, green: 0.10, blue: 0.10) }
+    var warning: Color { theme.warning }
     var errorSurface: Color { colorScheme == .dark ? Color(red: 0.28, green: 0.10, blue: 0.10) : Color(red: 1, green: 0.93, blue: 0.93) }
     var shadow: Color { Color.black.opacity(colorScheme == .dark ? 0.30 : 0.10) }
 

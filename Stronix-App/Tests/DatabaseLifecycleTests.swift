@@ -355,8 +355,23 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertEqual(try rowCount("PRAGMA foreign_key_check", in: readyDatabase.connection), 0)
     }
 
-    func testDiagnosticSummaryDoesNotIncludeFailureMessage() throws {
+    func testDiagnosticSummaryDoesNotIncludeSensitiveValuesOrStoragePaths() throws {
         let secret = "password-reset-code-123456-training-detail"
+        let databasePath = fixture.rootURL
+            .appendingPathComponent("private-user@example.com-database.db")
+            .path
+        let diagnostic = DatabaseLifecycleDiagnostic(
+            databaseLocation: databasePath,
+            schemaVersion: "private-schema-marker",
+            supportedSchemaVersion: "private-supported-schema-marker",
+            foreignKeysEnabled: true,
+            busyTimeoutMilliseconds: 5_000,
+            journalMode: "wal",
+            migrationIDs: ["private-migration-identifier"],
+            appliedMigrationIDs: ["private-applied-migration-identifier"],
+            recoveryStatus: .restored,
+            preparation: .recovered
+        )
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
                 documentsDirectory: fixture.rootURL.appendingPathComponent("Documents", isDirectory: true),
@@ -370,6 +385,15 @@ final class DatabaseLifecycleTests: XCTestCase {
         }
         XCTAssertFalse(failure.diagnostic.summary.contains(secret))
         XCTAssertFalse(DatabasePreparationFailure(message: secret).diagnostic.summary.contains(secret))
+        XCTAssertFalse(diagnostic.summary.contains(databasePath))
+        XCTAssertFalse(diagnostic.summary.contains("private-user@example.com"))
+        XCTAssertFalse(diagnostic.summary.contains("private-schema-marker"))
+        XCTAssertFalse(diagnostic.summary.contains("private-supported-schema-marker"))
+        XCTAssertFalse(diagnostic.summary.contains("private-migration-identifier"))
+        XCTAssertFalse(diagnostic.summary.contains("private-applied-migration-identifier"))
+        XCTAssertTrue(diagnostic.summary.contains("migrations=1"))
+        XCTAssertTrue(diagnostic.summary.contains("appliedMigrations=1"))
+        XCTAssertTrue(diagnostic.summary.contains("recovery=restored"))
     }
 
     func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
