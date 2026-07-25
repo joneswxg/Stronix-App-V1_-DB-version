@@ -1,3 +1,20 @@
+# Stronix App
+
+## Repository permissions
+
+Tracked non-script source files, Xcode metadata, documentation, and bundled resources must not be executable. Verify tracked Git-index permissions before opening a pull request:
+
+```bash
+python3 tools/verify_file_permissions.py
+```
+
+The database generator remains a Python-invoked tool, not an executable entrypoint:
+
+```bash
+python3 tools/database/generate_baseline_db.py \
+  --output Stronix-App/Resources/Database/database_stronix.db
+```
+
 D1 技术框架选型
 1.iOS App ←→ 本地Swift服务层 ←→ 本地SQLite数据库
 2.后端数据库: SQLite
@@ -46,6 +63,10 @@ D2 APP功能描述: 一款健身训练记录的软件,针对健身房的workout�
 6.1.3 页面,名称: 变化,提供体测数据变化图表
 6.2 页面二: 普通数据
 6.2.1 输入身高,体重,年龄, 估算基础代谢率,计算不同目标下的热量需求以及三大营养素的需求比例
+
+## Repository hygiene
+
+Run `sh tools/check_tracked_noise.sh` to verify that tracked files contain no Finder metadata, per-user Xcode state, local build output, or generated logs. Shared SwiftPM dependency resolution and the reviewed bundled SQLite baseline remain intentionally versioned.
 
 
 

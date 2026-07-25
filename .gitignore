@@ -1,2 +1,10 @@
 .DS_Store
 **/xcuserdata/
+*.xcuserstate
+*.xcbkptlist
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+build/
+Logs/
+*.log
