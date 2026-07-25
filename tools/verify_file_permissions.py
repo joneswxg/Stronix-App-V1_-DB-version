@@ -4,7 +4,9 @@ from pathlib import Path
 import subprocess
 import sys
 
-INTENDED_EXECUTABLES: frozenset[str] = frozenset()
+INTENDED_EXECUTABLES: frozenset[str] = frozenset({
+    "tools/check_tracked_noise.sh",
+})
 
 
 def tracked_modes(repository_root: Path) -> dict[str, str]:

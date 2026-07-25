@@ -4,7 +4,6 @@
     "external_id": "1256",
     "name": "三板凳双杠臂屈伸",
     "name_en": "three bench dip",
-    "gifUrl": "Images/triceps/exercise_1256.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -13,14 +12,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_1256.gif"
   },
   {
     "id": 3,
     "external_id": "775",
     "name": "卧式窄握肱三头肌头后臂屈伸",
     "name_en": "ez bar lying close grip triceps extension behind head",
-    "gifUrl": "Images/triceps/exercise_775.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -29,14 +28,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_775.gif"
   },
   {
     "id": 4,
     "external_id": "546",
     "name": "哑铃上斜肱三头肌臂屈伸",
     "name_en": "dumbbell incline triceps extension",
-    "gifUrl": "Images/triceps/exercise_546.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -45,14 +44,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_546.gif"
   },
   {
     "id": 5,
     "external_id": "614",
     "name": "单臂哑铃肱三头肌臂屈伸",
     "name_en": "dumbbell one arm triceps extension (on bench)",
-    "gifUrl": "Images/triceps/exercise_614.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -61,14 +60,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_614.gif"
   },
   {
     "id": 6,
     "external_id": "551",
     "name": "俯身哑铃臂屈伸",
     "name_en": "dumbbell kickback",
-    "gifUrl": "Images/triceps/exercise_551.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -77,14 +76,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_551.gif"
   },
   {
     "id": 7,
     "external_id": "662",
     "name": "坐姿哑铃颈后臂屈伸",
     "name_en": "dumbbell seated bench extension",
-    "gifUrl": "Images/triceps/exercise_662.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -93,14 +92,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_662.gif"
   },
   {
     "id": 8,
     "external_id": "718",
     "name": "站姿哑铃单臂屈伸",
     "name_en": "dumbbell standing one arm extension",
-    "gifUrl": "Images/triceps/exercise_718.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -109,14 +108,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_718.gif"
   },
   {
     "id": 9,
     "external_id": "778",
     "name": "曲柄杠铃颈后臂屈伸",
     "name_en": "ez bar standing french press",
-    "gifUrl": "Images/triceps/exercise_778.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -125,14 +124,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_778.gif"
   },
   {
     "id": 10,
     "external_id": "964",
     "name": "器械三头下压",
     "name_en": "lever overhand triceps dip",
-    "gifUrl": "Images/triceps/exercise_964.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -141,14 +140,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_964.gif"
   },
   {
     "id": 11,
     "external_id": "790",
     "name": "坐姿曲柄杠铃臂屈伸",
     "name_en": "ez barbell seated triceps extension",
-    "gifUrl": "Images/triceps/exercise_790.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -157,14 +156,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_790.gif"
   },
   {
     "id": 12,
     "external_id": "998",
     "name": "器械下压",
     "name_en": "lever triceps extension",
-    "gifUrl": "Images/triceps/exercise_998.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -173,14 +172,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_998.gif"
   },
   {
     "id": 13,
     "external_id": "301",
     "name": "上斜绳索肱三头肌伸展",
     "name_en": "cable incline triceps extension",
-    "gifUrl": "Images/triceps/exercise_301.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -189,14 +188,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_301.gif"
   },
   {
     "id": 14,
     "external_id": "333",
     "name": "单臂绳索三头肌下压",
     "name_en": "cable one arm tricep pushdown",
-    "gifUrl": "Images/triceps/exercise_333.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -205,14 +204,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_333.gif"
   },
   {
     "id": 15,
     "external_id": "364",
     "name": "绳索上斜肱三头肌伸展",
     "name_en": "cable rope incline tricep extension",
-    "gifUrl": "Images/triceps/exercise_364.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -221,14 +220,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_364.gif"
   },
   {
     "id": 16,
     "external_id": "357",
     "name": "绳索反握下压",
     "name_en": "cable reverse-grip pushdown",
-    "gifUrl": "Images/triceps/exercise_357.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -237,14 +236,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_357.gif"
   },
   {
     "id": 17,
     "external_id": "397",
     "name": "绳索站姿单臂肱三头肌伸展",
     "name_en": "cable standing one arm triceps extension",
-    "gifUrl": "Images/triceps/exercise_397.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -253,14 +252,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_397.gif"
   },
   {
     "id": 18,
     "external_id": "411",
     "name": "绳索肱三头肌下压（V 杆）",
     "name_en": "cable triceps pushdown (v-bar)",
-    "gifUrl": "Images/triceps/exercise_411.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -269,14 +268,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_411.gif"
   },
   {
     "id": 19,
     "external_id": "1259",
     "name": "双杠肱三头肌臂屈伸",
     "name_en": "triceps dip",
-    "gifUrl": "Images/triceps/exercise_1259.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -285,14 +284,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_1259.gif"
   },
   {
     "id": 20,
     "external_id": "460",
     "name": "窄距俯卧撑",
     "name_en": "diamond push-up",
-    "gifUrl": "Images/triceps/exercise_460.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -301,14 +300,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_460.gif"
   },
   {
     "id": 21,
     "external_id": "34",
     "name": "辅助肱三头肌双杠臂屈伸",
     "name_en": "assisted triceps dip (kneeling)",
-    "gifUrl": "Images/triceps/exercise_34.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -317,14 +316,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_34.gif"
   },
   {
     "id": 22,
     "external_id": "1314",
     "name": "双杠负重肱三头肌臂屈伸",
     "name_en": "weighted triceps dip on high parallel bars",
-    "gifUrl": "Images/triceps/exercise_1314.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -333,14 +332,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_1314.gif"
   },
   {
     "id": 23,
     "external_id": "1203",
     "name": "史密斯坐姿肩上推举",
     "name_en": "smith seated shoulder press",
-    "gifUrl": "Images/delts/exercise_1203.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -349,14 +348,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_1203.gif"
   },
   {
     "id": 24,
     "external_id": "1216",
     "name": "史密斯直立划船",
     "name_en": "smith upright row",
-    "gifUrl": "Images/delts/exercise_1216.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -365,14 +364,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_1216.gif"
   },
   {
     "id": 25,
     "external_id": "1205",
     "name": "史密斯肩上推举",
     "name_en": "smith shoulder press",
-    "gifUrl": "Images/delts/exercise_1205.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -381,14 +380,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_1205.gif"
   },
   {
     "id": 26,
     "external_id": "1172",
     "name": "史密斯颈后推举",
     "name_en": "smith behind neck press",
-    "gifUrl": "Images/delts/exercise_1172.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -397,14 +396,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_1172.gif"
   },
   {
     "id": 27,
     "external_id": "545",
     "name": "哑铃上斜T字平举",
     "name_en": "dumbbell incline t-raise",
-    "gifUrl": "Images/delts/exercise_545.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -413,14 +412,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_545.gif"
   },
   {
     "id": 28,
     "external_id": "541",
     "name": "哑铃上斜后侧平举",
     "name_en": "dumbbell incline rear lateral raise",
-    "gifUrl": "Images/delts/exercise_541.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -429,14 +428,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_541.gif"
   },
   {
     "id": 29,
     "external_id": "554",
     "name": "哑铃侧平举",
     "name_en": "dumbbell lateral raise",
-    "gifUrl": "Images/delts/exercise_554.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -445,14 +444,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_554.gif"
   },
   {
     "id": 30,
     "external_id": "475",
     "name": "哑铃卧推",
     "name_en": "dumbbell bench seated press",
-    "gifUrl": "Images/delts/exercise_475.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -461,14 +460,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_475.gif"
   },
   {
     "id": 31,
     "external_id": "596",
     "name": "哑铃单臂侧平举",
     "name_en": "dumbbell one arm lateral raise with support",
-    "gifUrl": "Images/delts/exercise_596.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -477,14 +476,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_596.gif"
   },
   {
     "id": 32,
     "external_id": "648",
     "name": "斜板哑铃反向飞鸟",
     "name_en": "dumbbell reverse fly",
-    "gifUrl": "Images/delts/exercise_648.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -493,14 +492,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_648.gif"
   },
   {
     "id": 33,
     "external_id": "675",
     "name": "哑铃坐姿侧平举",
     "name_en": "dumbbell seated lateral raise",
-    "gifUrl": "Images/delts/exercise_675.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -509,14 +508,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_675.gif"
   },
   {
     "id": 34,
     "external_id": "671",
     "name": "哑铃坐姿前平举",
     "name_en": "dumbbell seated front raise",
-    "gifUrl": "Images/delts/exercise_671.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -525,14 +524,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_671.gif"
   },
   {
     "id": 35,
     "external_id": "688",
     "name": "坐姿哑铃推举",
     "name_en": "dumbbell seated shoulder press",
-    "gifUrl": "Images/delts/exercise_688.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -541,14 +540,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_688.gif"
   },
   {
     "id": 36,
     "external_id": "739",
     "name": "哑铃直立划船",
     "name_en": "dumbbell upright row",
-    "gifUrl": "Images/delts/exercise_739.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -557,14 +556,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_739.gif"
   },
   {
     "id": 37,
     "external_id": "471",
     "name": "哑铃阿诺德推举",
     "name_en": "dumbbell arnold press",
-    "gifUrl": "Images/delts/exercise_471.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -573,14 +572,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_471.gif"
   },
   {
     "id": 38,
     "external_id": "376",
     "name": "绳索坐姿后侧飞鸟",
     "name_en": "cable seated rear lateral raise",
-    "gifUrl": "Images/delts/exercise_376.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -589,14 +588,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_376.gif"
   },
   {
     "id": 39,
     "external_id": "642",
     "name": "坐姿俯身哑铃飞鸟",
     "name_en": "dumbbell rear fly",
-    "gifUrl": "Images/delts/exercise_642.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -605,14 +604,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_642.gif"
   },
   {
     "id": 40,
     "external_id": "986",
     "name": "坐姿反向飞鸟",
     "name_en": "lever seated reverse fly",
-    "gifUrl": "Images/delts/exercise_986.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -621,14 +620,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_986.gif"
   },
   {
     "id": 41,
     "external_id": "954",
     "name": "器械侧平举",
     "name_en": "lever lateral raise",
-    "gifUrl": "Images/delts/exercise_954.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -637,14 +636,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_954.gif"
   },
   {
     "id": 42,
     "external_id": "958",
     "name": "坐姿器械推举",
     "name_en": "lever military press ",
-    "gifUrl": "Images/delts/exercise_958.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -653,14 +652,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_958.gif"
   },
   {
     "id": 43,
     "external_id": "422",
     "name": "绳索直立划船",
     "name_en": "cable upright row",
-    "gifUrl": "Images/delts/exercise_422.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -669,14 +668,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_422.gif"
   },
   {
     "id": 44,
     "external_id": "400",
     "name": "绳索站立后三角肌划船",
     "name_en": "cable standing rear delt row (with rope)",
-    "gifUrl": "Images/delts/exercise_400.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -685,14 +684,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_400.gif"
   },
   {
     "id": 45,
     "external_id": "191",
     "name": "杠铃坐姿推举",
     "name_en": "barbell seated overhead press",
-    "gifUrl": "Images/delts/exercise_191.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -701,14 +700,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_191.gif"
   },
   {
     "id": 46,
     "external_id": "327",
     "name": "绳索单臂侧平举",
     "name_en": "cable one arm lateral raise",
-    "gifUrl": "Images/delts/exercise_327.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -717,14 +716,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_327.gif"
   },
   {
     "id": 47,
     "external_id": "291",
     "name": "绳索前平举",
     "name_en": "cable front shoulder raise",
-    "gifUrl": "Images/delts/exercise_291.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -733,14 +732,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_291.gif"
   },
   {
     "id": 48,
     "external_id": "234",
     "name": "杠铃宽握直立划船",
     "name_en": "barbell wide-grip upright row",
-    "gifUrl": "Images/delts/exercise_234.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -749,14 +748,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_234.gif"
   },
   {
     "id": 49,
     "external_id": "228",
     "name": "杠铃直立划船",
     "name_en": "barbell upright row",
-    "gifUrl": "Images/delts/exercise_228.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -765,14 +764,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_228.gif"
   },
   {
     "id": 50,
     "external_id": "209",
     "name": "杠铃站姿推举",
     "name_en": "barbell standing bradford press",
-    "gifUrl": "Images/delts/exercise_209.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -781,14 +780,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_209.gif"
   },
   {
     "id": 51,
     "external_id": "279",
     "name": "绳索交叉反向飞鸟",
     "name_en": "cable cross-over revers fly",
-    "gifUrl": "Images/delts/exercise_279.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -797,14 +796,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_279.gif"
   },
   {
     "id": 52,
     "external_id": "934",
     "name": "V 型杆俯身划船",
     "name_en": "lever bent-over row with v-bar ",
-    "gifUrl": "Images/upper back/exercise_934.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -813,14 +812,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_934.gif"
   },
   {
     "id": 53,
     "external_id": "1175",
     "name": "史密斯俯身划船",
     "name_en": "smith bent over row",
-    "gifUrl": "Images/upper back/exercise_1175.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -829,14 +828,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_1175.gif"
   },
   {
     "id": 54,
     "external_id": "1200",
     "name": "史密斯反握俯身划船",
     "name_en": "smith reverse grip bent over row",
-    "gifUrl": "Images/upper back/exercise_1200.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -845,14 +844,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_1200.gif"
   },
   {
     "id": 55,
     "external_id": "477",
     "name": "哑铃俯身划船",
     "name_en": "dumbbell bent over row",
-    "gifUrl": "Images/upper back/exercise_477.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -861,14 +860,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_477.gif"
   },
   {
     "id": 56,
     "external_id": "585",
     "name": "哑铃单臂俯身划船",
     "name_en": "dumbbell one arm bent-over row",
-    "gifUrl": "Images/upper back/exercise_585.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -877,14 +876,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_585.gif"
   },
   {
     "id": 57,
     "external_id": "650",
     "name": "哑铃反握上斜卧划船",
     "name_en": "dumbbell reverse grip incline bench two arm row",
-    "gifUrl": "Images/upper back/exercise_650.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -893,14 +892,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_650.gif"
   },
   {
     "id": 58,
     "external_id": "377",
     "name": "坐姿划船",
     "name_en": "cable seated row",
-    "gifUrl": "Images/upper back/exercise_377.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -909,14 +908,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_377.gif"
   },
   {
     "id": 59,
     "external_id": "988",
     "name": "器械坐姿划船",
     "name_en": "lever seated row",
-    "gifUrl": "Images/upper back/exercise_988.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -925,14 +924,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_988.gif"
   },
   {
     "id": 60,
     "external_id": "288",
     "name": "坐姿宽握划船",
     "name_en": "cable floor seated wide-grip row",
-    "gifUrl": "Images/upper back/exercise_288.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -941,14 +940,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_288.gif"
   },
   {
     "id": 61,
     "external_id": "380",
     "name": "坐姿宽握划船",
     "name_en": "cable seated wide-grip row",
-    "gifUrl": "Images/upper back/exercise_380.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -957,14 +956,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_380.gif"
   },
   {
     "id": 62,
     "external_id": "897",
     "name": "壶铃单臂划船",
     "name_en": "kettlebell one arm row",
-    "gifUrl": "Images/upper back/exercise_897.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -973,14 +972,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_897.gif"
   },
   {
     "id": 63,
     "external_id": "911",
     "name": "壶铃双臂划船",
     "name_en": "kettlebell two arm row",
-    "gifUrl": "Images/upper back/exercise_911.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -989,14 +988,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_911.gif"
   },
   {
     "id": 64,
     "external_id": "438",
     "name": "引体向上（窄距平行握法）",
     "name_en": "chin-ups (narrow parallel grip)",
-    "gifUrl": "Images/upper back/exercise_438.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1005,14 +1004,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_438.gif"
   },
   {
     "id": 65,
     "external_id": "428",
     "name": "弧形杠卧式划船",
     "name_en": "cambered bar lying row",
-    "gifUrl": "Images/upper back/exercise_428.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1021,14 +1020,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_428.gif"
   },
   {
     "id": 66,
     "external_id": "996",
     "name": "杠杆T杆划船",
     "name_en": "lever t bar row ",
-    "gifUrl": "Images/upper back/exercise_996.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1037,14 +1036,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_996.gif"
   },
   {
     "id": 67,
     "external_id": "997",
     "name": "杠杆T杆反握划船",
     "name_en": "lever t-bar reverse grip row",
-    "gifUrl": "Images/upper back/exercise_997.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1053,14 +1052,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_997.gif"
   },
   {
     "id": 68,
     "external_id": "930",
     "name": "器械交替窄握坐姿划船",
     "name_en": "lever alternating narrow grip seated row ",
-    "gifUrl": "Images/upper back/exercise_930.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1069,14 +1068,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_930.gif"
   },
   {
     "id": 69,
     "external_id": "933",
     "name": "杠铃抱拉",
     "name_en": "lever bent over row ",
-    "gifUrl": "Images/upper back/exercise_933.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1085,14 +1084,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_933.gif"
   },
   {
     "id": 70,
     "external_id": "960",
     "name": "杠杆单臂俯身划船",
     "name_en": "lever one arm bent over row ",
-    "gifUrl": "Images/upper back/exercise_960.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1101,14 +1100,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_960.gif"
   },
   {
     "id": 71,
     "external_id": "947",
     "name": "器械高位划船",
     "name_en": "lever high row ",
-    "gifUrl": "Images/upper back/exercise_947.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1117,14 +1116,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_947.gif"
   },
   {
     "id": 72,
     "external_id": "174",
     "name": "杠铃反握俯身划船",
     "name_en": "barbell reverse grip bent over row",
-    "gifUrl": "Images/upper back/exercise_174.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1133,14 +1132,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_174.gif"
   },
   {
     "id": 73,
     "external_id": "102",
     "name": "杠铃俯身划船",
     "name_en": "barbell bent over row",
-    "gifUrl": "Images/upper back/exercise_102.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1149,14 +1148,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_102.gif"
   },
   {
     "id": 74,
     "external_id": "312",
     "name": "绳索低位坐姿划船",
     "name_en": "cable low seated row",
-    "gifUrl": "Images/upper back/exercise_312.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1165,14 +1164,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_312.gif"
   },
   {
     "id": 75,
     "external_id": "959",
     "name": "器械窄握坐姿划船",
     "name_en": "lever narrow grip seated row ",
-    "gifUrl": "Images/upper back/exercise_959.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1181,14 +1180,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_959.gif"
   },
   {
     "id": 76,
     "external_id": "408",
     "name": "绳索直背坐姿划船",
     "name_en": "cable straight back seated row",
-    "gifUrl": "Images/upper back/exercise_408.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1197,14 +1196,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_408.gif"
   },
   {
     "id": 77,
     "external_id": "972",
     "name": "杠杆反向T杆划船",
     "name_en": "lever reverse t-bar row",
-    "gifUrl": "Images/upper back/exercise_972.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1213,14 +1212,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_972.gif"
   },
   {
     "id": 78,
     "external_id": "859",
     "name": "史密斯架倒立划船",
     "name_en": "inverted row on bench",
-    "gifUrl": "Images/upper back/exercise_859.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1229,14 +1228,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_859.gif"
   },
   {
     "id": 79,
     "external_id": "134",
     "name": "杠铃上斜划船",
     "name_en": "barbell incline row",
-    "gifUrl": "Images/upper back/exercise_134.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1245,14 +1244,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_134.gif"
   },
   {
     "id": 80,
     "external_id": "177",
     "name": "杠铃反握上斜卧推划船",
     "name_en": "barbell reverse grip incline bench row",
-    "gifUrl": "Images/upper back/exercise_177.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1261,14 +1260,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_177.gif"
   },
   {
     "id": 81,
     "external_id": "358",
     "name": "反握坐姿高位拉下",
     "name_en": "cable reverse-grip straight back seated high row",
-    "gifUrl": "Images/upper back/exercise_358.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1277,14 +1276,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       12
-    ]
+    ],
+    "gifUrl": "Images/upper back/exercise_358.gif"
   },
   {
     "id": 82,
     "external_id": "1138",
     "name": "侧卧髋内收",
     "name_en": "side lying hip adduction (male)",
-    "gifUrl": "Images/adductors/exercise_1138.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1293,14 +1292,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_1138.gif"
   },
   {
     "id": 83,
     "external_id": "983",
     "name": "坐姿髋内收",
     "name_en": "lever seated hip adduction",
-    "gifUrl": "Images/adductors/exercise_983.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1309,14 +1308,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_983.gif"
   },
   {
     "id": 84,
     "external_id": "295",
     "name": "缆绳髋内收",
     "name_en": "cable hip adduction",
-    "gifUrl": "Images/adductors/exercise_295.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1325,14 +1324,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_295.gif"
   },
   {
     "id": 85,
     "external_id": "269",
     "name": "蝴蝶瑜伽姿势",
     "name_en": "butterfly yoga pose",
-    "gifUrl": "Images/adductors/exercise_269.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1341,14 +1340,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_269.gif"
   },
   {
     "id": 86,
     "external_id": "29",
     "name": "辅助侧卧内收肌拉伸",
     "name_en": "assisted side lying adductor stretch",
-    "gifUrl": "Images/adductors/exercise_29.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1357,14 +1356,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_29.gif"
   },
   {
     "id": 87,
     "external_id": "1139",
     "name": "侧平板髋内收",
     "name_en": "side plank hip adduction",
-    "gifUrl": "Images/adductors/exercise_1139.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1373,14 +1372,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       8
-    ]
+    ],
+    "gifUrl": "Images/adductors/exercise_1139.gif"
   },
   {
     "id": 88,
     "external_id": "1210",
     "name": "史密斯站姿腕弯举",
     "name_en": "smith standing back wrist curl",
-    "gifUrl": "Images/forearms/exercise_1210.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1389,14 +1388,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_1210.gif"
   },
   {
     "id": 89,
     "external_id": "1204",
     "name": "史密斯坐姿腕弯举",
     "name_en": "smith seated wrist curl",
-    "gifUrl": "Images/forearms/exercise_1204.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1405,14 +1404,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_1204.gif"
   },
   {
     "id": 90,
     "external_id": "601",
     "name": "哑铃单臂反向腕弯举",
     "name_en": "dumbbell one arm revers wrist curl",
-    "gifUrl": "Images/forearms/exercise_601.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1421,14 +1420,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_601.gif"
   },
   {
     "id": 91,
     "external_id": "616",
     "name": "哑铃单臂腕弯举",
     "name_en": "dumbbell one arm wrist curl",
-    "gifUrl": "Images/forearms/exercise_616.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1437,14 +1436,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_616.gif"
   },
   {
     "id": 92,
     "external_id": "621",
     "name": "哑铃卧推单臂反向腕弯举",
     "name_en": "dumbbell over bench one arm reverse wrist curl",
-    "gifUrl": "Images/forearms/exercise_621.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1453,14 +1452,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_621.gif"
   },
   {
     "id": 93,
     "external_id": "622",
     "name": "哑铃卧推单臂腕弯举",
     "name_en": "dumbbell over bench one arm wrist curl",
-    "gifUrl": "Images/forearms/exercise_622.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1469,14 +1468,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_622.gif"
   },
   {
     "id": 94,
     "external_id": "654",
     "name": "哑铃反向腕弯举",
     "name_en": "dumbbell reverse wrist curl",
-    "gifUrl": "Images/forearms/exercise_654.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1485,14 +1484,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_654.gif"
   },
   {
     "id": 95,
     "external_id": "684",
     "name": "哑铃坐姿掌心向上腕弯举",
     "name_en": "dumbbell seated palms up wrist curl",
-    "gifUrl": "Images/forearms/exercise_684.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1501,14 +1500,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_684.gif"
   },
   {
     "id": 96,
     "external_id": "158",
     "name": "杠铃掌向上腕弯举（长凳上）",
     "name_en": "barbell palms up wrist curl over a bench",
-    "gifUrl": "Images/forearms/exercise_158.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1517,14 +1516,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_158.gif"
   },
   {
     "id": 97,
     "external_id": "208",
     "name": "杠铃站姿后腕弯举",
     "name_en": "barbell standing back wrist curl",
-    "gifUrl": "Images/forearms/exercise_208.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1533,14 +1532,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       15
-    ]
+    ],
+    "gifUrl": "Images/forearms/exercise_208.gif"
   },
   {
     "id": 98,
     "external_id": "852",
     "name": "倾斜肩胛骨俯卧撑",
     "name_en": "incline scapula push up",
-    "gifUrl": "Images/serratus anterior/exercise_852.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1549,14 +1548,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       17
-    ]
+    ],
+    "gifUrl": "Images/serratus anterior/exercise_852.gif"
   },
   {
     "id": 99,
     "external_id": "1115",
     "name": "肩胛骨俯卧撑",
     "name_en": "scapula push-up",
-    "gifUrl": "Images/serratus anterior/exercise_1115.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1565,14 +1564,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       17
-    ]
+    ],
+    "gifUrl": "Images/serratus anterior/exercise_1115.gif"
   },
   {
     "id": 100,
     "external_id": "982",
     "name": "坐位器械髋外展",
     "name_en": "lever seated hip abduction",
-    "gifUrl": "Images/abductors/exercise_982.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1581,14 +1580,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       18
-    ]
+    ],
+    "gifUrl": "Images/abductors/exercise_982.gif"
   },
   {
     "id": 101,
     "external_id": "1133",
     "name": "侧桥髋外展",
     "name_en": "side bridge hip abduction",
-    "gifUrl": "Images/abductors/exercise_1133.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1597,14 +1596,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       18
-    ]
+    ],
+    "gifUrl": "Images/abductors/exercise_1133.gif"
   },
   {
     "id": 102,
     "external_id": "1136",
     "name": "侧髋外展",
     "name_en": "side hip abduction",
-    "gifUrl": "Images/abductors/exercise_1136.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1613,14 +1612,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       18
-    ]
+    ],
+    "gifUrl": "Images/abductors/exercise_1136.gif"
   },
   {
     "id": 103,
     "external_id": "1088",
     "name": "阻力带坐姿髋外展",
     "name_en": "resistance band seated hip abduction",
-    "gifUrl": "Images/abductors/exercise_1088.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1629,14 +1628,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       18
-    ]
+    ],
+    "gifUrl": "Images/abductors/exercise_1088.gif"
   },
   {
     "id": 104,
     "external_id": "1040",
     "name": "单腿地板提踵",
     "name_en": "one leg floor calf raise",
-    "gifUrl": "Images/calves/exercise_1040.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1645,14 +1644,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_1040.gif"
   },
   {
     "id": 105,
     "external_id": "1147",
     "name": "单腿提踵（哑铃）",
     "name_en": "single leg calf raise (on a dumbbell)",
-    "gifUrl": "Images/calves/exercise_1147.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1661,14 +1660,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_1147.gif"
   },
   {
     "id": 106,
     "external_id": "1196",
     "name": "史密斯单腿地板提踵",
     "name_en": "smith one leg floor calf raise",
-    "gifUrl": "Images/calves/exercise_1196.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1677,14 +1676,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_1196.gif"
   },
   {
     "id": 107,
     "external_id": "1198",
     "name": "史密斯反向提踵",
     "name_en": "smith reverse calf raises",
-    "gifUrl": "Images/calves/exercise_1198.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1693,14 +1692,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_1198.gif"
   },
   {
     "id": 108,
     "external_id": "1212",
     "name": "史密斯站立提踵",
     "name_en": "smith standing leg calf raise",
-    "gifUrl": "Images/calves/exercise_1212.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1709,14 +1708,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_1212.gif"
   },
   {
     "id": 109,
     "external_id": "994",
     "name": "杠杆站立提踵",
     "name_en": "lever standing calf raise",
-    "gifUrl": "Images/calves/exercise_994.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1725,14 +1724,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_994.gif"
   },
   {
     "id": 110,
     "external_id": "257",
     "name": "自重站立提踵",
     "name_en": "bodyweight standing calf raise",
-    "gifUrl": "Images/calves/exercise_257.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1741,14 +1740,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       4
-    ]
+    ],
+    "gifUrl": "Images/calves/exercise_257.gif"
   },
   {
     "id": 111,
     "external_id": "267",
     "name": "波比跳",
     "name_en": "burpee",
-    "gifUrl": "Images/cardiovascular system/exercise_267.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1757,14 +1756,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_267.gif"
   },
   {
     "id": 112,
     "external_id": "1111",
     "name": "跑步",
     "name_en": "run (equipment)",
-    "gifUrl": "Images/cardiovascular system/exercise_1111.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1773,14 +1772,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1111.gif"
   },
   {
     "id": 113,
     "external_id": "1128",
     "name": "半蹲跳（男子）",
     "name_en": "semi squat jump (male)",
-    "gifUrl": "Images/cardiovascular system/exercise_1128.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1789,14 +1788,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1128.gif"
   },
   {
     "id": 114,
     "external_id": "1244",
     "name": "单车",
     "name_en": "stationary bike walk",
-    "gifUrl": "Images/cardiovascular system/exercise_1244.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1805,14 +1804,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1244.gif"
   },
   {
     "id": 115,
     "external_id": "1278",
     "name": "倾斜跑步机行走",
     "name_en": "walking on incline treadmill",
-    "gifUrl": "Images/cardiovascular system/exercise_1278.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1821,14 +1820,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1278.gif"
   },
   {
     "id": 116,
     "external_id": "1243",
     "name": "动感单车",
     "name_en": "stationary bike run v. 3",
-    "gifUrl": "Images/cardiovascular system/exercise_1243.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1837,14 +1836,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1243.gif"
   },
   {
     "id": 117,
     "external_id": "1279",
     "name": "爬楼梯",
     "name_en": "walking on stepmill",
-    "gifUrl": "Images/cardiovascular system/exercise_1279.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1853,14 +1852,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1279.gif"
   },
   {
     "id": 118,
     "external_id": "865",
     "name": "杰克·伯比",
     "name_en": "jack burpee",
-    "gifUrl": "Images/cardiovascular system/exercise_865.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1869,14 +1868,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_865.gif"
   },
   {
     "id": 119,
     "external_id": "1275",
     "name": "椭圆机",
     "name_en": "walk elliptical cross trainer",
-    "gifUrl": "Images/cardiovascular system/exercise_1275.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1885,14 +1884,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       10
-    ]
+    ],
+    "gifUrl": "Images/cardiovascular system/exercise_1275.gif"
   },
   {
     "id": 120,
     "external_id": "1171",
     "name": "史密斯北后耸肩",
     "name_en": "smith back shrug",
-    "gifUrl": "Images/traps/exercise_1171.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1901,14 +1900,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_1171.gif"
   },
   {
     "id": 121,
     "external_id": "1206",
     "name": "史密斯耸肩",
     "name_en": "smith shrug",
-    "gifUrl": "Images/traps/exercise_1206.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1917,14 +1916,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_1206.gif"
   },
   {
     "id": 122,
     "external_id": "544",
     "name": "哑铃上斜耸肩",
     "name_en": "dumbbell incline shrug",
-    "gifUrl": "Images/traps/exercise_544.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1933,14 +1932,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_544.gif"
   },
   {
     "id": 123,
     "external_id": "502",
     "name": "哑铃下斜耸肩",
     "name_en": "dumbbell decline shrug",
-    "gifUrl": "Images/traps/exercise_502.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1949,14 +1948,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_502.gif"
   },
   {
     "id": 124,
     "external_id": "691",
     "name": "哑铃耸肩",
     "name_en": "dumbbell shrug",
-    "gifUrl": "Images/traps/exercise_691.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1965,14 +1964,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_691.gif"
   },
   {
     "id": 125,
     "external_id": "194",
     "name": "杠铃耸肩",
     "name_en": "barbell shrug",
-    "gifUrl": "Images/traps/exercise_194.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1981,14 +1980,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_194.gif"
   },
   {
     "id": 126,
     "external_id": "1116",
     "name": "肩胛骨引体向上",
     "name_en": "scapular pull-up",
-    "gifUrl": "Images/traps/exercise_1116.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -1997,14 +1996,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       16
-    ]
+    ],
+    "gifUrl": "Images/traps/exercise_1116.gif"
   },
   {
     "id": 127,
     "external_id": "1225",
     "name": "分腿蹲",
     "name_en": "split squats",
-    "gifUrl": "Images/quads/exercise_1225.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2013,14 +2012,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_1225.gif"
   },
   {
     "id": 128,
     "external_id": "1207",
     "name": "史密斯单腿分腿蹲",
     "name_en": "smith single leg split squat",
-    "gifUrl": "Images/quads/exercise_1207.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2029,14 +2028,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_1207.gif"
   },
   {
     "id": 129,
     "external_id": "1176",
     "name": "史密斯椅式深蹲",
     "name_en": "smith chair squat",
-    "gifUrl": "Images/quads/exercise_1176.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2045,14 +2044,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_1176.gif"
   },
   {
     "id": 130,
     "external_id": "699",
     "name": "哑铃单腿分腿蹲",
     "name_en": "dumbbell single leg split squat",
-    "gifUrl": "Images/quads/exercise_699.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2061,14 +2060,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_699.gif"
   },
   {
     "id": 131,
     "external_id": "513",
     "name": "哑铃深蹲",
     "name_en": "dumbbell goblet squat",
-    "gifUrl": "Images/quads/exercise_513.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2077,14 +2076,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_513.gif"
   },
   {
     "id": 132,
     "external_id": "955",
     "name": "器械腿部伸展",
     "name_en": "lever leg extension",
-    "gifUrl": "Images/quads/exercise_955.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2093,14 +2092,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_955.gif"
   },
   {
     "id": 133,
     "external_id": "155",
     "name": "杠铃单腿深蹲",
     "name_en": "barbell one leg squat",
-    "gifUrl": "Images/quads/exercise_155.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2109,14 +2108,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_155.gif"
   },
   {
     "id": 134,
     "external_id": "1226",
     "name": "深蹲挺举",
     "name_en": "squat jerk",
-    "gifUrl": "Images/quads/exercise_1226.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2125,14 +2124,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_1226.gif"
   },
   {
     "id": 135,
     "external_id": "1140",
     "name": "侧推颈部伸展",
     "name_en": "side push neck stretch",
-    "gifUrl": "Images/levator scapulae/exercise_1140.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2141,14 +2140,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       19
-    ]
+    ],
+    "gifUrl": "Images/levator scapulae/exercise_1140.gif"
   },
   {
     "id": 136,
     "external_id": "1028",
     "name": "颈部侧伸展",
     "name_en": "neck side stretch",
-    "gifUrl": "Images/levator scapulae/exercise_1028.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2157,14 +2156,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       19
-    ]
+    ],
+    "gifUrl": "Images/levator scapulae/exercise_1028.gif"
   },
   {
     "id": 137,
     "external_id": "309",
     "name": "V 杆绳索侧下拉",
     "name_en": "cable lateral pulldown with v-bar",
-    "gifUrl": "Images/lats/exercise_309.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2173,14 +2172,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_309.gif"
   },
   {
     "id": 138,
     "external_id": "6",
     "name": "交替侧下拉",
     "name_en": "alternate lateral pulldown",
-    "gifUrl": "Images/lats/exercise_6.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2189,14 +2188,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_6.gif"
   },
   {
     "id": 139,
     "external_id": "962",
     "name": "单臂侧宽下拉",
     "name_en": "lever one arm lateral wide pulldown ",
-    "gifUrl": "Images/lats/exercise_962.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2205,14 +2204,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_962.gif"
   },
   {
     "id": 140,
     "external_id": "1093",
     "name": "反握高位下拉",
     "name_en": "reverse grip machine lat pulldown",
-    "gifUrl": "Images/lats/exercise_1093.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2221,14 +2220,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1093.gif"
   },
   {
     "id": 141,
     "external_id": "372",
     "name": "坐姿高位划船（V 杆）",
     "name_en": "cable seated high row (v-bar)",
-    "gifUrl": "Images/lats/exercise_372.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2237,14 +2236,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_372.gif"
   },
   {
     "id": 142,
     "external_id": "1317",
     "name": "宽握引体向上",
     "name_en": "wide grip pull-up",
-    "gifUrl": "Images/lats/exercise_1317.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2253,14 +2252,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1317.gif"
   },
   {
     "id": 143,
     "external_id": "1094",
     "name": "反握引体向上",
     "name_en": "reverse grip pull-up",
-    "gifUrl": "Images/lats/exercise_1094.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2269,14 +2268,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1094.gif"
   },
   {
     "id": 144,
     "external_id": "1082",
     "name": "后引体向上",
     "name_en": "rear pull-up",
-    "gifUrl": "Images/lats/exercise_1082.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2285,14 +2284,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1082.gif"
   },
   {
     "id": 145,
     "external_id": "1318",
     "name": "宽握后引体向上",
     "name_en": "wide grip rear pull-up",
-    "gifUrl": "Images/lats/exercise_1318.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2301,14 +2300,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1318.gif"
   },
   {
     "id": 146,
     "external_id": "437",
     "name": "引体向上",
     "name_en": "chin-up",
-    "gifUrl": "Images/lats/exercise_437.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2317,14 +2316,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_437.gif"
   },
   {
     "id": 147,
     "external_id": "45",
     "name": "弹力带辅助引体向上",
     "name_en": "band assisted pull-up",
-    "gifUrl": "Images/lats/exercise_45.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2333,14 +2332,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_45.gif"
   },
   {
     "id": 148,
     "external_id": "942",
     "name": "器械高位下拉",
     "name_en": "lever front pulldown",
-    "gifUrl": "Images/lats/exercise_942.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2349,14 +2348,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_942.gif"
   },
   {
     "id": 149,
     "external_id": "931",
     "name": "反手辅助引体向上",
     "name_en": "lever assisted chin-up",
-    "gifUrl": "Images/lats/exercise_931.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2365,14 +2364,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_931.gif"
   },
   {
     "id": 150,
     "external_id": "342",
     "name": "高位下拉",
     "name_en": "cable pulldown (pro lat bar)",
-    "gifUrl": "Images/lats/exercise_342.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2381,14 +2380,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_342.gif"
   },
   {
     "id": 151,
     "external_id": "350",
     "name": "颈后高位下拉",
     "name_en": "cable rear pulldown",
-    "gifUrl": "Images/lats/exercise_350.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2397,14 +2396,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_350.gif"
   },
   {
     "id": 152,
     "external_id": "32",
     "name": "辅助站立引体向上",
     "name_en": "assisted standing pull-up",
-    "gifUrl": "Images/lats/exercise_32.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2413,14 +2412,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_32.gif"
   },
   {
     "id": 153,
     "external_id": "1297",
     "name": "负重引体向上",
     "name_en": "weighted pull-up",
-    "gifUrl": "Images/lats/exercise_1297.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2429,14 +2428,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1297.gif"
   },
   {
     "id": 154,
     "external_id": "1281",
     "name": "负重窄握引体向上（双杠臂屈伸）",
     "name_en": "weighted close grip chin-up on dip cage",
-    "gifUrl": "Images/lats/exercise_1281.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2445,14 +2444,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_1281.gif"
   },
   {
     "id": 155,
     "external_id": "23",
     "name": "辅助平行窄握引体向上",
     "name_en": "assisted parallel close grip pull-up",
-    "gifUrl": "Images/lats/exercise_23.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2461,14 +2460,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_23.gif"
   },
   {
     "id": 156,
     "external_id": "27",
     "name": "辅助引体向上",
     "name_en": "assisted pull-up",
-    "gifUrl": "Images/lats/exercise_27.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2477,14 +2476,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_27.gif"
   },
   {
     "id": 157,
     "external_id": "406",
     "name": "绳索直臂下拉",
     "name_en": "cable straight arm pulldown",
-    "gifUrl": "Images/lats/exercise_406.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2493,14 +2492,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       3
-    ]
+    ],
+    "gifUrl": "Images/lats/exercise_406.gif"
   },
   {
     "id": 158,
     "external_id": "788",
     "name": "曲柄杠铃反握牧师椅弯举",
     "name_en": "ez barbell reverse grip preacher curl",
-    "gifUrl": "Images/biceps/exercise_788.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2509,14 +2508,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_788.gif"
   },
   {
     "id": 159,
     "external_id": "780",
     "name": "曲柄杠铃窄握牧师弯举",
     "name_en": "ez barbell close grip preacher curl",
-    "gifUrl": "Images/biceps/exercise_780.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2525,14 +2524,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_780.gif"
   },
   {
     "id": 160,
     "external_id": "781",
     "name": "曲柄杠铃窄握弯举",
     "name_en": "ez barbell close-grip curl",
-    "gifUrl": "Images/biceps/exercise_781.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2541,14 +2540,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_781.gif"
   },
   {
     "id": 161,
     "external_id": "795",
     "name": "曲柄杠铃站姿宽握弯举",
     "name_en": "ez-barbell standing wide grip biceps curl",
-    "gifUrl": "Images/biceps/exercise_795.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2557,14 +2556,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_795.gif"
   },
   {
     "id": 162,
     "external_id": "787",
     "name": "曲柄杠铃反握弯举",
     "name_en": "ez barbell reverse grip curl",
-    "gifUrl": "Images/biceps/exercise_787.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2573,14 +2572,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_787.gif"
   },
   {
     "id": 163,
     "external_id": "782",
     "name": "曲柄杠铃弯举",
     "name_en": "ez barbell curl",
-    "gifUrl": "Images/biceps/exercise_782.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2589,14 +2588,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_782.gif"
   },
   {
     "id": 164,
     "external_id": "521",
     "name": "哑铃上斜二头肌弯举",
     "name_en": "dumbbell incline biceps curl",
-    "gifUrl": "Images/biceps/exercise_521.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2605,14 +2604,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_521.gif"
   },
   {
     "id": 165,
     "external_id": "481",
     "name": "哑铃二头肌弯举",
     "name_en": "dumbbell biceps curl",
-    "gifUrl": "Images/biceps/exercise_481.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2621,14 +2620,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_481.gif"
   },
   {
     "id": 166,
     "external_id": "482",
     "name": "哑铃二头肌弯举（带臂力器）",
     "name_en": "dumbbell biceps curl (with arm blaster)",
-    "gifUrl": "Images/biceps/exercise_482.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2637,14 +2636,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_482.gif"
   },
   {
     "id": 167,
     "external_id": "467",
     "name": "哑铃交替坐姿锤式弯举",
     "name_en": "dumbbell alternate seated hammer curl",
-    "gifUrl": "Images/biceps/exercise_467.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2653,14 +2652,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_467.gif"
   },
   {
     "id": 168,
     "external_id": "463",
     "name": "哑铃交替二头肌弯举",
     "name_en": "dumbbell alternate biceps curl",
-    "gifUrl": "Images/biceps/exercise_463.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2669,14 +2668,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_463.gif"
   },
   {
     "id": 169,
     "external_id": "607",
     "name": "哑铃单臂坐姿锤式弯举",
     "name_en": "dumbbell one arm seated hammer curl",
-    "gifUrl": "Images/biceps/exercise_607.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2685,14 +2684,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_607.gif"
   },
   {
     "id": 170,
     "external_id": "617",
     "name": "哑铃单臂牧师弯举",
     "name_en": "dumbbell one arm zottman preacher curl",
-    "gifUrl": "Images/biceps/exercise_617.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2701,14 +2700,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_617.gif"
   },
   {
     "id": 171,
     "external_id": "666",
     "name": "哑铃坐姿二头肌弯举",
     "name_en": "dumbbell seated bicep curl",
-    "gifUrl": "Images/biceps/exercise_666.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2717,14 +2716,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_666.gif"
   },
   {
     "id": 172,
     "external_id": "686",
     "name": "哑铃坐姿反握集中弯举",
     "name_en": "dumbbell seated revers grip concentration curl",
-    "gifUrl": "Images/biceps/exercise_686.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2733,14 +2732,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_686.gif"
   },
   {
     "id": 173,
     "external_id": "715",
     "name": "哑铃站姿单臂集中弯举",
     "name_en": "dumbbell standing one arm concentration curl",
-    "gifUrl": "Images/biceps/exercise_715.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2749,14 +2748,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_715.gif"
   },
   {
     "id": 174,
     "external_id": "711",
     "name": "哑铃站姿集中弯举",
     "name_en": "dumbbell standing concentration curl",
-    "gifUrl": "Images/biceps/exercise_711.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2765,14 +2764,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_711.gif"
   },
   {
     "id": 175,
     "external_id": "490",
     "name": "哑铃集中弯举",
     "name_en": "dumbbell concentration curl",
-    "gifUrl": "Images/biceps/exercise_490.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2781,14 +2780,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_490.gif"
   },
   {
     "id": 176,
     "external_id": "371",
     "name": "坐姿绳索弯举",
     "name_en": "cable seated curl",
-    "gifUrl": "Images/biceps/exercise_371.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2797,14 +2796,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_371.gif"
   },
   {
     "id": 177,
     "external_id": "375",
     "name": "坐姿绳索过顶弯举",
     "name_en": "cable seated overhead curl",
-    "gifUrl": "Images/biceps/exercise_375.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2813,14 +2812,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_375.gif"
   },
   {
     "id": 178,
     "external_id": "103",
     "name": "杠铃二头肌弯举（带臂力器）",
     "name_en": "barbell biceps curl (with arm blaster)",
-    "gifUrl": "Images/biceps/exercise_103.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2829,14 +2828,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_103.gif"
   },
   {
     "id": 179,
     "external_id": "173",
     "name": "杠铃反向弯举",
     "name_en": "barbell reverse curl",
-    "gifUrl": "Images/biceps/exercise_173.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2845,14 +2844,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_173.gif"
   },
   {
     "id": 180,
     "external_id": "161",
     "name": "杠铃牧师弯举",
     "name_en": "barbell preacher curl",
-    "gifUrl": "Images/biceps/exercise_161.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2861,14 +2860,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_161.gif"
   },
   {
     "id": 181,
     "external_id": "222",
     "name": "杠铃站姿宽握弯举",
     "name_en": "barbell standing wide-grip curl",
-    "gifUrl": "Images/biceps/exercise_222.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2877,14 +2876,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_222.gif"
   },
   {
     "id": 182,
     "external_id": "211",
     "name": "杠铃站姿窄握弯举",
     "name_en": "barbell standing close grip curl",
-    "gifUrl": "Images/biceps/exercise_211.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2893,14 +2892,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_211.gif"
   },
   {
     "id": 183,
     "external_id": "334",
     "name": "绳索过顶弯举",
     "name_en": "cable overhead curl",
-    "gifUrl": "Images/biceps/exercise_334.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2909,14 +2908,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       13
-    ]
+    ],
+    "gifUrl": "Images/biceps/exercise_334.gif"
   },
   {
     "id": 184,
     "external_id": "849",
     "name": "上斜俯卧撑",
     "name_en": "incline push-up",
-    "gifUrl": "Images/pectorals/exercise_849.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2925,14 +2924,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_849.gif"
   },
   {
     "id": 185,
     "external_id": "850",
     "name": "上斜俯卧撑（在箱子上）",
     "name_en": "incline push-up (on box)",
-    "gifUrl": "Images/pectorals/exercise_850.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2941,14 +2940,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_850.gif"
   },
   {
     "id": 186,
     "external_id": "1064",
     "name": "俯卧撑",
     "name_en": "push-up",
-    "gifUrl": "Images/pectorals/exercise_1064.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2957,14 +2956,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1064.gif"
   },
   {
     "id": 187,
     "external_id": "1179",
     "name": "史密斯下斜卧推",
     "name_en": "smith decline bench press",
-    "gifUrl": "Images/pectorals/exercise_1179.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2973,14 +2972,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1179.gif"
   },
   {
     "id": 188,
     "external_id": "1180",
     "name": "史密斯下斜反握推举",
     "name_en": "smith decline reverse-grip press",
-    "gifUrl": "Images/pectorals/exercise_1180.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -2989,14 +2988,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1180.gif"
   },
   {
     "id": 189,
     "external_id": "1173",
     "name": "史密斯卧推",
     "name_en": "smith bench press",
-    "gifUrl": "Images/pectorals/exercise_1173.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3005,14 +3004,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1173.gif"
   },
   {
     "id": 190,
     "external_id": "1201",
     "name": "史密斯反握推举",
     "name_en": "smith reverse-grip press",
-    "gifUrl": "Images/pectorals/exercise_1201.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3021,14 +3020,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1201.gif"
   },
   {
     "id": 191,
     "external_id": "1185",
     "name": "史密斯上斜卧推",
     "name_en": "smith incline bench press",
-    "gifUrl": "Images/pectorals/exercise_1185.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3037,14 +3036,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1185.gif"
   },
   {
     "id": 192,
     "external_id": "520",
     "name": "哑铃上斜卧推",
     "name_en": "dumbbell incline bench press",
-    "gifUrl": "Images/pectorals/exercise_520.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3053,14 +3052,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_520.gif"
   },
   {
     "id": 193,
     "external_id": "538",
     "name": "哑铃上斜掌内推",
     "name_en": "dumbbell incline palm-in press",
-    "gifUrl": "Images/pectorals/exercise_538.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3069,14 +3068,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_538.gif"
   },
   {
     "id": 194,
     "external_id": "525",
     "name": "哑铃上斜飞鸟",
     "name_en": "dumbbell incline fly",
-    "gifUrl": "Images/pectorals/exercise_525.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3085,14 +3084,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_525.gif"
   },
   {
     "id": 195,
     "external_id": "474",
     "name": "哑铃卧推",
     "name_en": "dumbbell bench press",
-    "gifUrl": "Images/pectorals/exercise_474.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3101,14 +3100,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_474.gif"
   },
   {
     "id": 196,
     "external_id": "498",
     "name": "哑铃下斜飞鸟",
     "name_en": "dumbbell decline fly",
-    "gifUrl": "Images/pectorals/exercise_498.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3117,14 +3116,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_498.gif"
   },
   {
     "id": 197,
     "external_id": "507",
     "name": "哑铃飞鸟",
     "name_en": "dumbbell fly",
-    "gifUrl": "Images/pectorals/exercise_507.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3133,14 +3132,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_507.gif"
   },
   {
     "id": 198,
     "external_id": "980",
     "name": "坐姿器械飞鸟",
     "name_en": "lever seated fly",
-    "gifUrl": "Images/pectorals/exercise_980.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3149,14 +3148,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_980.gif"
   },
   {
     "id": 199,
     "external_id": "1319",
     "name": "宽手俯卧撑",
     "name_en": "wide hand push up",
-    "gifUrl": "Images/pectorals/exercise_1319.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3165,14 +3164,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1319.gif"
   },
   {
     "id": 200,
     "external_id": "298",
     "name": "上斜绳索飞鸟",
     "name_en": "cable incline fly",
-    "gifUrl": "Images/pectorals/exercise_298.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3181,14 +3180,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_298.gif"
   },
   {
     "id": 201,
     "external_id": "940",
     "name": "器械下斜卧推",
     "name_en": "lever decline chest press",
-    "gifUrl": "Images/pectorals/exercise_940.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3197,14 +3196,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_940.gif"
   },
   {
     "id": 202,
     "external_id": "937",
     "name": "器械卧推",
     "name_en": "lever chest press",
-    "gifUrl": "Images/pectorals/exercise_937.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3213,14 +3212,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_937.gif"
   },
   {
     "id": 203,
     "external_id": "938",
     "name": "器械卧推",
     "name_en": "lever chest press ",
-    "gifUrl": "Images/pectorals/exercise_938.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3229,14 +3228,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_938.gif"
   },
   {
     "id": 204,
     "external_id": "131",
     "name": "杠铃上斜卧推",
     "name_en": "barbell incline bench press",
-    "gifUrl": "Images/pectorals/exercise_131.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3245,14 +3244,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_131.gif"
   },
   {
     "id": 205,
     "external_id": "950",
     "name": "器械上斜卧推",
     "name_en": "lever incline chest press",
-    "gifUrl": "Images/pectorals/exercise_950.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3261,14 +3260,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_950.gif"
   },
   {
     "id": 206,
     "external_id": "109",
     "name": "杠铃下斜卧推",
     "name_en": "barbell decline bench press",
-    "gifUrl": "Images/pectorals/exercise_109.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3277,14 +3276,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_109.gif"
   },
   {
     "id": 207,
     "external_id": "99",
     "name": "杠铃卧推",
     "name_en": "barbell bench press",
-    "gifUrl": "Images/pectorals/exercise_99.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3293,14 +3292,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_99.gif"
   },
   {
     "id": 208,
     "external_id": "231",
     "name": "杠铃宽距卧推",
     "name_en": "barbell wide bench press",
-    "gifUrl": "Images/pectorals/exercise_231.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3309,14 +3308,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_231.gif"
   },
   {
     "id": 209,
     "external_id": "393",
     "name": "绳索夹胸",
     "name_en": "cable standing fly",
-    "gifUrl": "Images/pectorals/exercise_393.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3325,14 +3324,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_393.gif"
   },
   {
     "id": 210,
     "external_id": "316",
     "name": "平板绳索夹胸",
     "name_en": "cable lying fly",
-    "gifUrl": "Images/pectorals/exercise_316.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3341,14 +3340,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_316.gif"
   },
   {
     "id": 211,
     "external_id": "432",
     "name": "双杠臂屈伸",
     "name_en": "chest dip",
-    "gifUrl": "Images/pectorals/exercise_432.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3357,14 +3356,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_432.gif"
   },
   {
     "id": 212,
     "external_id": "433",
     "name": "双杠臂屈伸1",
     "name_en": "chest dip (on dip-pull-up cage)",
-    "gifUrl": "Images/pectorals/exercise_433.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3373,14 +3372,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_433.gif"
   },
   {
     "id": 213,
     "external_id": "14",
     "name": "辅助双杠臂屈伸",
     "name_en": "assisted chest dip (kneeling)",
-    "gifUrl": "Images/pectorals/exercise_14.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3389,14 +3388,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_14.gif"
   },
   {
     "id": 214,
     "external_id": "318",
     "name": "绳索夹胸",
     "name_en": "cable middle fly",
-    "gifUrl": "Images/pectorals/exercise_318.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3405,14 +3404,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_318.gif"
   },
   {
     "id": 215,
     "external_id": "497",
     "name": "哑铃下斜卧推",
     "name_en": "dumbbell decline bench press",
-    "gifUrl": "Images/pectorals/exercise_497.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3421,14 +3420,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_497.gif"
   },
   {
     "id": 216,
     "external_id": "635",
     "name": "仰卧哑铃上拉",
     "name_en": "dumbbell pullover",
-    "gifUrl": "Images/pectorals/exercise_635.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3437,14 +3436,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_635.gif"
   },
   {
     "id": 217,
     "external_id": "1218",
     "name": "史密斯宽握下斜卧推",
     "name_en": "smith wide grip decline bench press",
-    "gifUrl": "Images/pectorals/exercise_1218.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3453,14 +3452,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1218.gif"
   },
   {
     "id": 218,
     "external_id": "1217",
     "name": "史密斯宽握卧推",
     "name_en": "smith wide grip bench press",
-    "gifUrl": "Images/pectorals/exercise_1217.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3469,14 +3468,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1217.gif"
   },
   {
     "id": 219,
     "external_id": "1186",
     "name": "史密斯斜板反握推举",
     "name_en": "smith incline reverse-grip press",
-    "gifUrl": "Images/pectorals/exercise_1186.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3485,14 +3484,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1186.gif"
   },
   {
     "id": 220,
     "external_id": "1193",
     "name": "史密斯机反向下斜窄握卧推",
     "name_en": "smith machine reverse decline close grip bench press",
-    "gifUrl": "Images/pectorals/exercise_1193.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3501,14 +3500,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_1193.gif"
   },
   {
     "id": 221,
     "external_id": "875",
     "name": "壶铃在地板上交替推举",
     "name_en": "kettlebell alternating press on floor",
-    "gifUrl": "Images/pectorals/exercise_875.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3517,14 +3516,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_875.gif"
   },
   {
     "id": 222,
     "external_id": "47",
     "name": "弹力带卧推",
     "name_en": "band bench press",
-    "gifUrl": "Images/pectorals/exercise_47.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3533,14 +3532,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       5
-    ]
+    ],
+    "gifUrl": "Images/pectorals/exercise_47.gif"
   },
   {
     "id": 223,
     "external_id": "38",
     "name": "健身球上的背部伸展",
     "name_en": "back extension on exercise ball",
-    "gifUrl": "Images/spine/exercise_38.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3549,14 +3548,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       11
-    ]
+    ],
+    "gifUrl": "Images/spine/exercise_38.gif"
   },
   {
     "id": 224,
     "external_id": "841",
     "name": "山羊挺身",
     "name_en": "hyperextension",
-    "gifUrl": "Images/spine/exercise_841.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3565,14 +3564,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       11
-    ]
+    ],
+    "gifUrl": "Images/spine/exercise_841.gif"
   },
   {
     "id": 225,
     "external_id": "1223",
     "name": "脊柱伸展",
     "name_en": "spine stretch",
-    "gifUrl": "Images/spine/exercise_1223.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3581,14 +3580,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       11
-    ]
+    ],
+    "gifUrl": "Images/spine/exercise_1223.gif"
   },
   {
     "id": 226,
     "external_id": "225",
     "name": "杠铃直腿硬拉",
     "name_en": "barbell straight leg deadlift",
-    "gifUrl": "Images/hamstrings/exercise_225.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3597,14 +3596,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       7
-    ]
+    ],
+    "gifUrl": "Images/hamstrings/exercise_225.gif"
   },
   {
     "id": 227,
     "external_id": "984",
     "name": "坐姿腿弯举",
     "name_en": "lever seated leg curl",
-    "gifUrl": "Images/hamstrings/exercise_984.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3613,14 +3612,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       7
-    ]
+    ],
+    "gifUrl": "Images/hamstrings/exercise_984.gif"
   },
   {
     "id": 228,
     "external_id": "952",
     "name": "杠杆跪腿弯举",
     "name_en": "lever kneeling leg curl ",
-    "gifUrl": "Images/hamstrings/exercise_952.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3629,14 +3628,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       7
-    ]
+    ],
+    "gifUrl": "Images/hamstrings/exercise_952.gif"
   },
   {
     "id": 229,
     "external_id": "956",
     "name": "卧姿腿弯举",
     "name_en": "lever lying leg curl",
-    "gifUrl": "Images/hamstrings/exercise_956.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3645,14 +3644,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       7
-    ]
+    ],
+    "gifUrl": "Images/hamstrings/exercise_956.gif"
   },
   {
     "id": 230,
     "external_id": "1240",
     "name": "站姿单腿弯举",
     "name_en": "standing single leg curl",
-    "gifUrl": "Images/hamstrings/exercise_1240.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3661,14 +3660,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       7
-    ]
+    ],
+    "gifUrl": "Images/hamstrings/exercise_1240.gif"
   },
   {
     "id": 231,
     "external_id": "233",
     "name": "杠铃宽距深蹲",
     "name_en": "barbell wide squat",
-    "gifUrl": "Images/quads/exercise_233.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3677,14 +3676,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       2
-    ]
+    ],
+    "gifUrl": "Images/quads/exercise_233.gif"
   },
   {
     "id": 232,
     "external_id": "1258",
     "name": "六角杠铃硬拉",
     "name_en": "trap bar deadlift",
-    "gifUrl": "Images/glutes/exercise_1258.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3693,14 +3692,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1258.gif"
   },
   {
     "id": 233,
     "external_id": "1041",
     "name": "单腿深蹲",
     "name_en": "one leg squat",
-    "gifUrl": "Images/glutes/exercise_1041.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3709,14 +3708,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1041.gif"
   },
   {
     "id": 234,
     "external_id": "1310",
     "name": "负重拉伸弓箭步",
     "name_en": "weighted stretch lunge",
-    "gifUrl": "Images/glutes/exercise_1310.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3725,14 +3724,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1310.gif"
   },
   {
     "id": 235,
     "external_id": "146",
     "name": "臀推",
     "name_en": "barbell lying lifting (on hip)",
-    "gifUrl": "Images/glutes/exercise_146.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3741,14 +3740,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_146.gif"
   },
   {
     "id": 236,
     "external_id": "1189",
     "name": "史密斯深蹲",
     "name_en": "smith low bar squat",
-    "gifUrl": "Images/glutes/exercise_1189.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3757,14 +3756,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1189.gif"
   },
   {
     "id": 237,
     "external_id": "628",
     "name": "哑铃深蹲",
     "name_en": "dumbbell plyo squat",
-    "gifUrl": "Images/glutes/exercise_628.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3773,14 +3772,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_628.gif"
   },
   {
     "id": 238,
     "external_id": "733",
     "name": "哑铃直腿硬拉",
     "name_en": "dumbbell straight leg deadlift",
-    "gifUrl": "Images/glutes/exercise_733.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3789,14 +3788,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_733.gif"
   },
   {
     "id": 239,
     "external_id": "734",
     "name": "哑铃相扑拉",
     "name_en": "dumbbell sumo pull through",
-    "gifUrl": "Images/glutes/exercise_734.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3805,14 +3804,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_734.gif"
   },
   {
     "id": 240,
     "external_id": "939",
     "name": "杠杆硬拉",
     "name_en": "lever deadlift ",
-    "gifUrl": "Images/glutes/exercise_939.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3821,14 +3820,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_939.gif"
   },
   {
     "id": 241,
     "external_id": "140",
     "name": "杠铃深蹲",
     "name_en": "barbell low bar squat",
-    "gifUrl": "Images/glutes/exercise_140.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3837,14 +3836,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_140.gif"
   },
   {
     "id": 242,
     "external_id": "948",
     "name": "杠杆髋部伸展 v. 2",
     "name_en": "lever hip extension v. 2",
-    "gifUrl": "Images/glutes/exercise_948.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3853,14 +3852,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_948.gif"
   },
   {
     "id": 243,
     "external_id": "1166",
     "name": "哈克机深蹲",
     "name_en": "sled hack squat",
-    "gifUrl": "Images/glutes/exercise_1166.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3869,14 +3868,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1166.gif"
   },
   {
     "id": 244,
     "external_id": "108",
     "name": "杠铃硬拉",
     "name_en": "barbell deadlift",
-    "gifUrl": "Images/glutes/exercise_108.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3885,14 +3884,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_108.gif"
   },
   {
     "id": 245,
     "external_id": "183",
     "name": "杠铃罗马尼亚硬拉",
     "name_en": "barbell romanian deadlift",
-    "gifUrl": "Images/glutes/exercise_183.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3901,14 +3900,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_183.gif"
   },
   {
     "id": 246,
     "external_id": "1164",
     "name": "雪橇式哈克深蹲",
     "name_en": "sled closer hack squat",
-    "gifUrl": "Images/glutes/exercise_1164.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3917,14 +3916,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1164.gif"
   },
   {
     "id": 247,
     "external_id": "1159",
     "name": "雪橇45°举腿",
     "name_en": "sled 45в° leg press",
-    "gifUrl": "Images/glutes/exercise_1159.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3933,14 +3932,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1159.gif"
   },
   {
     "id": 248,
     "external_id": "120",
     "name": "杠铃前蹲",
     "name_en": "barbell front squat",
-    "gifUrl": "Images/glutes/exercise_120.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3949,14 +3948,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_120.gif"
   },
   {
     "id": 249,
     "external_id": "1178",
     "name": "史密斯硬拉",
     "name_en": "smith deadlift",
-    "gifUrl": "Images/glutes/exercise_1178.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3965,14 +3964,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       6
-    ]
+    ],
+    "gifUrl": "Images/glutes/exercise_1178.gif"
   },
   {
     "id": 250,
     "external_id": "2",
     "name": "45°侧弯",
     "name_en": "45Â° side bend",
-    "gifUrl": "Images/abs/exercise_2.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3981,14 +3980,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_2.gif"
   },
   {
     "id": 251,
     "external_id": "447",
     "name": "交叉身体卷腹",
     "name_en": "cross body crunch",
-    "gifUrl": "Images/abs/exercise_447.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -3997,14 +3996,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_447.gif"
   },
   {
     "id": 252,
     "external_id": "1008",
     "name": "仰卧抬腿提臀",
     "name_en": "lying leg-hip raise",
-    "gifUrl": "Images/abs/exercise_1008.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4013,14 +4012,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1008.gif"
   },
   {
     "id": 253,
     "external_id": "1",
     "name": "仰卧起坐",
     "name_en": "3/4 sit-up",
-    "gifUrl": "Images/abs/exercise_1.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4029,14 +4028,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1.gif"
   },
   {
     "id": 254,
     "external_id": "452",
     "name": "卷腹",
     "name_en": "curl-up",
-    "gifUrl": "Images/abs/exercise_452.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4045,14 +4044,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_452.gif"
   },
   {
     "id": 255,
     "external_id": "1091",
     "name": "反向卷腹",
     "name_en": "reverse crunch",
-    "gifUrl": "Images/abs/exercise_1091.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4061,14 +4060,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1091.gif"
   },
   {
     "id": 256,
     "external_id": "830",
     "name": "悬垂腿抬臀",
     "name_en": "hanging leg hip raise",
-    "gifUrl": "Images/abs/exercise_830.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4077,14 +4076,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_830.gif"
   },
   {
     "id": 257,
     "external_id": "11",
     "name": "手臂吊带举腿",
     "name_en": "arm slingers hanging straight legs",
-    "gifUrl": "Images/abs/exercise_11.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4093,14 +4092,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_11.gif"
   },
   {
     "id": 258,
     "external_id": "834",
     "name": "悬垂举腿",
     "name_en": "hanging straight leg hip raise",
-    "gifUrl": "Images/abs/exercise_834.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4109,14 +4108,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_834.gif"
   },
   {
     "id": 259,
     "external_id": "1289",
     "name": "负重悬垂腿抬臀",
     "name_en": "weighted hanging leg-hip raise",
-    "gifUrl": "Images/abs/exercise_1289.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4125,14 +4124,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1289.gif"
   },
   {
     "id": 260,
     "external_id": "304",
     "name": "绳索跪姿卷腹",
     "name_en": "cable kneeling crunch",
-    "gifUrl": "Images/abs/exercise_304.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4141,14 +4140,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_304.gif"
   },
   {
     "id": 261,
     "external_id": "976",
     "name": "杠杆式坐姿卷腹",
     "name_en": "lever seated crunch",
-    "gifUrl": "Images/abs/exercise_976.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4157,14 +4156,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_976.gif"
   },
   {
     "id": 262,
     "external_id": "953",
     "name": "杠杆跪姿扭转",
     "name_en": "lever kneeling twist",
-    "gifUrl": "Images/abs/exercise_953.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4173,14 +4172,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_953.gif"
   },
   {
     "id": 263,
     "external_id": "10",
     "name": "悬挂弯曲膝举腿(手臂吊带)",
     "name_en": "arm slingers hanging bent knee legs",
-    "gifUrl": "Images/abs/exercise_10.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4189,14 +4188,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_10.gif"
   },
   {
     "id": 264,
     "external_id": "1120",
     "name": "坐姿抬腿",
     "name_en": "seated leg raise",
-    "gifUrl": "Images/abs/exercise_1120.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4205,14 +4204,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1120.gif"
   },
   {
     "id": 265,
     "external_id": "977",
     "name": "坐姿杠杆卷腹（胸垫）",
     "name_en": "lever seated crunch (chest pad)",
-    "gifUrl": "Images/abs/exercise_977.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4221,14 +4220,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_977.gif"
   },
   {
     "id": 266,
     "external_id": "1274",
     "name": "垂直抬腿（双杠）",
     "name_en": "vertical leg raise (on parallel bars)",
-    "gifUrl": "Images/abs/exercise_1274.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4237,14 +4236,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1274.gif"
   },
   {
     "id": 267,
     "external_id": "832",
     "name": "悬垂斜抬膝",
     "name_en": "hanging oblique knee raise",
-    "gifUrl": "Images/abs/exercise_832.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4253,14 +4252,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_832.gif"
   },
   {
     "id": 268,
     "external_id": "1315",
     "name": "滑轮",
     "name_en": "wheel rollerout",
-    "gifUrl": "Images/abs/exercise_1315.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4269,14 +4268,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_1315.gif"
   },
   {
     "id": 269,
     "external_id": "750",
     "name": "肘碰膝",
     "name_en": "elbow-to-knee",
-    "gifUrl": "Images/abs/exercise_750.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4285,14 +4284,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       1
-    ]
+    ],
+    "gifUrl": "Images/abs/exercise_750.gif"
   },
   {
     "id": 270,
     "external_id": "786",
     "name": "仰卧曲柄杠铃弯举",
     "name_en": "ez barbell jm bench press",
-    "gifUrl": "Images/triceps/exercise_786.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4301,14 +4300,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_786.gif"
   },
   {
     "id": 271,
     "external_id": "594",
     "name": "俯身哑铃单臂屈伸",
     "name_en": "dumbbell one arm kickback",
-    "gifUrl": "Images/triceps/exercise_594.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4317,14 +4316,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_594.gif"
   },
   {
     "id": 272,
     "external_id": "143",
     "name": "杠铃卧推窄握",
     "name_en": "barbell lying close-grip press",
-    "gifUrl": "Images/triceps/exercise_143.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4333,14 +4332,14 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       9
-    ]
+    ],
+    "gifUrl": "Images/triceps/exercise_143.gif"
   },
   {
     "id": 273,
     "external_id": "992",
     "name": "器械肩推举 v. 3",
     "name_en": "lever shoulder press  v. 3",
-    "gifUrl": "Images/delts/exercise_992.gif",
     "description": "",
     "description_en": "",
     "difficulty": "",
@@ -4349,6 +4348,7 @@
     "is_bilateral": 0,
     "target_muscle_ids": [
       14
-    ]
+    ],
+    "gifUrl": "Images/delts/exercise_992.gif"
   }
 ]
