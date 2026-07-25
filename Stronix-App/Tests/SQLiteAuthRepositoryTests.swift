@@ -3,22 +3,18 @@ import XCTest
 @testable import Stronix
 
 final class SQLiteAuthRepositoryTests: XCTestCase {
-    private var temporaryRoot: URL!
+    private var fixture: IsolatedDatabaseFixture!
     private var connection: Connection!
 
     override func setUpWithError() throws {
-        temporaryRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
-        let databaseURL = temporaryRoot.appendingPathComponent("authentication.db")
-        try FileManager.default.copyItem(at: try bundledBaselineURL(), to: databaseURL)
-        connection = try Connection(databaseURL.path)
+        fixture = try IsolatedDatabaseFixture()
+        connection = try fixture.prepareRepositoryDatabase(named: "authentication.db")
     }
 
     override func tearDownWithError() throws {
         connection = nil
-        if let temporaryRoot { try? FileManager.default.removeItem(at: temporaryRoot) }
-        temporaryRoot = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testRegisteredUserCanAuthenticateWithTheirPassword() async throws {
@@ -117,10 +113,6 @@ final class SQLiteAuthRepositoryTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? AuthError, .usernameTaken)
         }
-    }
-
-    private func bundledBaselineURL() throws -> URL {
-        try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
     }
 }
 

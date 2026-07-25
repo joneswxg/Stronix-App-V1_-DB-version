@@ -3,22 +3,15 @@ import SQLite
 @testable import Stronix
 
 final class DatabaseLifecycleTests: XCTestCase {
-    private var temporaryRoot: URL!
+    private var fixture: IsolatedDatabaseFixture!
 
     override func setUpWithError() throws {
-        temporaryRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(
-            at: temporaryRoot,
-            withIntermediateDirectories: true
-        )
+        fixture = try IsolatedDatabaseFixture()
     }
 
     override func tearDownWithError() throws {
-        if let temporaryRoot {
-            try? FileManager.default.removeItem(at: temporaryRoot)
-        }
-        temporaryRoot = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testBundledBaselineInitializesWithCleanSchemaAndDeterministicSeeds() throws {
@@ -26,7 +19,7 @@ final class DatabaseLifecycleTests: XCTestCase {
             DatabaseEnvironment.application().sourceDatabaseURL,
             "Expected the generated baseline database in the app bundle"
         )
-        let documentsDirectory = temporaryRoot.appendingPathComponent(
+        let documentsDirectory = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -141,7 +134,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     func testBundledBaselineLedgerRejectsMutation() throws {
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "Documents",
                     isDirectory: true
                 ),
@@ -176,7 +169,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         let sourceDatabaseURL = try bundledBaselineURL()
         let freshLifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "FreshDocuments",
                     isDirectory: true
                 ),
@@ -188,7 +181,7 @@ final class DatabaseLifecycleTests: XCTestCase {
             return XCTFail("Expected fresh initialization to succeed")
         }
 
-        let rebuildDocumentsURL = temporaryRoot.appendingPathComponent(
+        let rebuildDocumentsURL = fixture.rootURL.appendingPathComponent(
             "RebuildDocuments",
             isDirectory: true
         )
@@ -221,7 +214,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     func testReadyBaselineSupportsCurrentAuthenticationAndActionQueries() throws {
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "Documents",
                     isDirectory: true
                 ),
@@ -288,7 +281,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     func testPrepareReturnsReadyConnectionThatSupportsReadAndWrite() throws {
         let sourceDatabaseURL = try makeSourceDatabase()
 
-        let isolatedDocumentsURL = temporaryRoot.appendingPathComponent(
+        let isolatedDocumentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -339,7 +332,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     func testReadyConnectionRejectsForeignKeyViolations() throws {
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent("Documents", isDirectory: true),
+                documentsDirectory: fixture.rootURL.appendingPathComponent("Documents", isDirectory: true),
                 databaseFilename: "baseline.db",
                 sourceDatabaseURL: try bundledBaselineURL()
             )
@@ -366,7 +359,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         let secret = "password-reset-code-123456-training-detail"
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent("Documents", isDirectory: true),
+                documentsDirectory: fixture.rootURL.appendingPathComponent("Documents", isDirectory: true),
                 databaseFilename: "missing.db",
                 sourceDatabaseURL: nil
             )
@@ -380,7 +373,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -458,7 +451,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareMigratesLegacyMixedPlansAndPreservesUserReferences() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         try makeLegacyMixedPlanDatabase(at: databaseURL)
@@ -535,7 +528,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRestoresLegacyMixedPlansWhenSplitMigrationFails() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         try makeLegacyMixedPlanDatabase(at: databaseURL)
@@ -580,7 +573,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareDoesNotReplayAppliedMigrationAfterRestart() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -633,7 +626,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRollsBackFailedMigrationAndDoesNotRecordIt() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -673,7 +666,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRollsBackMigrationThatFailsValidation() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -720,7 +713,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRunsMultiplePendingMigrationsInCatalogOrder() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -767,7 +760,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testMissingBaselineLedgerPreventsMigrationExecution() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -803,7 +796,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRejectsInvalidMigrationCatalogBeforeChangingDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -841,7 +834,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRejectsGappedKnownMigrationLedger() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -881,7 +874,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPrepareRejectsNewerSchemaWithoutModifyingDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -930,7 +923,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testMissingRequiredIndexPreventsDatabaseReadiness() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -957,7 +950,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPreparePreservesExistingDocumentsDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -993,7 +986,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testForeignKeyViolationsPreventDatabaseReadiness() throws {
-        let sourceDatabaseURL = temporaryRoot.appendingPathComponent("invalid-foreign-key.db")
+        let sourceDatabaseURL = fixture.rootURL.appendingPathComponent("invalid-foreign-key.db")
         let sourceConnection = try Connection(sourceDatabaseURL.path)
         try sourceConnection.execute("PRAGMA foreign_keys = OFF")
         try sourceConnection.run(
@@ -1005,7 +998,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         try sourceConnection.run(
             "INSERT INTO children (id, parent_id) VALUES (1, 999)"
         )
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1027,9 +1020,9 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testInvalidSourceDoesNotLeavePartiallyInitializedDatabase() throws {
-        let sourceDatabaseURL = temporaryRoot.appendingPathComponent("invalid-source.db")
+        let sourceDatabaseURL = fixture.rootURL.appendingPathComponent("invalid-source.db")
         try Data("not a sqlite database".utf8).write(to: sourceDatabaseURL)
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1051,7 +1044,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testExplicitRebuildClearsExistingDataAndReinitializes() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1099,7 +1092,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testFailedExplicitRebuildPreservesExistingDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1115,7 +1108,7 @@ final class DatabaseLifecycleTests: XCTestCase {
                 "INSERT INTO fixture_values (id, value) VALUES (1, 'keep-marker')"
             )
         }
-        let invalidSourceURL = temporaryRoot.appendingPathComponent("invalid-rebuild.db")
+        let invalidSourceURL = fixture.rootURL.appendingPathComponent("invalid-rebuild.db")
         try Data("not a sqlite database".utf8).write(to: invalidSourceURL)
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
@@ -1141,7 +1134,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
     func testStartupPreparationUsesNonDestructivePathByDefault() throws {
         let sourceDatabaseURL = try makeSourceDatabase()
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1180,7 +1173,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 #if DEBUG
     func testStartupPreparationRequiresExplicitDebugArgumentForRemediation() throws {
         let sourceDatabaseURL = try makeSourceDatabase()
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1224,7 +1217,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "Documents",
                     isDirectory: true
                 ),
@@ -1250,7 +1243,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testFailedExplicitRebuildPreservesCommittedWalData() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1268,7 +1261,7 @@ final class DatabaseLifecycleTests: XCTestCase {
         )
         XCTAssertTrue(FileManager.default.fileExists(atPath: databaseURL.path + "-wal"))
 
-        let invalidSourceURL = temporaryRoot.appendingPathComponent("invalid-wal-rebuild.db")
+        let invalidSourceURL = fixture.rootURL.appendingPathComponent("invalid-wal-rebuild.db")
         try Data("not a sqlite database".utf8).write(to: invalidSourceURL)
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
@@ -1293,7 +1286,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testInvalidExistingDatabaseIsNotMarkedReady() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent(
+        let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
             isDirectory: true
         )
@@ -1321,7 +1314,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     func testPreparationFailureDoesNotExposeAConnection() {
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "Documents",
                     isDirectory: true
                 ),
@@ -1339,10 +1332,10 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testRetryCanRecoverAfterPreparationFailure() throws {
-        let sourceDatabaseURL = temporaryRoot.appendingPathComponent("source.db")
+        let sourceDatabaseURL = fixture.rootURL.appendingPathComponent("source.db")
         let lifecycle = DatabaseLifecycle(
             environment: DatabaseEnvironment(
-                documentsDirectory: temporaryRoot.appendingPathComponent(
+                documentsDirectory: fixture.rootURL.appendingPathComponent(
                     "Documents",
                     isDirectory: true
                 ),
@@ -1368,7 +1361,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testNoPendingMigrationDoesNotCreateSnapshot() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1388,7 +1381,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testBackupFailurePreventsMigrationAndPreservesDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1422,7 +1415,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testFailedMigrationRestoresCommittedWalData() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1477,7 +1470,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testPostMigrationReadinessFailureRestoresOriginalDatabase() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         let connection = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1513,7 +1506,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testRestorationFailureLeavesDatabaseUnavailableAndPreservesSnapshot() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1537,7 +1530,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     func testSuccessfulMigrationRemovesSnapshotArtifacts() throws {
-        let documentsURL = temporaryRoot.appendingPathComponent("Documents", isDirectory: true)
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
         let databaseURL = documentsURL.appendingPathComponent("fixture.db")
         _ = try makeBaselineConnectionWithFixtureTable(at: databaseURL)
@@ -1707,10 +1700,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     private func bundledBaselineURL() throws -> URL {
-        try XCTUnwrap(
-            DatabaseEnvironment.application().sourceDatabaseURL,
-            "Expected the generated baseline database in the app bundle"
-        )
+        fixture.baselineSourceURL
     }
 
     private func makeLegacyMixedPlanDatabase(at databaseURL: URL) throws {
@@ -1851,7 +1841,7 @@ final class DatabaseLifecycleTests: XCTestCase {
     }
 
     private func makeSourceDatabase() throws -> URL {
-        let sourceDatabaseURL = temporaryRoot.appendingPathComponent("source.db")
+        let sourceDatabaseURL = fixture.rootURL.appendingPathComponent("source.db")
         try FileManager.default.copyItem(
             at: try bundledBaselineURL(),
             to: sourceDatabaseURL

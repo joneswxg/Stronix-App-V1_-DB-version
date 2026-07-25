@@ -3,7 +3,7 @@ import SQLite
 @testable import Stronix
 
 final class TrainingHistoryRepositoryTests: XCTestCase {
-    private var temporaryRoot: URL!
+    private var fixture: IsolatedDatabaseFixture!
     private var connection: Connection!
     private var repository: SQLiteTrainingHistoryRepository!
     private var ownerID: Int!
@@ -14,15 +14,10 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
     private var pressID: Int!
 
     override func setUpWithError() throws {
-        temporaryRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
-        let databaseURL = temporaryRoot.appendingPathComponent("training-history.db")
-        try FileManager.default.copyItem(at: try bundledBaselineURL(), to: databaseURL)
-        connection = try Connection(databaseURL.path)
-        try connection.execute("PRAGMA foreign_keys = ON")
-        ownerID = try insertUser(username: "owner", email: "owner@example.com")
-        otherUserID = try insertUser(username: "other", email: "other@example.com")
+        fixture = try IsolatedDatabaseFixture()
+        connection = try fixture.prepareRepositoryDatabase(named: "training-history.db")
+        ownerID = try TestUserFixture(username: "owner", email: "owner@example.com").insert(into: connection).id
+        otherUserID = try TestUserFixture(username: "other", email: "other@example.com").insert(into: connection).id
         ownerPlanID = try insertPlan(ownerID: ownerID, name: "Owner plan")
         otherPlanID = try insertPlan(ownerID: ownerID, name: "Other plan")
         squatID = try insertAction(externalID: "squat", name: "Squat")
@@ -33,10 +28,8 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
     override func tearDownWithError() throws {
         repository = nil
         connection = nil
-        if let temporaryRoot {
-            try? FileManager.default.removeItem(at: temporaryRoot)
-        }
-        temporaryRoot = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testListOrdersByTrainingDateThenCreatedAtAndIncludesPagination() throws {
@@ -182,22 +175,6 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
             page: TrainingHistoryPageRequest(page: page, pageSize: pageSize),
             filter: TrainingHistoryFilter()
         )
-    }
-
-    private func bundledBaselineURL() throws -> URL {
-        try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
-    }
-
-    private func insertUser(username: String, email: String) throws -> Int {
-        try connection.run(
-            """
-            INSERT INTO user (username, email, password_hash, created_at)
-            VALUES (?, ?, 'test-hash', '2026-07-22T00:00:00Z')
-            """,
-            username,
-            email
-        )
-        return Int(connection.lastInsertRowid)
     }
 
     private func insertPlan(ownerID: Int, name: String) throws -> Int {

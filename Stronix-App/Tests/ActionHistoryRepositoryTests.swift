@@ -3,7 +3,7 @@ import SQLite
 @testable import Stronix
 
 final class ActionHistoryRepositoryTests: XCTestCase {
-    private var temporaryRoot: URL!
+    private var fixture: IsolatedDatabaseFixture!
     private var connection: Connection!
     private var repository: SQLiteActionHistoryRepository!
     private var userID: Int!
@@ -11,14 +11,9 @@ final class ActionHistoryRepositoryTests: XCTestCase {
     private var otherActionID: Int!
 
     override func setUpWithError() throws {
-        temporaryRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
-        let databaseURL = temporaryRoot.appendingPathComponent("action-history.db")
-        try FileManager.default.copyItem(at: try bundledBaselineURL(), to: databaseURL)
-        connection = try Connection(databaseURL.path)
-        try connection.execute("PRAGMA foreign_keys = ON")
-        userID = try insertUser()
+        fixture = try IsolatedDatabaseFixture()
+        connection = try fixture.prepareRepositoryDatabase(named: "action-history.db")
+        userID = try TestUserFixture(username: "history-user", email: "history@example.com").insert(into: connection).id
         targetActionID = try insertAction(externalID: "target-action", name: "Target")
         otherActionID = try insertAction(externalID: "other-action", name: "Other")
         repository = SQLiteActionHistoryRepository(connection: connection)
@@ -27,10 +22,8 @@ final class ActionHistoryRepositoryTests: XCTestCase {
     override func tearDownWithError() throws {
         repository = nil
         connection = nil
-        if let temporaryRoot {
-            try? FileManager.default.removeItem(at: temporaryRoot)
-        }
-        temporaryRoot = nil
+        fixture.tearDown()
+        fixture = nil
     }
 
     func testActionHistoryOrdersLimitsMapsSetsAndCalculatesCompletedVolume() throws {
@@ -77,20 +70,6 @@ final class ActionHistoryRepositoryTests: XCTestCase {
                 return XCTFail("Expected DatabaseError.notReady, got \(error)")
             }
         }
-    }
-
-    private func bundledBaselineURL() throws -> URL {
-        try XCTUnwrap(DatabaseEnvironment.application().sourceDatabaseURL)
-    }
-
-    private func insertUser() throws -> Int {
-        try connection.run(
-            """
-            INSERT INTO user (username, email, password_hash, created_at)
-            VALUES ('history-user', 'history@example.com', 'test-hash', '2026-07-22T00:00:00Z')
-            """
-        )
-        return Int(connection.lastInsertRowid)
     }
 
     private func insertAction(externalID: String, name: String) throws -> Int {
