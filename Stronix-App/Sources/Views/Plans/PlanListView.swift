@@ -1,226 +1,42 @@
 import SwiftUI
 
 struct PlanListView: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
+    @EnvironmentObject private var userSession: UserSession
     @ObservedObject var viewModel: PlanViewModel
     @ObservedObject var createPlanViewModel: CreatePlanViewModel
-    @EnvironmentObject private var userSession: UserSession
     @State private var showLogin = false
-    @State private var selectedTab = 1  // 0: 计划模版, 1: 个人计划 - 默认显示个人计划
-    @State private var isEditPlanPresented = false // 添加标记，跟踪EditPlan是否打开
-    @State private var navigateToCreatePlan = false // 添加导航状态
-    
+    @State private var selectedTab = 1
+    @State private var navigateToCreatePlan = false
+
     var body: some View {
         VStack(spacing: 0) {
-            // Logo区域 - 与ActionListView保持一致
-            HStack {
-                Image("StronixLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 35)
-                Spacer()
-                Text("STRONIX")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(theme.primary)
-                
-                // 登录状态指示器
-                if userSession.isAuthenticated {
-                    Button(action: {
-                        Task {
-                            try? await userSession.logout()
-                        }
-                    }) {
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(theme.primary)
-                    }
-                } else {
-                    Button(action: {
-                        showLogin = true
-                    }) {
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 20))
-                            .foregroundColor(theme.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(theme.surface)
-            .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
-            
-            if !userSession.isAuthenticated {
-                // 未登录状态视图
-                VStack(spacing: 20) {
-                    Spacer()
-                    
-                    Image(systemName: "person.circle")
-                        .font(.system(size: 64))
-                        .foregroundColor(theme.secondary.opacity(0.5))
-                    
-                    Text("请先登录")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(theme.onSurface)
-                    
-                    Text("登录后可以查看和管理您的训练计划")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    Button(action: {
-                        showLogin = true
-                    }) {
-                        Text("立即登录")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(theme.onPrimary)
-                            .frame(width: 120, height: 44)
-                            .background(theme.primary)
-                            .cornerRadius(22)
-                    }
-                    
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(theme.background)
-            } else if !viewModel.hasAnyPlans && !viewModel.isLoadingTemplates && !viewModel.isLoadingPersonal {
-                // 空状态视图
-                VStack(spacing: 20) {
-                    Spacer()
-                    Text("您还没有创建任何训练计划")
-                        .font(.system(size: 16))
-                        .foregroundColor(theme.secondary)
-                    
-                    Button(action: {
-                        navigateToCreatePlan = true
-                    }) {
-                        Text("创建计划")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(theme.onPrimary)
-                            .frame(width: 120, height: 44)
-                            .background(theme.primary)
-                            .cornerRadius(22)
-                    }
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(theme.background)
-            } else {
-                VStack(spacing: 0) {
-                    
-                    // 标签页切换器
-                    HStack(spacing: 0) {
-                        // 计划模版标签
-                        Button(action: {
-                            selectedTab = 0
-                        }) {
-                            VStack(spacing: 4) {
-                                HStack(spacing: 4) {
-                                    Text("计划模版")
-                                        .font(.system(size: 16, weight: selectedTab == 0 ? .medium : .regular))
-                                        .foregroundColor(selectedTab == 0 ? theme.primary : theme.secondary)
-                                    
-                                    if viewModel.isLoadingTemplates {
-                                        ProgressView()
-                                            .scaleEffect(0.6)
-                                    }
-                                }
-                                
-                                Rectangle()
-                                    .fill(selectedTab == 0 ? theme.primary : Color.clear)
-                                    .frame(height: 2)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        
-                        // 个人计划标签
-                        Button(action: {
-                            selectedTab = 1
-                        }) {
-                            VStack(spacing: 4) {
-                                HStack(spacing: 8) {
-                                    HStack(spacing: 4) {
-                                        Text("个人计划")
-                                            .font(.system(size: 16, weight: selectedTab == 1 ? .medium : .regular))
-                                            .foregroundColor(selectedTab == 1 ? theme.primary : theme.secondary)
-                                        
-                                        if viewModel.isLoadingPersonal {
-                                            ProgressView()
-                                                .scaleEffect(0.6)
-                                        }
-                                    }
-                                    
-                                    if selectedTab == 1 {
-                                        Button(action: {
-                                            navigateToCreatePlan = true
-                                        }) {
-                                            Image(systemName: "plus.circle.fill")
-                                                .foregroundColor(theme.primary)
-                                                .font(.system(size: 18))
-                                        }
-                                    }
-                                }
-                                
-                                Rectangle()
-                                    .fill(selectedTab == 1 ? theme.primary : Color.clear)
-                                    .frame(height: 2)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(theme.surface)
-                    .shadow(color: theme.secondary.opacity(0.1), radius: 1, y: 1)
-                    
-                    // 内容区域
-                    TabView(selection: $selectedTab) {
-                        // 计划模版页面
-                        TemplatesView(viewModel: viewModel)
-                            .tag(0)
-                        
-                        // 个人计划页面
-                        PersonalPlansView(viewModel: viewModel)
-                            .tag(1)
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .animation(.easeInOut(duration: 0.3), value: selectedTab)
-                }
-            }
+            header
+            content
         }
+        .background(tokens.canvas)
         .fullScreenCover(isPresented: $navigateToCreatePlan) {
             CreatePlanView(
                 viewModel: createPlanViewModel,
-                onSaveSucceeded: {
-                    await viewModel.refreshPersonalPlansOnly()
-                }
+                onSaveSucceeded: { await viewModel.refreshPersonalPlansOnly() }
             )
         }
         .sheet(isPresented: $showLogin) {
             LoginView()
                 .onDisappear {
                     if userSession.isAuthenticated {
-                        Task {
-                            await viewModel.refresh()
-                        }
+                        Task { await viewModel.refresh() }
                     }
                 }
         }
-        .alert("错误", isPresented: $viewModel.showError) {
-            Button("确定") {
-                viewModel.showError = false
-            }
-            Button("重试") {
-                Task {
-                    await viewModel.refresh()
-                }
-            }
+        .alert("planList.error.title", isPresented: $viewModel.showError) {
+            Button("planList.action.confirm") { viewModel.showError = false }
+            Button("planList.action.retry") { Task { await viewModel.refresh() } }
             if !userSession.isAuthenticated {
-                Button("登录") {
-                    showLogin = true
-                }
+                Button("planList.action.login") { showLogin = true }
             }
         } message: {
-            Text(viewModel.errorMessage ?? "未知错误")
+            Text(viewModel.errorMessage ?? AppStrings.text("planList.error.unknown"))
         }
         .refreshable {
             if userSession.isAuthenticated {
@@ -228,207 +44,278 @@ struct PlanListView: View {
             }
         }
         .task {
-            guard !isEditPlanPresented, userSession.isAuthenticated else { return }
+            guard userSession.isAuthenticated else { return }
             await viewModel.loadInitialData()
         }
         .onChange(of: userSession.isAuthenticated) { _, isLoggedIn in
             if isLoggedIn {
-                Task {
-                    await viewModel.refresh()
-                }
+                Task { await viewModel.refresh() }
             } else {
                 viewModel.clearData()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdatedFromDetail"))) { notification in
-            // 接收来自TrainingPlanDetailView的计划更新通知
-            if let updatedPlan = notification.userInfo?["updatedPlan"] as? TrainingPlan {
-                print("🔄 PlanListView 收到计划更新通知: \(updatedPlan.name)")
-                
-                // 更新personalPlans列表中的对应计划
-                if let index = viewModel.personalPlans.firstIndex(where: { $0.id == updatedPlan.id }) {
-                    var updatedPlans = viewModel.personalPlans
-                    updatedPlans[index] = updatedPlan
-                    viewModel.personalPlans = updatedPlans
-                    print("✅ PlanListView 已更新列表中的计划项: \(updatedPlan.name)")
-                }
-                
-                // 同时更新selectedPlan
-                if viewModel.selectedPlan?.id == updatedPlan.id {
-                    viewModel.selectedPlan = updatedPlan
-                    print("✅ PlanListView 已更新 selectedPlan 数据")
-                }
+            guard let updatedPlan = notification.userInfo?["updatedPlan"] as? TrainingPlan else { return }
+            if let index = viewModel.personalPlans.firstIndex(where: { $0.id == updatedPlan.id }) {
+                var updatedPlans = viewModel.personalPlans
+                updatedPlans[index] = updatedPlan
+                viewModel.personalPlans = updatedPlans
+            }
+            if viewModel.selectedPlan?.id == updatedPlan.id {
+                viewModel.selectedPlan = updatedPlan
             }
         }
     }
+
+    private var header: some View {
+        HStack(spacing: DesignTokens.Spacing.medium) {
+            Image("StronixLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 35)
+                .accessibilityHidden(true)
+            Text("STRONIX")
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.primary)
+                .accessibilityHidden(true)
+            Spacer()
+            Button {
+                if userSession.isAuthenticated {
+                    Task { try? await userSession.logout() }
+                } else {
+                    showLogin = true
+                }
+            } label: {
+                Image(systemName: userSession.isAuthenticated ? "person.circle.fill" : "person.circle")
+                    .font(.title2)
+                    .foregroundStyle(userSession.isAuthenticated ? tokens.primary : tokens.contentSecondary)
+                    .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
+            }
+            .accessibilityLabel(userSession.isAuthenticated ? Text("planList.accessibility.logout") : Text("planList.accessibility.login"))
+            .accessibilityHint(userSession.isAuthenticated ? Text("planList.accessibility.logoutHint") : Text("planList.accessibility.loginHint"))
+        }
+        .padding(.horizontal, DesignTokens.Spacing.large)
+        .padding(.vertical, DesignTokens.Spacing.small)
+        .background(tokens.surface)
+        .shadow(color: tokens.shadow, radius: 2, y: 1)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if !userSession.isAuthenticated {
+            ContentStateView(
+                kind: .empty,
+                symbol: "person.circle",
+                title: "planList.signedOut.title",
+                message: "planList.signedOut.message",
+                actionTitle: "planList.action.loginNow",
+                action: { showLogin = true }
+            )
+        } else if viewModel.showError && !viewModel.hasAnyPlans {
+            ContentStateView(
+                kind: .error,
+                symbol: "exclamationmark.triangle",
+                title: "planList.error.title",
+                message: "planList.error.message",
+                actionTitle: "planList.action.retry",
+                action: { Task { await viewModel.refresh() } }
+            )
+        } else if viewModel.isLoadingTemplates && viewModel.isLoadingPersonal && !viewModel.hasAnyPlans {
+            ContentStateView(
+                kind: .loading,
+                symbol: "",
+                title: "planList.loading.title",
+                message: "planList.loading.message"
+            )
+        } else if !viewModel.hasAnyPlans && !viewModel.isLoadingTemplates && !viewModel.isLoadingPersonal {
+            ContentStateView(
+                kind: .empty,
+                symbol: "calendar.badge.plus",
+                title: "planList.empty.title",
+                message: "planList.empty.message",
+                actionTitle: "planList.action.create",
+                action: { navigateToCreatePlan = true }
+            )
+        } else {
+            VStack(spacing: 0) {
+                tabBar
+                TabView(selection: $selectedTab) {
+                    TemplatesView(viewModel: viewModel)
+                        .tag(0)
+                    PersonalPlansView(viewModel: viewModel)
+                        .tag(1)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.easeInOut(duration: 0.2), value: selectedTab)
+            }
+        }
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: DesignTokens.Spacing.small) {
+            tabButton(title: "planList.tab.templates", selection: 0, isLoading: viewModel.isLoadingTemplates)
+            tabButton(title: "planList.tab.personal", selection: 1, isLoading: viewModel.isLoadingPersonal)
+            if selectedTab == 1 {
+                Button { navigateToCreatePlan = true } label: {
+                    Image(systemName: "plus")
+                        .font(DesignTokens.Typography.action)
+                        .foregroundStyle(tokens.onPrimary)
+                        .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
+                        .background(tokens.primary)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel(Text("planList.accessibility.create"))
+            }
+        }
+        .padding(DesignTokens.Spacing.medium)
+        .background(tokens.surface)
+        .shadow(color: tokens.shadow, radius: 2, y: 1)
+    }
+
+    private func tabButton(title: LocalizedStringKey, selection: Int, isLoading: Bool) -> some View {
+        Button { selectedTab = selection } label: {
+            HStack(spacing: DesignTokens.Spacing.small) {
+                Text(title)
+                    .font(DesignTokens.Typography.label)
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityHidden(true)
+                }
+            }
+            .foregroundStyle(selectedTab == selection ? tokens.primary : tokens.contentSecondary)
+            .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
+            .overlay(alignment: .bottom) {
+                Capsule()
+                    .fill(selectedTab == selection ? tokens.primary : .clear)
+                    .frame(height: 3)
+            }
+        }
+        .accessibilityValue(selectedTab == selection ? Text("planList.accessibility.selected") : Text("planList.accessibility.unselected"))
+    }
 }
 
-// 计划模版视图
 struct TemplatesView: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: PlanViewModel
-    
-    let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
-    ]
-    
+
     var body: some View {
-        ScrollView {
-            if viewModel.templatePlans.isEmpty && !viewModel.isLoadingTemplates {
-                // 空状态
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 48))
-                        .foregroundColor(.gray.opacity(0.5))
-                    
-                    Text("暂无模板计划")
-                        .font(.system(size: 16))
-                        .foregroundColor(theme.secondary)
-                    
-                    Text("系统模板计划正在准备中")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.secondary.opacity(0.7))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, 100)
-            } else {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(viewModel.templatePlans) { plan in
-                        TemplatePlanCard(plan: plan, viewModel: viewModel)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
+        PlanGrid(
+            plans: viewModel.templatePlans,
+            isLoading: viewModel.isLoadingTemplates,
+            isAccessibilitySize: dynamicTypeSize.isAccessibilitySize,
+            emptyState: ContentStateView(
+                kind: .empty,
+                symbol: "doc.text",
+                title: "planList.templates.empty.title",
+                message: "planList.templates.empty.message"
+            )
+        ) { plan in
+            TemplatePlanCard(plan: plan, viewModel: viewModel)
         }
-        .background(theme.background)
+        .background(tokens.canvas)
     }
 }
 
-// 个人计划视图
 struct PersonalPlansView: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: PlanViewModel
-    
-    let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
-    ]
-    
+
     var body: some View {
-        ScrollView {
-            if viewModel.personalPlans.isEmpty && !viewModel.isLoadingPersonal {
-                // 空状态
-                VStack(spacing: 16) {
-                    Image(systemName: "person.crop.circle")
-                        .font(.system(size: 48))
-                        .foregroundColor(theme.secondary.opacity(0.5))
-                    
-                    Text("暂无个人计划")
-                        .font(.system(size: 16))
-                        .foregroundColor(theme.secondary)
-                    
-                    Text("点击右上角 + 号创建您的第一个训练计划")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.secondary.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, 100)
-            } else {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(viewModel.personalPlans) { plan in
-                        PersonalPlanCard(plan: plan, viewModel: viewModel)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
+        PlanGrid(
+            plans: viewModel.personalPlans,
+            isLoading: viewModel.isLoadingPersonal,
+            isAccessibilitySize: dynamicTypeSize.isAccessibilitySize,
+            emptyState: ContentStateView(
+                kind: .empty,
+                symbol: "person.crop.circle",
+                title: "planList.personal.empty.title",
+                message: "planList.personal.empty.message"
+            )
+        ) { plan in
+            PersonalPlanCard(plan: plan, viewModel: viewModel)
         }
-        .background(theme.background)
+        .background(tokens.canvas)
     }
 }
 
-// 计划模版卡片
+private struct PlanGrid<Card: View, EmptyState: View>: View {
+    let plans: [TrainingPlan]
+    let isLoading: Bool
+    let isAccessibilitySize: Bool
+    let emptyState: EmptyState
+    @ViewBuilder let card: (TrainingPlan) -> Card
+
+    private var columns: [GridItem] {
+        isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())]
+    }
+
+    var body: some View {
+        if isLoading && plans.isEmpty {
+            ContentStateView(
+                kind: .loading,
+                symbol: "",
+                title: "planList.loading.title",
+                message: "planList.loading.message"
+            )
+        } else if plans.isEmpty {
+            emptyState
+        } else {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: DesignTokens.Spacing.large) {
+                    ForEach(plans) { plan in
+                        card(plan)
+                    }
+                }
+                .padding(DesignTokens.Spacing.large)
+            }
+        }
+    }
+}
+
 struct TemplatePlanCard: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
     @State private var showCopyConfirmation = false
     @State private var isUsing = false
-    
+
     var body: some View {
-        NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(plan.name)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(theme.onSurface)
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    // 移动"使用"按钮到右上角
-                    Button(action: {
-                        showCopyConfirmation = true
-                    }) {
-                        HStack(spacing: 4) {
-                            if isUsing {
-                                ProgressView()
-                                    .scaleEffect(0.6)
-                            } else {
-                                Text("使用")
-                            }
-                        }
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(theme.primary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(theme.primary.opacity(0.1))
-                        .cornerRadius(8)
-                    }
-                    .disabled(isUsing)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    // 显示动作信息 - 固定高度区域，最多显示五行
-                    VStack(alignment: .leading, spacing: 1) {
-                        if let actions = plan.actions, !actions.isEmpty {
-                            ForEach(actions.prefix(5), id: \.id) { action in
-                                Text("\(action.name) x \(action.totalSets)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(theme.onSurface)
-                                    .lineLimit(1)
-                            }
-                            
-                            if actions.count > 5 {
-                                Text("....")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(theme.secondary)
-                            }
-                        } else {
-                            Text("暂无动作")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.onSurface)
-                                .lineLimit(1)
-                        }
-                    }
-                    .frame(height: 70, alignment: .top) // 增加固定高度以容纳更多动作
-                }
-                
-                Spacer()
+        PlanCardContainer {
+            NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+                PlanCardContent(plan: plan)
             }
-            .padding(10)
-            .frame(height: 120)
-            .background(theme.surface)
-            .cornerRadius(12)
-            .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("\(plan.name), \(AppStrings.text("planList.accessibility.templatePlan"))"))
+            .accessibilityHint(Text("planList.accessibility.openPlanHint"))
+
+            Button {
+                showCopyConfirmation = true
+            } label: {
+                HStack(spacing: DesignTokens.Spacing.small) {
+                    if isUsing {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(tokens.onPrimary)
+                            .accessibilityHidden(true)
+                    }
+                    Text(isUsing ? "planList.action.using" : "planList.action.use")
+                        .font(DesignTokens.Typography.label)
+                }
+                .foregroundStyle(tokens.onPrimary)
+                .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
+                .background(tokens.primary)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+            }
+            .disabled(isUsing)
+            .accessibilityLabel(Text("\(AppStrings.text("planList.accessibility.useTemplate")): \(plan.name)"))
+            .accessibilityValue(isUsing ? Text("planList.accessibility.loading") : Text(""))
         }
-        .buttonStyle(PlainButtonStyle())
-        .alert("复制模板计划", isPresented: $showCopyConfirmation) {
-            Button("取消", role: .cancel) { }
-            Button("是") {
+        .alert("planList.templateCopy.title", isPresented: $showCopyConfirmation) {
+            Button("planList.action.cancel", role: .cancel) {}
+            Button("planList.action.copy") {
                 Task {
                     isUsing = true
                     await viewModel.copyTemplatePlan(plan)
@@ -436,14 +323,13 @@ struct TemplatePlanCard: View {
                 }
             }
         } message: {
-            Text("是否将模板复制到个人计划？")
+            Text("planList.templateCopy.message")
         }
     }
 }
 
-// 个人计划卡片
 struct PersonalPlanCard: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
     @State private var showEditPlan = false
@@ -452,112 +338,69 @@ struct PersonalPlanCard: View {
     @State private var showCopyDialog = false
     @State private var copyPlanName = ""
     @State private var isCopying = false
-    
+
     var body: some View {
-        NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(plan.name)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(theme.onSurface)
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    // 工具菜单
-                    Menu {
-                        Button(action: {
-                            Task {
-                                await viewModel.loadPlanDetail(planId: plan.id)
-                                
-                                if viewModel.selectedPlan != nil {
-                                    showEditPlan = true
-                                }
+        PlanCardContainer {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
+                NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+                    PlanCardContent(plan: plan)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("\(plan.name), \(AppStrings.text("planList.accessibility.personalPlan"))"))
+                .accessibilityHint(Text("planList.accessibility.openPlanHint"))
+
+                Menu {
+                    Button {
+                        Task {
+                            await viewModel.loadPlanDetail(planId: plan.id)
+                            if viewModel.selectedPlan != nil {
+                                showEditPlan = true
                             }
-                        }) {
-                            Label("编辑", systemImage: "pencil")
-                        }
-                        
-                        Button(action: {
-                            copyPlanName = "\(plan.name)-v1"
-                            showCopyDialog = true
-                        }) {
-                            Label("复制计划", systemImage: "doc.on.doc")
-                        }
-                        
-                        Button(role: .destructive, action: {
-                            showDeleteAlert = true
-                        }) {
-                            Label("删除", systemImage: "trash")
                         }
                     } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(theme.secondary)
-                            .frame(width: 20, height: 20)
-                            .background(theme.surface)
-                            .cornerRadius(10)
-                            .shadow(color: theme.onSurface.opacity(0.1), radius: 2, x: 0, y: 1)
+                        Label("planList.action.edit", systemImage: "pencil")
                     }
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    // 显示动作信息 - 固定高度区域，最多显示五行
-                    VStack(alignment: .leading, spacing: 1) {
-                        if let actions = plan.actions, !actions.isEmpty {
-                            ForEach(actions.prefix(5), id: \.id) { action in
-                                Text("\(action.name) x \(action.totalSets)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(theme.onSurface)
-                                    .lineLimit(1)
-                            }
-                            
-                            if actions.count > 5 {
-                                Text("....")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(theme.secondary)
-                            }
-                        } else {
-                            Text("暂无动作")
-                                .font(.system(size: 11))
-                                .foregroundColor(theme.onSurface)
-                                .lineLimit(1)
-                        }
+                    Button {
+                        copyPlanName = "\(plan.name)-v1"
+                        showCopyDialog = true
+                    } label: {
+                        Label("planList.action.copy", systemImage: "doc.on.doc")
                     }
-                    .frame(height: 70, alignment: .top) // 增加固定高度以容纳更多动作
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Label("planList.action.delete", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .foregroundStyle(tokens.contentSecondary)
+                        .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
                 }
-                
-                Spacer()
+                .accessibilityLabel(Text("\(AppStrings.text("planList.accessibility.planMenu")): \(plan.name)"))
             }
-            .padding(10)
-            .frame(height: 120)
-            .background(theme.surface)
-            .cornerRadius(12)
-            .shadow(color: theme.onSurface.opacity(0.08), radius: 8, x: 0, y: 2)
         }
-        .buttonStyle(PlainButtonStyle())
+        .overlay {
+            if isDeleting {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                    .fill(tokens.surface.opacity(0.75))
+                ProgressView()
+                    .tint(tokens.primary)
+                    .accessibilityLabel(Text("planList.accessibility.loading"))
+            }
+        }
         .fullScreenCover(isPresented: $showEditPlan) {
             if let selectedPlan = viewModel.selectedPlan {
                 EditPlanView(plan: selectedPlan, onSaveSuccess: { updatedPlan in
                     showEditPlan = false
                     guard let updatedPlan else { return }
-                    Task {
-                        await viewModel.applyUpdatedPlan(updatedPlan)
-                    }
+                    Task { await viewModel.applyUpdatedPlan(updatedPlan) }
                 })
-                .onDisappear {
-                    print("🔍 EditPlanView onDisappear - 不触发刷新")
-                    // 兜底：如果因为某种原因 onSaveSuccess 未触发，这里确保状态一致
-                    if self.showEditPlan {
-                        self.showEditPlan = false
-                    }
-                }
             }
         }
-
-        .alert("删除计划", isPresented: $showDeleteAlert) {
-            Button("取消", role: .cancel) { }
-            Button("删除", role: .destructive) {
+        .alert("planList.delete.title", isPresented: $showDeleteAlert) {
+            Button("planList.action.cancel", role: .cancel) {}
+            Button("planList.action.delete", role: .destructive) {
                 Task {
                     isDeleting = true
                     await viewModel.deletePlan(plan)
@@ -565,45 +408,83 @@ struct PersonalPlanCard: View {
                 }
             }
         } message: {
-            Text("确定要删除计划 \"\(plan.name)\" 吗？此操作无法撤销。")
+            Text(String(format: AppStrings.text("planList.delete.message"), plan.name))
         }
-        .alert("复制计划", isPresented: $showCopyDialog) {
-            TextField("计划名称", text: $copyPlanName)
-            Button("取消", role: .cancel) {
-                copyPlanName = ""
-            }
-            Button("确认") {
-                if !copyPlanName.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Task {
-                        isCopying = true
-                        await viewModel.copyPersonalPlan(plan, newName: copyPlanName)
-                        isCopying = false
-                        copyPlanName = ""
-                    }
+        .alert("planList.copy.title", isPresented: $showCopyDialog) {
+            TextField("planList.copy.namePlaceholder", text: $copyPlanName)
+            Button("planList.action.cancel", role: .cancel) { copyPlanName = "" }
+            Button("planList.action.confirm") {
+                guard !copyPlanName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                Task {
+                    isCopying = true
+                    await viewModel.copyPersonalPlan(plan, newName: copyPlanName)
+                    isCopying = false
+                    copyPlanName = ""
                 }
             }
+            .disabled(isCopying)
         } message: {
-            Text("请输入新计划的名称")
+            Text("planList.copy.message")
         }
-        .overlay(
-            // 删除中的加载指示器
-            Group {
-                if isDeleting {
-                    theme.onSurface.opacity(0.3)
-                        .cornerRadius(12)
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: theme.onPrimary))
+    }
+}
+
+private struct PlanCardContainer<Content: View>: View {
+    @Environment(\.designTokens) private var tokens
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+            content
+        }
+        .padding(DesignTokens.Spacing.medium)
+        .background(tokens.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+        }
+    }
+}
+
+private struct PlanCardContent: View {
+    @Environment(\.designTokens) private var tokens
+    let plan: TrainingPlan
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+            Text(plan.name)
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.contentPrimary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let actions = plan.actions, !actions.isEmpty {
+                ForEach(actions.prefix(5), id: \.id) { action in
+                    Text("\(action.name) × \(action.totalSets)")
+                        .font(DesignTokens.Typography.feedback)
+                        .foregroundStyle(tokens.contentSecondary)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                if actions.count > 5 {
+                    Text(String(format: AppStrings.text("planList.actionSummary.more"), actions.count - 5))
+                        .font(DesignTokens.Typography.feedback)
+                        .foregroundStyle(tokens.contentSecondary)
+                }
+            } else {
+                Text("planList.actionSummary.empty")
+                    .font(DesignTokens.Typography.feedback)
+                    .foregroundStyle(tokens.contentSecondary)
             }
-        )
+        }
     }
 }
 
 #Preview {
     PlanListView(
         viewModel: PlanViewModel(),
-        createPlanViewModel: CreatePlanViewModel(
-            useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared)
-        )
+        createPlanViewModel: CreatePlanViewModel(useCase: CreateUserPlanUseCase(repository: LocalPlanService.shared))
     )
+    .withAppTheme()
 }
