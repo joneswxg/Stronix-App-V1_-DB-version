@@ -9,6 +9,8 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
+from action_image_manifest import validate_manifest
+
 BASELINE_MIGRATION_ID = "20260721_0001_baseline"
 BASELINE_APPLIED_AT = "2026-07-21T00:00:00Z"
 EXPECTED_SEED_COUNTS = {
@@ -337,6 +339,13 @@ def generate(output: Path) -> str:
     target_muscles = read_lookup_rows(seed_dir / "target_muscles.csv")
     equipment = read_lookup_rows(seed_dir / "equipment.csv")
     actions = read_actions(seed_dir / "actions.json")
+    _, image_diagnostics = validate_manifest(
+        actions,
+        seed_dir / "action_images.json",
+        script_dir.parents[1] / "Stronix-App" / "Resources",
+    )
+    if image_diagnostics:
+        raise ValueError("\n".join(diagnostic.format() for diagnostic in image_diagnostics))
     template_plans = read_template_plans(
         seed_dir / "template_plans.json",
         {int(action["id"]) for action in actions},
