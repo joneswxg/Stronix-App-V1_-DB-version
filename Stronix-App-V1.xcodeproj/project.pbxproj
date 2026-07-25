@@ -133,6 +133,7 @@
 				Views/Profile/ToolsView.swift,
 				Views/Profile/UserInfoView.swift,
 				Views/Shared/AuthControls.swift,
+				Views/Shared/ContentStateView.swift,
 				Views/Shared/CustomNumberKeyboard.swift,
 				Views/Training/TrainingFloatingIndicator.swift,
 				Views/Training/TrainingPlanDetailView.swift,
