@@ -1,3 +1,20 @@
+# Stronix App
+
+## Repository permissions
+
+Tracked source files, Xcode metadata, documentation, and bundled resources must not be executable. Verify tracked Git-index permissions before opening a pull request:
+
+```bash
+python3 tools/verify_file_permissions.py
+```
+
+The database generator remains a Python-invoked tool, not an executable entrypoint:
+
+```bash
+python3 tools/database/generate_baseline_db.py \
+  --output Stronix-App/Resources/Database/database_stronix.db
+```
+
 D1 技术框架选型
 1.iOS App ←→ 本地Swift服务层 ←→ 本地SQLite数据库
 2.后端数据库: SQLite
