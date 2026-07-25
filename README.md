@@ -47,6 +47,10 @@ D2 APP功能描述: 一款健身训练记录的软件,针对健身房的workout�
 6.2 页面二: 普通数据
 6.2.1 输入身高,体重,年龄, 估算基础代谢率,计算不同目标下的热量需求以及三大营养素的需求比例
 
+## Repository hygiene
+
+Run `sh tools/check_tracked_noise.sh` to verify that tracked files contain no Finder metadata, per-user Xcode state, local build output, or generated logs. Shared SwiftPM dependency resolution and the reviewed bundled SQLite baseline remain intentionally versioned.
+
 
 
 具体的项目结构：
