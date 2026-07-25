@@ -1,0 +1,87 @@
+{
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "auth.accessibility.loading" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在处理" } } }
+    },
+    "auth.accessibility.registrationReady" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "同意后即可提交注册" } } }
+    },
+    "auth.accessibility.selected" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已选择" } } }
+    },
+    "auth.accessibility.unselected" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未选择" } } }
+    },
+    "auth.action.backToLogin" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回登录" } } }
+    },
+    "auth.action.cancel" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } } }
+    },
+    "auth.action.confirm" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定" } } }
+    },
+    "auth.action.login" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录" } } }
+    },
+    "auth.action.loginNow" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即登录" } } }
+    },
+    "auth.action.register" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册" } } }
+    },
+    "auth.action.registerNow" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即注册" } } }
+    },
+    "auth.error.emailAlreadyExists" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱已被注册" } } } },
+    "auth.error.generic" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂时无法完成请求，请稍后重试" } } } },
+    "auth.error.invalidCredentials" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱或密码错误" } } } },
+    "auth.error.invalidEmail" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入有效的邮箱" } } } },
+    "auth.error.invalidHeight" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入有效的身高" } } } },
+    "auth.error.invalidPassword" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码至少需要 6 位" } } } },
+    "auth.error.invalidUsername" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入有效的用户名" } } } },
+    "auth.error.invalidWeight" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入有效的体重" } } } },
+    "auth.error.sessionUnavailable" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法安全保存登录状态，请重试" } } } },
+    "auth.error.usernameTaken" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "用户名已被使用" } } } },
+    "auth.feedback.loginFailed" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录失败" } } } },
+    "auth.feedback.passwordMismatch" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码不匹配" } } } },
+    "auth.feedback.registerFailed" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册失败" } } } },
+    "auth.field.email.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱" } } } },
+    "auth.field.email.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入邮箱" } } } },
+    "auth.field.gender" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "性别" } } } },
+    "auth.field.height.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "身高 (cm)" } } } },
+    "auth.field.height.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "170" } } } },
+    "auth.field.password.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码" } } } },
+    "auth.field.password.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入密码" } } } },
+    "auth.field.passwordConfirmation.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认密码" } } } },
+    "auth.field.passwordConfirmation.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请再次输入密码" } } } },
+    "auth.field.passwordRegistration.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入密码（至少6位）" } } } },
+    "auth.field.username.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "用户名" } } } },
+    "auth.field.username.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入用户名" } } } },
+    "auth.field.weight.label" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "体重 (kg)" } } } },
+    "auth.field.weight.placeholder" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "70" } } } },
+    "auth.forgotPassword.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此设备上的本地账户暂不支持密码重置。请使用原密码登录或联系支持人员。" } } } },
+    "auth.forgotPassword.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "忘记密码" } } } },
+    "auth.forgotPassword.unavailable" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂不支持密码重置" } } } },
+    "auth.gender.female" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "女" } } } },
+    "auth.gender.male" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "男" } } } },
+    "auth.gender.other" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "其他" } } } },
+    "auth.login.forgotPassword" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "忘记密码？" } } } },
+    "auth.login.loading" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在登录" } } } },
+    "auth.login.noAccount" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "还没有账号？" } } } },
+    "auth.login.subtitle" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "欢迎回来" } } } },
+    "auth.register.agreement" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "我已阅读并同意" } } } },
+    "auth.register.alreadyHaveAccount" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已有账号？" } } } },
+    "auth.register.loading" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在注册" } } } },
+    "auth.register.privacyPolicy" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "《隐私政策》" } } } },
+    "auth.register.subtitle" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "加入 STRONIX，开始您的健身之旅" } } } },
+    "auth.register.terms" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "《用户协议》" } } } },
+    "auth.register.termsConnector" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "和" } } } },
+    "auth.register.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "创建账号" } } } },
+    "auth.validation.checkRegistration" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请检查注册信息后重试" } } } },
+    "auth.validation.passwordMismatch" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "两次输入的密码不一致" } } } },
+    "auth.validation.termsRequired" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请先阅读并同意用户协议和隐私政策" } } } }
+  },
+  "version" : "1.0"
+}

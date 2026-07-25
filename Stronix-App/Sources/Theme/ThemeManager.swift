@@ -58,5 +58,6 @@ struct ThemeWrapper<Content: View>: View {
         content
             .environmentObject(themeManager)
             .environment(\.theme, themeManager.currentTheme)
+            .withDesignTokens()
     }
 }
