@@ -2,19 +2,33 @@ import SwiftUI
 import Charts
 
 struct BodyMeasurementOverview: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.designTokens) private var tokens
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: BodyMeasurementViewModel
-    @EnvironmentObject private var userSession: UserSession
+    let isAuthenticated: Bool
+    let logout: () async -> Void
     @State private var showLogin = false
-    
+
     var body: some View {
-        NavigationView {
-            ZStack {
-                mainContent
-                bottomButtons
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.xLarge) {
+                    headerSection
+                    content
+                }
+                .padding(.horizontal, DesignTokens.Spacing.large)
+                .padding(.bottom, DesignTokens.Spacing.xxLarge)
             }
-            .background(theme.background)
+            .background(tokens.canvas)
             .navigationBarHidden(true)
+            .safeAreaInset(edge: .bottom) {
+                if isAuthenticated {
+                    actionButtons
+                        .padding(.horizontal, DesignTokens.Spacing.large)
+                        .padding(.vertical, DesignTokens.Spacing.medium)
+                        .background(tokens.canvas)
+                }
+            }
         }
         .sheet(isPresented: $viewModel.showingAddSheet) {
             AddMeasurementSheet(viewModel: viewModel)
@@ -26,356 +40,404 @@ struct BodyMeasurementOverview: View {
             LoginView()
         }
     }
-    
-    private var mainContent: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                headerSection
-                
-                if !userSession.isAuthenticated {
-                    // 未登录状态视图
-                    VStack(spacing: 20) {
-                        Spacer()
-                        
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 64))
-                            .foregroundColor(theme.secondary.opacity(0.5))
-                        
-                        Text("请先登录")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(theme.onSurface)
-                        
-                        Text("登录后可以查看和管理您的体测数据")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Button(action: {
-                            showLogin = true
-                        }) {
-                            Text("立即登录")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(theme.onPrimary)
-                                .frame(width: 120, height: 44)
-                                .background(theme.primary)
-                                .cornerRadius(22)
-                        }
-                        
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.isLoading {
-                    ProgressView("加载中...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 100)
-                } else if viewModel.measurements.isEmpty {
-                    emptyStateView
-                } else {
-                    metricCardsSection
-                    chartSection
-                }
-                
-                Spacer(minLength: 100)
-            }
+
+    @ViewBuilder
+    private var content: some View {
+        if !isAuthenticated {
+            signedOutState
+        } else if viewModel.isLoading {
+            loadingState
+        } else if let errorMessage = viewModel.errorMessage {
+            errorState(errorMessage)
+        } else if viewModel.measurements.isEmpty {
+            emptyState
+        } else {
+            metricCardsSection
+            chartSection
         }
     }
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 20) {
+
+    private var signedOutState: some View {
+        VStack(spacing: DesignTokens.Spacing.large) {
+            Image(systemName: "person.circle")
+                .font(.system(size: 64))
+                .foregroundStyle(tokens.contentSecondary)
+                .accessibilityHidden(true)
+
+            Text("bodyMeasurement.state.signedOut.title")
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.contentPrimary)
+
+            Text("bodyMeasurement.state.signedOut.message")
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(tokens.contentSecondary)
+                .multilineTextAlignment(.center)
+
+            Button("bodyMeasurement.action.login") {
+                showLogin = true
+            }
+            .font(DesignTokens.Typography.action)
+            .foregroundStyle(tokens.onPrimary)
+            .frame(minWidth: 120, minHeight: DesignTokens.Metric.minimumTapSize)
+            .padding(.horizontal, DesignTokens.Spacing.large)
+            .background(tokens.primary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DesignTokens.Spacing.xxLarge)
+    }
+
+    private var loadingState: some View {
+        ProgressView("bodyMeasurement.state.loading")
+            .font(DesignTokens.Typography.body)
+            .foregroundStyle(tokens.contentPrimary)
+            .frame(maxWidth: .infinity, minHeight: 180)
+            .accessibilityLabel("bodyMeasurement.state.loading")
+    }
+
+    private func errorState(_ message: String) -> some View {
+        VStack(spacing: DesignTokens.Spacing.medium) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title)
+                .foregroundStyle(tokens.error)
+                .accessibilityHidden(true)
+
+            Text("bodyMeasurement.error.title")
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.contentPrimary)
+
+            Text(message)
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(tokens.contentSecondary)
+                .multilineTextAlignment(.center)
+
+            Button("bodyMeasurement.action.retry") {
+                Task { await viewModel.refreshData() }
+            }
+            .font(DesignTokens.Typography.action)
+            .foregroundStyle(tokens.onPrimary)
+            .frame(minHeight: DesignTokens.Metric.minimumTapSize)
+            .padding(.horizontal, DesignTokens.Spacing.large)
+            .background(tokens.primary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(DesignTokens.Spacing.xLarge)
+        .background(tokens.errorSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                .stroke(tokens.error, lineWidth: DesignTokens.Metric.borderWidth)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: DesignTokens.Spacing.large) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(theme.secondary)
-            
-            Text("暂无体测数据")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(theme.secondary)
-            
-            Text("点击下方按钮添加您的第一条体测记录")
-                .font(.system(size: 14))
-                .foregroundColor(theme.secondary)
+                .foregroundStyle(tokens.contentSecondary)
+                .accessibilityHidden(true)
+
+            Text("bodyMeasurement.state.empty.title")
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.contentPrimary)
+
+            Text("bodyMeasurement.state.empty.message")
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(tokens.contentSecondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(.top, 80)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DesignTokens.Spacing.xxLarge)
     }
-    
+
     private var headerSection: some View {
         HStack {
-            Text("体测概要")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(theme.onSurface)
+            Text("bodyMeasurement.title")
+                .font(DesignTokens.Typography.pageTitle)
+                .foregroundStyle(tokens.contentPrimary)
             Spacer()
-            
-            // 登录状态指示器
-            if userSession.isAuthenticated {
-                Button(action: {
-                    Task {
-                        try? await userSession.logout()
-                    }
-                }) {
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(theme.primary)
-                }
-            } else {
-                Button(action: {
+            Button {
+                if isAuthenticated {
+                    Task { await logout() }
+                } else {
                     showLogin = true
-                }) {
-                    Image(systemName: "person.circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(theme.secondary)
                 }
+            } label: {
+                Image(systemName: isAuthenticated ? "person.circle.fill" : "person.circle")
+                    .font(.title2)
+                    .foregroundStyle(isAuthenticated ? tokens.primary : tokens.contentSecondary)
+                    .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
             }
+            .accessibilityLabel(isAuthenticated ? "bodyMeasurement.accessibility.logout" : "bodyMeasurement.accessibility.login")
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
+        .padding(.top, DesignTokens.Spacing.small)
     }
-    
+
     private var metricCardsSection: some View {
         let displayData = viewModel.displayDataPoint
-        
-        return HStack(spacing: 15) {
-            MetricCard(
-                title: "体重",
-                value: displayData?.weightKg ?? 0,
-                unit: "kg",
-                isSelected: viewModel.selectedMetric == .weight
-            ) {
-                viewModel.selectMetric(.weight)
+
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
+                metricCards(displayData)
             }
-            
-            MetricCard(
-                title: "骨骼肌量",
-                value: displayData?.skeletalMuscleMassKg ?? 0,
-                unit: "kg",
-                isSelected: viewModel.selectedMetric == .muscleMass
-            ) {
-                viewModel.selectMetric(.muscleMass)
-            }
-            
-            MetricCard(
-                title: "体脂百分比",
-                value: displayData?.bodyFatPercentage ?? 0,
-                unit: "%",
-                isSelected: viewModel.selectedMetric == .bodyFat
-            ) {
-                viewModel.selectMetric(.bodyFat)
+            VStack(spacing: DesignTokens.Spacing.medium) {
+                metricCards(displayData)
             }
         }
-        .padding(.horizontal, 20)
     }
-    
+
+    @ViewBuilder
+    private func metricCards(_ displayData: BodyMeasurement?) -> some View {
+        MetricCard(
+            title: "bodyMeasurement.metric.weight",
+            value: displayData?.weightKg ?? 0,
+            unit: "kg",
+            isSelected: viewModel.selectedMetric == .weight
+        ) {
+            viewModel.selectMetric(.weight)
+        }
+
+        MetricCard(
+            title: "bodyMeasurement.metric.muscleMass",
+            value: displayData?.skeletalMuscleMassKg ?? 0,
+            unit: "kg",
+            isSelected: viewModel.selectedMetric == .muscleMass
+        ) {
+            viewModel.selectMetric(.muscleMass)
+        }
+
+        MetricCard(
+            title: "bodyMeasurement.metric.bodyFat",
+            value: displayData?.bodyFatPercentage ?? 0,
+            unit: "%",
+            isSelected: viewModel.selectedMetric == .bodyFat
+        ) {
+            viewModel.selectMetric(.bodyFat)
+        }
+    }
+
     private var chartSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: DesignTokens.Spacing.medium) {
             selectedDataPointView
             chartView
         }
-        .padding(.vertical, 10)
-        .background(theme.surface)
-        .cornerRadius(12)
-        .shadow(color: theme.shadow.opacity(0.1), radius: 5, x: 0, y: 2)
-        .padding(.horizontal, 20)
+        .padding(.vertical, DesignTokens.Spacing.large)
+        .background(tokens.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+        }
+        .shadow(color: tokens.shadow, radius: 5, x: 0, y: 2)
     }
-    
+
     @ViewBuilder
     private var selectedDataPointView: some View {
         if let selectedData = viewModel.selectedDataPoint {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text(BodyMeasurementDateFormatting.detailDate(selectedData.measurementTimestamp))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+                    .font(DesignTokens.Typography.label)
+                    .foregroundStyle(tokens.contentSecondary)
                 Spacer()
                 Text(viewModel.formatValue(viewModel.getValueForMetric(selectedData), for: viewModel.selectedMetric))
-                    .font(.system(size: 16, weight: .bold))
+                    .font(DesignTokens.Typography.action)
+                    .foregroundStyle(tokens.contentPrimary)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignTokens.Spacing.large)
         }
     }
-    
+
     private var chartView: some View {
-        // 按时间排序数据（从最早到最新）
         let sortedChartData = viewModel.chartData.sorted { $0.measurementTimestamp < $1.measurementTimestamp }
-        
-        let chart = Chart(Array(sortedChartData.enumerated()), id: \.offset) { index, data in
+
+        return Chart(Array(sortedChartData.enumerated()), id: \.offset) { index, data in
             LineMark(
-                x: .value("日期", index),
-                y: .value("数值", viewModel.getValueForMetric(data))
+                x: .value("Date", index),
+                y: .value("Value", viewModel.getValueForMetric(data))
             )
-            .foregroundStyle(theme.primary)
+            .foregroundStyle(tokens.primary)
             .lineStyle(StrokeStyle(lineWidth: 2))
-            
+
             PointMark(
-                x: .value("日期", index),
-                y: .value("数值", viewModel.getValueForMetric(data))
+                x: .value("Date", index),
+                y: .value("Value", viewModel.getValueForMetric(data))
             )
-            .foregroundStyle(theme.primary)
+            .foregroundStyle(tokens.primary)
             .symbolSize(50)
-            
-            // 显示选中点的垂直虚线
+
             if let selectedData = viewModel.selectedDataPoint,
                let selectedIndex = sortedChartData.firstIndex(where: { $0.id == selectedData.id }) {
                 RuleMark(x: .value("Selected", selectedIndex))
-                    .foregroundStyle(theme.secondary)
+                    .foregroundStyle(tokens.contentSecondary)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
         }
-        
-        return chart
-            .frame(height: 200)
-            .padding(.horizontal, 20)
-            .chartYScale(domain: viewModel.getYAxisDomain())
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: min(5, sortedChartData.count))) { value in
-                    AxisValueLabel {
-                        if let index = value.as(Int.self), index < sortedChartData.count {
-                            Text(BodyMeasurementDateFormatting.chartLabel(sortedChartData[index].measurementTimestamp))
-                                .font(.system(size: 10))
-                                .foregroundColor(theme.secondary)
-                        }
+        .frame(height: dynamicTypeSize.isAccessibilitySize ? 240 : 200)
+        .padding(.horizontal, DesignTokens.Spacing.large)
+        .chartYScale(domain: viewModel.getYAxisDomain())
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: min(5, sortedChartData.count))) { value in
+                AxisValueLabel {
+                    if let index = value.as(Int.self), index < sortedChartData.count {
+                        Text(BodyMeasurementDateFormatting.chartLabel(sortedChartData[index].measurementTimestamp))
+                            .font(DesignTokens.Typography.feedback)
+                            .foregroundStyle(tokens.contentSecondary)
                     }
                 }
             }
-            .onTapGesture { location in
-                handleChartTap(location: location, chartData: sortedChartData)
+        }
+        .onTapGesture { location in
+            handleChartTap(location: location, chartData: sortedChartData)
+        }
+        .onAppear {
+            if let latestData = sortedChartData.last {
+                viewModel.selectDataPoint(latestData)
             }
-            .onAppear {
-                // 页面加载时默认选择最新的数据点
-                if let latestData = sortedChartData.last {
-                    viewModel.selectDataPoint(latestData)
-                }
-            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("bodyMeasurement.accessibility.chartSummary")
+        .accessibilityValue(chartAccessibilityValue)
+        .accessibilityHint("bodyMeasurement.accessibility.chartHint")
+        .accessibilityAdjustableAction { direction in
+            adjustChartSelection(direction, chartData: sortedChartData)
+        }
     }
-    
+
+    private var chartAccessibilityValue: String {
+        guard let selectedData = viewModel.selectedDataPoint else { return "" }
+        return AppStrings.formatted(
+            "bodyMeasurement.accessibility.chartValue",
+            BodyMeasurementDateFormatting.detailDate(selectedData.measurementTimestamp),
+            viewModel.formatValue(viewModel.getValueForMetric(selectedData), for: viewModel.selectedMetric)
+        )
+    }
+
+    private func adjustChartSelection(_ direction: AccessibilityAdjustmentDirection, chartData: [BodyMeasurement]) {
+        guard let selectedData = viewModel.selectedDataPoint,
+              let currentIndex = chartData.firstIndex(where: { $0.id == selectedData.id }) else { return }
+
+        let nextIndex: Int
+        switch direction {
+        case .increment:
+            nextIndex = min(currentIndex + 1, chartData.count - 1)
+        case .decrement:
+            nextIndex = max(currentIndex - 1, 0)
+        @unknown default:
+            return
+        }
+        viewModel.selectDataPoint(chartData[nextIndex])
+    }
+
     private func handleChartTap(location: CGPoint, chartData: [BodyMeasurement]) {
         guard !chartData.isEmpty else { return }
-        
-        // 计算点击位置对应的数据点
-        let chartWidth = UIScreen.main.bounds.width - 80 // 减去padding
+
+        let chartWidth = UIScreen.main.bounds.width - 80
         let dataRange = max(1, chartData.count - 1)
         let pointWidth = chartWidth / Double(dataRange)
         let tappedIndex = Int(round(location.x / pointWidth))
-        
+
         if tappedIndex >= 0 && tappedIndex < chartData.count {
             viewModel.selectDataPoint(chartData[tappedIndex])
         }
     }
-    
-    
-    private var bottomButtons: some View {
-        VStack {
-            Spacer()
-            if userSession.isAuthenticated {
-                HStack(spacing: 15) {
-                    // 查看记录按钮 - 改为NavigationLink
-                    if !viewModel.measurements.isEmpty {
-                        NavigationLink(destination: BodyMeasurementListView(viewModel: viewModel)) {
-                            HStack {
-                                Image(systemName: "list.bullet")
-                                Text("查看记录")
-                            }
-                            .foregroundColor(theme.primary)
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 25)
-                            .frame(height: 70)
-                            .background(theme.surface)
-                            .cornerRadius(25)
-                            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
-                        }
-                    }
-                    
-                    addButton
-                    shareButton
-                }
-                .padding(.bottom, 30)
-            }
-        }
-    }
-    
-    private var shareButton: some View {
-        Button(action: {
-            // 分享功能，暂时不实现
-        }) {
-            HStack {
-                Image(systemName: "square.and.arrow.up")
-                Text("分享")
-            }
-            .foregroundColor(theme.primary)
-            .padding(.vertical, 12)
-            .padding(.horizontal, 30)
-            .frame(height: 70)
-            .background(theme.surface)
-            .cornerRadius(25)
-            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
-        }
-    }
-    
-    private var addButton: some View {
-        Button(action: {
-            viewModel.showAddSheet()
-        }) {
-            HStack {
-                Image(systemName: "plus")
-                Text("添加结果")
-            }
-            .foregroundColor(.white)
-            .padding(.vertical, 12)
-            .padding(.horizontal, 30)
-            .frame(height: 70)
-            .background(theme.primary)
-            .cornerRadius(25)
-            .shadow(color: theme.shadow.opacity(0.3), radius: 3, x: 0, y: 2)
-        }
-    }
-    
 
+    private var actionButtons: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
+                actionButtonsContent
+            }
+            VStack(spacing: DesignTokens.Spacing.small) {
+                actionButtonsContent
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtonsContent: some View {
+        if !viewModel.measurements.isEmpty {
+            NavigationLink(destination: BodyMeasurementListView(viewModel: viewModel)) {
+                Label("bodyMeasurement.action.viewRecords", systemImage: "list.bullet")
+                    .font(DesignTokens.Typography.action)
+                    .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
+                    .padding(.horizontal, DesignTokens.Spacing.medium)
+                    .background(tokens.controlSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous)
+                            .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+                    }
+            }
+            .foregroundStyle(tokens.primary)
+        }
+
+        Button {
+            viewModel.showAddSheet()
+        } label: {
+            Label("bodyMeasurement.action.add", systemImage: "plus")
+                .font(DesignTokens.Typography.action)
+                .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
+                .padding(.horizontal, DesignTokens.Spacing.medium)
+                .background(tokens.primary)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+        }
+        .foregroundStyle(tokens.onPrimary)
+    }
 }
 
-// 指标卡片组件
 struct MetricCard: View {
-    @Environment(\.theme) private var theme
-    let title: String
+    @Environment(\.designTokens) private var tokens
+    let title: LocalizedStringKey
     let value: Double
     let unit: String
     let isSelected: Bool
-    let onTap: () -> Void
-    
+    let action: () -> Void
+
     var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(theme.secondary)
-            
-            HStack(alignment: .bottom, spacing: 2) {
-                Text("\(value, specifier: "%.1f")")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(theme.onSurface)
-                Text(unit)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondary)
+        Button(action: action) {
+            VStack(spacing: DesignTokens.Spacing.small) {
+                Text(title)
+                    .font(DesignTokens.Typography.label)
+                    .foregroundStyle(tokens.contentSecondary)
+                    .multilineTextAlignment(.center)
+
+                HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.xSmall) {
+                    Text(value, format: .number.precision(.fractionLength(1)))
+                        .font(DesignTokens.Typography.action)
+                        .foregroundStyle(tokens.contentPrimary)
+                    Text(unit)
+                        .font(DesignTokens.Typography.label)
+                        .foregroundStyle(tokens.contentSecondary)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 96)
+            .padding(DesignTokens.Spacing.medium)
+            .background(isSelected ? tokens.controlSurface : tokens.surface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                    .stroke(isSelected ? tokens.primary : tokens.border, lineWidth: isSelected ? 2 : DesignTokens.Metric.borderWidth)
             }
         }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(isSelected ? theme.primary.opacity(0.1) : theme.surface)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? theme.primary : Color.clear, lineWidth: 2)
+        .accessibilityLabel(title)
+        .accessibilityValue(
+            AppStrings.formatted(
+                "bodyMeasurement.accessibility.metricValue",
+                value.formatted(.number.precision(.fractionLength(1))),
+                unit,
+                AppStrings.text(isSelected ? "bodyMeasurement.accessibility.selected" : "bodyMeasurement.accessibility.unselected")
+            )
         )
-        .shadow(color: theme.shadow.opacity(0.1), radius: 3, x: 0, y: 2)
-        .onTapGesture {
-            onTap()
-        }
+        .accessibilityHint("bodyMeasurement.accessibility.metricHint")
     }
 }
 
 #Preview {
-    BodyMeasurementOverview(viewModel: BodyMeasurementViewModel())
-        .environmentObject(
-            UserSession(
-                operations: AuthenticationUseCases(
-                    repository: SQLiteAuthRepository(),
-                    sessionStore: InMemoryLocalSessionStore()
-                )
-            )
-        )
+    BodyMeasurementOverview(
+        viewModel: BodyMeasurementViewModel(),
+        isAuthenticated: false,
+        logout: {}
+    )
+    .withAppTheme()
 }

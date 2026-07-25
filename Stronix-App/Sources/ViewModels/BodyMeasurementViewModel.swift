@@ -182,16 +182,16 @@ final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting
     private func message(for error: Error) -> String {
         switch error as? BodyMeasurementRepositoryError {
         case .unauthenticated:
-            return "用户未登录"
+            return AppStrings.text("bodyMeasurement.error.unauthenticated")
         case .notFoundOrUnauthorized:
-            return "记录已不可用"
+            return AppStrings.text("bodyMeasurement.error.unavailable")
         case .invalidMeasurementID, .invalidMeasurementTimestamp, .invalidWeight, .invalidHeight, .invalidBodyFatPercentage,
              .invalidSkeletalMuscleMass, .invalidVisceralFatLevel:
-            return "体测数据无效"
+            return AppStrings.text("bodyMeasurement.error.invalidMeasurement")
         case .malformedStoredTimestamp:
-            return "记录日期无效"
+            return AppStrings.text("bodyMeasurement.error.invalidDate")
         case nil:
-            return "操作失败，请稍后重试"
+            return AppStrings.text("bodyMeasurement.error.generic")
         }
     }
 }
