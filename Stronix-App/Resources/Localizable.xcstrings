@@ -1,39 +1,17 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
-    "auth.accessibility.loading" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在处理" } } }
-    },
-    "auth.accessibility.registrationReady" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "同意后即可提交注册" } } }
-    },
-    "auth.accessibility.selected" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已选择" } } }
-    },
-    "auth.accessibility.unselected" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未选择" } } }
-    },
-    "auth.action.backToLogin" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回登录" } } }
-    },
-    "auth.action.cancel" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } } }
-    },
-    "auth.action.confirm" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定" } } }
-    },
-    "auth.action.login" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录" } } }
-    },
-    "auth.action.loginNow" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即登录" } } }
-    },
-    "auth.action.register" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册" } } }
-    },
-    "auth.action.registerNow" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即注册" } } }
-    },
+    "auth.accessibility.loading" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在处理" } } } },
+    "auth.accessibility.registrationReady" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "同意后即可提交注册" } } } },
+    "auth.accessibility.selected" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已选择" } } } },
+    "auth.accessibility.unselected" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未选择" } } } },
+    "auth.action.backToLogin" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回登录" } } } },
+    "auth.action.cancel" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } } } },
+    "auth.action.confirm" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定" } } } },
+    "auth.action.login" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录" } } } },
+    "auth.action.loginNow" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即登录" } } } },
+    "auth.action.register" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册" } } } },
+    "auth.action.registerNow" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即注册" } } } },
     "auth.error.emailAlreadyExists" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱已被注册" } } } },
     "auth.error.generic" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂时无法完成请求，请稍后重试" } } } },
     "auth.error.invalidCredentials" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱或密码错误" } } } },
@@ -81,7 +59,95 @@
     "auth.register.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "创建账号" } } } },
     "auth.validation.checkRegistration" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请检查注册信息后重试" } } } },
     "auth.validation.passwordMismatch" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "两次输入的密码不一致" } } } },
-    "auth.validation.termsRequired" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请先阅读并同意用户协议和隐私政策" } } } }
+    "auth.validation.termsRequired" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请先阅读并同意用户协议和隐私政策" } } } },
+    "training.accessibility.actionMenu" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "动作菜单" } } } },
+    "training.accessibility.cancelWorkoutHint" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消后将丢失本次训练进度" } } } },
+    "training.accessibility.editValueHint" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击后使用数字键盘修改" } } } },
+    "training.accessibility.elapsed" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已用时间" } } } },
+    "training.accessibility.floatingHint" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击返回正在进行的训练" } } } },
+    "training.accessibility.floatingLabel" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练进行中" } } } },
+    "training.accessibility.numberKeyboard" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "数字输入键盘" } } } },
+    "training.accessibility.restTimer" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "休息计时器" } } } },
+    "training.accessibility.setMenu" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "组菜单" } } } },
+    "training.accessibility.startHint" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "开始执行此训练计划" } } } },
+    "training.accessibility.startUnavailableHint" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "计划加载完成且至少包含一个动作后可开始训练" } } } },
+    "training.accessibility.volume" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练容量" } } } },
+    "training.action.addAction" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加动作" } } } },
+    "training.action.addNote" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加备注" } } } },
+    "training.action.addSet" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新增一组" } } } },
+    "training.action.addTenSeconds" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "增加 10 秒" } } } },
+    "training.action.back" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回" } } } },
+    "training.action.cancel" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } } } },
+    "training.action.cancelWorkout" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消锻炼" } } } },
+    "training.action.closeRest" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭休息计时器" } } } },
+    "training.action.complete" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成" } } } },
+    "training.action.confirm" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定" } } } },
+    "training.action.configureRest" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置休息时间" } } } },
+    "training.action.delete" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除" } } } },
+    "training.action.deleteAction" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除动作" } } } },
+    "training.action.deleteSet" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除本组" } } } },
+    "training.action.doNotUpdate" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不更新" } } } },
+    "training.action.edit" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "编辑" } } } },
+    "training.action.finishRest" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "结束休息" } } } },
+    "training.action.history" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "动作历史" } } } },
+    "training.action.hideNote" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "收起备注" } } } },
+    "training.action.markComplete" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标记完成" } } } },
+    "training.action.pause" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂停" } } } },
+    "training.action.recordBilateral" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "记录左右重量" } } } },
+    "training.action.reset" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重置" } } } },
+    "training.action.resume" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "继续" } } } },
+    "training.action.retryUpdate" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重试更新计划" } } } },
+    "training.action.start" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "开始训练" } } } },
+    "training.action.stopCurrent" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "停止当前训练" } } } },
+    "training.action.subtractTenSeconds" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "减少 10 秒" } } } },
+    "training.action.update" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "更新" } } } },
+    "training.alert.cancel.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定要取消本次锻炼吗？所有进度都将丢失。" } } } },
+    "training.alert.cancel.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认取消锻炼" } } } },
+    "training.alert.complete.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认完成本次训练？" } } } },
+    "training.alert.complete.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成训练" } } } },
+    "training.alert.conflict.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "当前正在进行「%@」训练，是否停止当前训练并开始新的训练？" } } } },
+    "training.alert.conflict.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练冲突" } } } },
+    "training.alert.deleteAction.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定要删除这个训练动作吗？" } } } },
+    "training.alert.deleteAction.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认删除" } } } },
+    "training.alert.error.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成训练失败" } } } },
+    "training.alert.updatePlan.message" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "检测到训练计划有变动，是否更新训练计划？" } } } },
+    "training.alert.updatePlan.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "更新训练计划" } } } },
+    "training.detail.actions" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练动作" } } } },
+    "training.detail.bilateralSet" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "第 %d 组：左 %.1f kg，右 %.1f kg，%d 次" } } } },
+    "training.detail.created" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "创建：%@" } } } },
+    "training.detail.description" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "计划描述" } } } },
+    "training.detail.emptyActions" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无训练动作" } } } },
+    "training.detail.rest" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "休息时间：%d 秒" } } } },
+    "training.detail.set" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "第 %d 组：%.1f kg，%d 次" } } } },
+    "training.detail.setCount" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%d 组" } } } },
+    "training.detail.title" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练计划详情" } } } },
+    "training.detail.volume" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%.1f kg" } } } },
+    "training.error.unknown" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知错误" } } } },
+    "training.field.leftWeight" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "左重量" } } } },
+    "training.field.note" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "备注" } } } },
+    "training.field.repetitions" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "次数" } } } },
+    "training.field.rightWeight" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "右重量" } } } },
+    "training.field.weight" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重量" } } } },
+    "training.floating.active" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练进行中" } } } },
+    "training.keyboard.clear" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清空" } } } },
+    "training.keyboard.decimal" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "小数点" } } } },
+    "training.keyboard.decrease" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "减少数值" } } } },
+    "training.keyboard.delete" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除最后一位" } } } },
+    "training.keyboard.hide" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "隐藏键盘" } } } },
+    "training.keyboard.increase" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "增加数值" } } } },
+    "training.navigation.active" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "训练中" } } } },
+    "training.rest.configure" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置休息时间" } } } },
+    "training.rest.minutes" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "分钟：%d" } } } },
+    "training.rest.seconds" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%d 秒休息" } } } },
+    "training.rest.secondsOnly" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "秒数：%d" } } } },
+    "training.set.number" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "第 %d 组" } } } },
+    "training.state.completed" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已完成" } } } },
+    "training.state.incomplete" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未完成" } } } },
+    "training.state.loading" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在加载" } } } },
+    "training.state.paused" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已暂停" } } } },
+    "training.state.processing" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在处理" } } } },
+    "training.state.running" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "运行中" } } } },
+    "training.state.unavailable" : { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂不可用" } } } }
   },
   "version" : "1.0"
 }

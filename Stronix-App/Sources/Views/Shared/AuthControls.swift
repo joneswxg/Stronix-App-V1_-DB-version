@@ -87,15 +87,16 @@ struct AuthTextField: View {
     }
 }
 
-enum AuthActionStyle {
+enum SemanticActionStyle {
     case primary
     case secondary
+    case destructive
 }
 
-struct AuthActionButton: View {
+struct SemanticActionButton: View {
     let title: LocalizedStringKey
     let loadingTitle: LocalizedStringKey
-    let style: AuthActionStyle
+    let style: SemanticActionStyle
     let isEnabled: Bool
     let isLoading: Bool
     let action: () -> Void
@@ -120,23 +121,68 @@ struct AuthActionButton: View {
             .padding(.vertical, DesignTokens.Spacing.small)
             .background(background)
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+            .overlay {
+                if style == .secondary {
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous)
+                        .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+                }
+            }
         }
         .disabled(!isEnabled || isLoading)
         .accessibilityValue(isLoading ? Text("auth.accessibility.loading") : Text(""))
     }
 
     private var foreground: Color {
+        if !isEnabled || isLoading {
+            return tokens.disabledContent
+        }
         switch style {
-        case .primary: isEnabled && !isLoading ? tokens.onPrimary : tokens.disabledContent
-        case .secondary: tokens.primary
+        case .primary:
+            return tokens.onPrimary
+        case .secondary:
+            return tokens.primary
+        case .destructive:
+            return tokens.error
         }
     }
 
     private var background: Color {
-        switch style {
-        case .primary: isEnabled && !isLoading ? tokens.primary : tokens.disabledFill
-        case .secondary: Color.clear
+        if !isEnabled || isLoading {
+            return tokens.disabledFill
         }
+        switch style {
+        case .primary:
+            return tokens.primary
+        case .secondary:
+            return .clear
+        case .destructive:
+            return tokens.errorSurface
+        }
+    }
+}
+
+enum AuthActionStyle {
+    case primary
+    case secondary
+}
+
+struct AuthActionButton: View {
+    let title: LocalizedStringKey
+    let loadingTitle: LocalizedStringKey
+    let style: AuthActionStyle
+    let isEnabled: Bool
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        SemanticActionButton(
+            title: title,
+            loadingTitle: loadingTitle,
+            style: style == .primary ? .primary : .secondary,
+            isEnabled: isEnabled,
+            isLoading: isLoading,
+            action: action
+        )
     }
 }
 
