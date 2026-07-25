@@ -333,3 +333,133 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 ## Phase Completion Rule
 
 For Phase 1, execute every path above on a real simulator or device. Record the database diagnostic summary and actual result in the Phase 1 execution record. Every failure or blocked item must link to a follow-up GitHub issue; do not silently leave a failed release-gate check unresolved.
+
+## Phase 6.5: Design System Stage Cross-Flow Acceptance and Delivery Guardrails
+
+### Scope
+
+This gate validates the Phase 6.1–6.4 pilot surfaces across authentication, plans, training, and body measurement, plus training-history behavior after a completed session. History is a regression surface only; it is not a Phase 6.5 visual migration target.
+
+This gate does not authorize a repository-wide restyle, full translation, History redesign, migration of non-pilot pages, or UI automation for every screen.
+
+### Execution Record Template
+
+- Date:
+- Commit:
+- Tester:
+- Xcode version:
+- Device or simulator:
+- iOS version:
+- Debug build command and result:
+- Release build command and result:
+- XCTest command and result:
+- Appearance tested: Light / Dark
+- Locale tested: Simplified Chinese
+- Dynamic Type tested: Standard / Accessibility size
+- VoiceOver tested: On / Off
+- Result: Pass / Fail / Partial / Blocked / Not run
+- Performed evidence:
+- Blocked or not-run checks and reason:
+- Follow-up issues:
+- Notes:
+
+### Manual Execution Record
+
+- Date: 2026-07-25
+- Commit: `795e255`
+- Tester: Claude Code
+- Xcode version: Xcode 26.6 (build 17F113; full Xcode selected with `DEVELOPER_DIR`)
+- Device or simulator: iPhone 17 Pro (`913B9C86-EFD4-4D99-86F7-F9CAE2640483`)
+- iOS version: 26.5
+- Debug build command and result: `xcodebuild -project Stronix-App-V1.xcodeproj -scheme Stronix-App-V1 -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/stronix-verify-derived CODE_SIGNING_ALLOWED=NO build` — Pass.
+- Release build command and result: `xcodebuild -project Stronix-App-V1.xcodeproj -scheme Stronix-App-V1 -configuration Release -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/stronix-release-verify-derived CODE_SIGNING_ALLOWED=NO build` — Pass.
+- XCTest command and result: `xcodebuild -project Stronix-App-V1.xcodeproj -scheme Stronix-App-V1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/stronix-test-derived-serial CODE_SIGNING_ALLOWED=NO test` — Pass (143 tests, 0 failures).
+- Appearance tested: Light and Dark signed-out body-measurement overview — Pass.
+- Locale tested: Simplified Chinese — Pass for the observed signed-out body-measurement overview.
+- Dynamic Type tested: Not run.
+- VoiceOver tested: Not run.
+- Result: Partial
+- Performed evidence: Debug startup reached `MainTabView`; Light and Dark Appearance screenshots showed the signed-out body-measurement overview with Chinese copy and a reachable login action. Relaunch preserved the signed-out startup state. Screenshot paths: `/tmp/stronix-phase-6-5-relaunch-light.png`, `/tmp/stronix-phase-6-5-dark-verified.png`.
+- Blocked or not-run checks and reason: Not run, not blocked: authenticated auth/plan/training/history/body-measurement flows, state matrix, accessibility Dynamic Type, and VoiceOver require a controlled account/data setup and interactive assistive-technology operation. They remain required before Phase 6.5 acceptance can be recorded.
+- Follow-up issues: None. Issue #74 was closed as a false positive after a correctly sequenced Dark Appearance capture passed.
+- Notes: The first parallel XCTest run was invalidated when a concurrent Debug app install replaced the test host bundle. The serial rerun above passed; no assertion failure was observed. The screenshots were inspected during this run and are not retained as durable release artifacts.
+
+### Result Rules
+
+- **Pass** means the listed check was performed and the expected result was observed.
+- **Fail** means the listed check was performed and the expected result was not observed. Link a separate follow-up issue.
+- **Blocked** means a concrete environment, account, data, or reproducibility prerequisite prevented execution. Record the blocker and link a follow-up issue when remediation is needed.
+- **Not run** means the check was deliberately deferred or does not apply; record why.
+- **Partial** means the record contains both performed checks and blocked or not-run checks. A Partial result is not Phase 6.5 acceptance.
+
+For every failed or blocked item, link a distinct GitHub issue and identify whether it is a functional regression, localization defect, accessibility defect, visual/token-adoption defect, or environmental blocker. This checklist records validation status; it is not a substitute for the follow-up implementation specification.
+
+### Shared Visual, Localization, and Accessibility Protocol
+
+For each applicable pilot path below:
+
+1. Build and launch the Debug app on the recorded simulator or device.
+2. Repeat the path in Light and Dark appearance.
+3. Use Simplified Chinese and inspect visible labels, actions, loading labels, errors, state messages, and VoiceOver announcements.
+4. Test at a standard Dynamic Type size and at an accessibility size. Confirm text is readable, essential actions remain visible and reachable, and adaptive layouts remain usable.
+5. Enable VoiceOver. Confirm focus order, labels, values, hints, selected/disabled/processing state, and that decorative images are not announced.
+6. Record screenshots, screen recordings, or concise observed results only after the check is performed.
+
+Use semantic-token behavior, system Dynamic Type, and the shared 44-point minimum action target as the expected presentation baseline. Record a finding instead of silently broadening this gate when a non-pilot screen needs redesign.
+
+### Cross-Flow Matrix
+
+#### Authentication and shared controls
+
+| Surface | States and actions | Expected business and presentation result |
+| --- | --- | --- |
+| Auth fields | Normal input, validation error, Chinese copy, Light/Dark, accessibility Dynamic Type | Labels, placeholders, and errors remain readable; focus order is meaningful; decorative field symbols are not announced. |
+| Semantic and auth action buttons | Enabled, disabled, loading, primary, and secondary where applicable | Disabled/loading actions do not submit twice; the loading value is announced; the action remains operable with an appropriate target. |
+| Login | Failed credential attempt and valid login | Safe invalid-credential result remains unchanged; valid credentials establish the expected session and protected data scope. |
+| Registration | Invalid/mismatched input, disabled submit, valid registration/loading | Invalid input creates no account; valid registration preserves the existing account/session behavior. |
+| Password reset disclosure | Open and dismiss the local-account disclosure | The unavailable local-password-reset disclosure remains informational; no reset mutation, success state, or reset route is exposed. |
+
+Validate `AuthTextField`, `SemanticActionButton`, and `AuthActionButton` where their existing seams apply.
+
+#### Plans and shared content states
+
+| Surface | States and actions | Expected business and presentation result |
+| --- | --- | --- |
+| Plan list | Signed out, initial loading, error/retry, empty, and populated | Each state is understandable in Chinese and assistive technology; retry/login/create actions remain reachable. |
+| Template and personal plan tabs | Populated tabs, per-tab empty states, accessibility Dynamic Type | Grid/layout adapts without hiding key actions; tabs, cards, and menus expose useful labels and state. |
+| Template use and User Plan editing | Use a template, edit the resulting User Plan, reopen both | Template use creates a user-owned plan; edits persist on that User Plan and never mutate the source Template Plan. |
+| Plan persistence | Reopen the list and plan after save/relaunch | Created, copied, and edited User Plan values remain intact. |
+
+Validate `ContentStateView` where the existing plan-list state seam uses it; this does not require every state screen to use that component.
+
+#### Training and history regression
+
+| Surface | States and actions | Expected business and presentation result |
+| --- | --- | --- |
+| Training-plan detail | Unavailable/disabled, enabled, and loading start behavior | Template plans remain excluded from the personal-training flow; an eligible User Plan can start training without changed business behavior. |
+| Active training | Edit a value, complete a set, open/pause/resume/skip rest, use key menus, complete/cancel confirmation | Key controls retain meaningful VoiceOver labels, values, and hints; edits and timer behavior preserve existing training-session behavior. |
+| Completion | Complete a session; exercise completion error/retry only if reproducible | Completion records the session once and preserves the existing recovery behavior without duplicate history. |
+| History regression | Open history list, detail, and statistics after completion | The completed session appears with matching actions and sets; History paths do not crash. Record appearance/localization/accessibility findings separately rather than redesigning History here. |
+
+#### Body measurement
+
+| Surface | States and actions | Expected business and presentation result |
+| --- | --- | --- |
+| Overview | Signed out, loading, error/retry, empty, and populated | Each state remains understandable and its applicable action remains reachable. |
+| Metrics and chart | Select metrics and use the chart adjustable action | Selected metric state and chart value/hint are announced; adaptive layout remains usable at accessibility Dynamic Type. |
+| Add and persistence | Add a measurement, return to overview/list, relaunch | The new record refreshes the overview/list/chart and persists. |
+| Account isolation | Compare User A and User B data | User B does not see User A measurements, selections, charts, or sheets; User A data reloads when User A signs back in. |
+
+### Follow-On Page Adoption Rules
+
+For new or newly migrated SwiftUI pages:
+
+1. Use `DesignTokens` through the existing app theme/token provider for semantic colors, typography, spacing, radii, borders, and minimum-target metrics. Do not add page-local Light/Dark palettes, appearance branching, or a parallel theme API.
+2. Reuse existing shared presentation components when their seam matches the need: `AuthTextField` for authentication-style inputs, `SemanticActionButton` or `AuthActionButton` for semantic actions and loading/disabled treatment, and `ContentStateView` for loading, empty, and error content states.
+3. Add new core user-visible copy to `Localizable.xcstrings`. Use localization keys in SwiftUI and `AppStrings` only when runtime string formatting/resolution is required. Do not embed new core visible copy directly in page views.
+4. Retain accessible labels, values, and hints; hide decorative imagery from assistive technology; and make essential controls operable at the design system's minimum target size.
+5. Before merge, manually check new or migrated pages in Light/Dark appearance, Simplified Chinese, accessibility Dynamic Type, and VoiceOver. Keep non-pilot migration in separately scoped work.
+
+### Phase 6.5 Completion Rule
+
+Do not declare this gate complete until the Debug build, applicable Release build, existing XCTest suite, and actual manual execution record are complete. Every failure or blocker must have a linked follow-up issue; unchecked templates and planned validation do not count as acceptance evidence.
