@@ -3,6 +3,7 @@ import SwiftUI
 struct TrainingHistoryDetailView: View {
     @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var userSession: UserSession
 
     let historyId: Int
     private let repository: TrainingHistoryRepository
@@ -25,7 +26,7 @@ struct TrainingHistoryDetailView: View {
         VStack(spacing: 0) {
             header
             switch viewModel.phase {
-            case .loading:
+            case .idle, .loading:
                 Spacer()
                 ProgressView("加载训练详情...")
                 Spacer()
@@ -40,7 +41,10 @@ struct TrainingHistoryDetailView: View {
             }
         }
         .navigationBarHidden(true)
-        .task { await load() }
+        .task {
+            userSession.registerResetter(viewModel)
+            await load()
+        }
         .navigationDestination(isPresented: $showEditView) {
             if case .success(let detail) = viewModel.phase {
                 EditHistoryDetailView(

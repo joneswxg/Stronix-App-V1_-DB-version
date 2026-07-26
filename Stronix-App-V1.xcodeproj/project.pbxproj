@@ -88,6 +88,7 @@
 				UseCases/CopyTemplatePlanUseCase.swift,
 				UseCases/CreateUserPlanUseCase.swift,
 				ViewModels/ActionHistoryViewModel.swift,
+				ViewModels/HistoryCalendarViewModel.swift,
 				ViewModels/HistoryListViewModel.swift,
 				ViewModels/TrainingHistoryDetailViewModel.swift,
 				ViewModels/AuthViewModel.swift,

@@ -26,11 +26,9 @@ struct CalendarDate: Hashable {
 struct CalendarView: View {
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var themeManager: ThemeManager
+    @EnvironmentObject private var userSession: UserSession
     @State private var currentDate = Date()
-    @State private var selectedDateString: String?
-    @State private var trainingDatesInMonth: Set<String> = []
-    @State private var isLoadingMonth = false
-    @State private var loadErrorMessage: String?
+    @StateObject private var viewModel: HistoryCalendarViewModel
 
     private let repository: TrainingHistoryRepository
     private let ownerIDProvider: () -> Int?
@@ -44,6 +42,7 @@ struct CalendarView: View {
         self.repository = repository
         self.ownerIDProvider = ownerIDProvider
         self.deleteHistory = deleteHistory
+        _viewModel = StateObject(wrappedValue: HistoryCalendarViewModel(repository: repository))
     }
 
 // 模拟训练数据结构
@@ -68,31 +67,8 @@ struct TrainingDayData: Identifiable {
     
     // 加载当前月份的训练日期
     private func loadTrainingDatesForCurrentMonth() {
-        guard let ownerID = ownerIDProvider() else {
-            loadErrorMessage = AppError.authenticationRequired.userMessage
-            return
-        }
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month], from: currentDate)
-        guard let year = components.year, let month = components.month else { return }
-        let startDate = String(format: "%04d-%02d-01", year, month)
-        let daysInMonth = calendar.range(of: .day, in: .month, for: currentDate)?.count ?? 31
-        let endDate = String(format: "%04d-%02d-%02d", year, month, daysInMonth)
-        let range = TrainingHistoryDateRange(startDate: startDate, endDate: endDate)
-        let repository = repository
-
         Task {
-            isLoadingMonth = true
-            loadErrorMessage = nil
-            do {
-                let dates = try await Task.detached {
-                    try repository.trainingDates(ownerID: ownerID, in: range)
-                }.value
-                trainingDatesInMonth = Set(dates.dates)
-            } catch {
-                loadErrorMessage = AppError.map(error).userMessage
-            }
-            isLoadingMonth = false
+            await viewModel.load(date: currentDate, ownerID: ownerIDProvider())
         }
     }
 
@@ -101,10 +77,10 @@ struct TrainingDayData: Identifiable {
             monthNavigationHeader
             weekdayHeader
             
-            if isLoadingMonth {
+            if viewModel.phase == .loading {
                 ProgressView("加载当月训练数据...")
                     .padding()
-            } else if let loadErrorMessage {
+            } else if case .failure(let loadErrorMessage) = viewModel.phase {
                 VStack(spacing: 12) {
                     Text(loadErrorMessage)
                         .font(.caption)
@@ -119,6 +95,7 @@ struct TrainingDayData: Identifiable {
             Spacer()
         }
         .onAppear {
+            userSession.registerResetter(viewModel)
             loadTrainingDatesForCurrentMonth()
         }
     }
@@ -171,7 +148,7 @@ struct TrainingDayData: Identifiable {
                     CalendarDayView(
                         calendarDate: calendarDate,
                         currentDate: currentDate,
-                        hasTraining: trainingDatesInMonth.contains(calendarDate.dateString)
+                        hasTraining: viewModel.trainingDatesInMonth.contains(calendarDate.dateString)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())

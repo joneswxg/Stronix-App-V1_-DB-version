@@ -3,6 +3,7 @@ import SwiftUI
 struct HistoryListView: View {
     @Environment(\.theme) private var theme: AppTheme
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var userSession: UserSession
 
     let selectedDate: Date
     let selectedDateString: String
@@ -69,6 +70,7 @@ struct HistoryListView: View {
         }
         .navigationBarHidden(true)
         .task(id: selectedDateString) {
+            userSession.registerResetter(viewModel)
             await load()
         }
         .alert("确认删除", isPresented: Binding(
@@ -98,7 +100,7 @@ struct HistoryListView: View {
     @ViewBuilder
     private var content: some View {
         switch viewModel.phase {
-        case .loading:
+        case .idle, .loading:
             Spacer()
             VStack {
                 ProgressView("加载训练记录...")

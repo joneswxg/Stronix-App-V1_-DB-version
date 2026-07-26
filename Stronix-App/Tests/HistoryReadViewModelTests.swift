@@ -61,9 +61,57 @@ final class HistoryListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.phase, .success(page))
     }
 
-    private func query() -> TrainingHistoryListQuery {
+    func testResetClearsStateAndKeepsDelayedResultFromPublishing() async {
+        let stalePage = makePage(histories: [makeHistory(id: 1)])
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            listResults: [.success(stalePage)],
+            detailResults: []
+        )
+        let viewModel = HistoryListViewModel(repository: repository)
+
+        let loadTask = Task { await viewModel.load(query: query()) }
+        await fulfillment(of: [repository.listRequestStarted[0]], timeout: 1)
+
+        viewModel.resetUserScopedState()
+
+        XCTAssertEqual(viewModel.phase, .idle)
+
+        repository.completeListRequest(at: 0)
+        await loadTask.value
+
+        XCTAssertEqual(viewModel.phase, .idle)
+    }
+
+    func testNewScopeResultWinsWhenOutgoingLoadCompletesLast() async {
+        let stalePage = makePage(histories: [makeHistory(id: 1)])
+        let currentPage = makePage(histories: [makeHistory(id: 2)])
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            listResults: [.success(stalePage), .success(currentPage)],
+            detailResults: []
+        )
+        let viewModel = HistoryListViewModel(repository: repository)
+
+        let staleLoad = Task { await viewModel.load(query: query(ownerID: 7)) }
+        await fulfillment(of: [repository.listRequestStarted[0]], timeout: 1)
+        viewModel.resetUserScopedState()
+
+        let currentLoad = Task { await viewModel.load(query: query(ownerID: 8)) }
+        await fulfillment(of: [repository.listRequestStarted[1]], timeout: 1)
+
+        repository.completeListRequest(at: 0)
+        await staleLoad.value
+
+        XCTAssertEqual(viewModel.phase, .loading)
+
+        repository.completeListRequest(at: 1)
+        await currentLoad.value
+
+        XCTAssertEqual(viewModel.phase, .success(currentPage))
+    }
+
+    private func query(ownerID: Int = 7) -> TrainingHistoryListQuery {
         TrainingHistoryListQuery(
-            ownerID: 7,
+            ownerID: ownerID,
             page: TrainingHistoryPageRequest(page: 2, pageSize: 10),
             filter: TrainingHistoryFilter(
                 userPlanID: 3,
@@ -134,6 +182,197 @@ final class TrainingHistoryDetailViewModelTests: XCTestCase {
         await loadTask.value
 
         XCTAssertEqual(viewModel.phase, .success(detail))
+    }
+
+    func testResetClearsStateAndKeepsDelayedResultFromPublishing() async {
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            listResults: [],
+            detailResults: [.success(makeDetail())]
+        )
+        let viewModel = TrainingHistoryDetailViewModel(repository: repository)
+
+        let loadTask = Task { await viewModel.load(historyID: 42, ownerID: 7) }
+        await fulfillment(of: [repository.detailRequestStarted[0]], timeout: 1)
+
+        viewModel.resetUserScopedState()
+
+        XCTAssertEqual(viewModel.phase, .idle)
+
+        repository.completeDetailRequest(at: 0)
+        await loadTask.value
+
+        XCTAssertEqual(viewModel.phase, .idle)
+    }
+
+    func testNewScopeResultWinsWhenOutgoingLoadCompletesLast() async {
+        let staleDetail = makeDetail(historyID: 42)
+        let currentDetail = makeDetail(historyID: 84)
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            listResults: [],
+            detailResults: [.success(staleDetail), .success(currentDetail)]
+        )
+        let viewModel = TrainingHistoryDetailViewModel(repository: repository)
+
+        let staleLoad = Task { await viewModel.load(historyID: 42, ownerID: 7) }
+        await fulfillment(of: [repository.detailRequestStarted[0]], timeout: 1)
+        viewModel.resetUserScopedState()
+
+        let currentLoad = Task { await viewModel.load(historyID: 84, ownerID: 8) }
+        await fulfillment(of: [repository.detailRequestStarted[1]], timeout: 1)
+
+        repository.completeDetailRequest(at: 0)
+        await staleLoad.value
+
+        XCTAssertEqual(viewModel.phase, .loading)
+
+        repository.completeDetailRequest(at: 1)
+        await currentLoad.value
+
+        XCTAssertEqual(viewModel.phase, .success(currentDetail))
+    }
+}
+
+@MainActor
+final class HistoryCalendarViewModelTests: XCTestCase {
+    func testResetClearsDatesAndKeepsDelayedResultFromPublishing() async {
+        let staleDates = TrainingHistoryDates(
+            dates: ["2026-07-22"],
+            range: TrainingHistoryDateRange(startDate: "2026-07-01", endDate: "2026-07-31")
+        )
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            dateResults: [.success(staleDates)],
+            listResults: [],
+            detailResults: []
+        )
+        let viewModel = HistoryCalendarViewModel(repository: repository)
+
+        let loadTask = Task { await viewModel.load(date: sampleMonth(), ownerID: 7) }
+        await fulfillment(of: [repository.dateRequestStarted[0]], timeout: 1)
+
+        viewModel.resetUserScopedState()
+
+        XCTAssertEqual(viewModel.phase, .idle)
+        XCTAssertEqual(viewModel.trainingDatesInMonth, [])
+
+        repository.completeDateRequest(at: 0)
+        await loadTask.value
+
+        XCTAssertEqual(viewModel.phase, .idle)
+        XCTAssertEqual(viewModel.trainingDatesInMonth, [])
+    }
+
+    func testNewScopeDatesWinWhenOutgoingLoadCompletesLast() async {
+        let staleDates = TrainingHistoryDates(
+            dates: ["2026-07-22"],
+            range: TrainingHistoryDateRange(startDate: "2026-07-01", endDate: "2026-07-31")
+        )
+        let currentDates = TrainingHistoryDates(
+            dates: ["2026-07-23"],
+            range: TrainingHistoryDateRange(startDate: "2026-07-01", endDate: "2026-07-31")
+        )
+        let repository = SequencedBlockingTrainingHistoryRepository(
+            dateResults: [.success(staleDates), .success(currentDates)],
+            listResults: [],
+            detailResults: []
+        )
+        let viewModel = HistoryCalendarViewModel(repository: repository)
+
+        let staleLoad = Task { await viewModel.load(date: sampleMonth(), ownerID: 7) }
+        await fulfillment(of: [repository.dateRequestStarted[0]], timeout: 1)
+        viewModel.resetUserScopedState()
+
+        let currentLoad = Task { await viewModel.load(date: sampleMonth(), ownerID: 8) }
+        await fulfillment(of: [repository.dateRequestStarted[1]], timeout: 1)
+
+        repository.completeDateRequest(at: 0)
+        await staleLoad.value
+
+        XCTAssertEqual(viewModel.phase, .loading)
+
+        repository.completeDateRequest(at: 1)
+        await currentLoad.value
+
+        XCTAssertEqual(viewModel.phase, .success)
+        XCTAssertEqual(viewModel.trainingDatesInMonth, ["2026-07-23"])
+    }
+
+    private func sampleMonth() -> Date {
+        Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 7, day: 1))!
+    }
+}
+
+private final class SequencedBlockingTrainingHistoryRepository: TrainingHistoryRepository, @unchecked Sendable {
+    private(set) var dateRequestStarted: [XCTestExpectation]
+    private(set) var listRequestStarted: [XCTestExpectation]
+    private(set) var detailRequestStarted: [XCTestExpectation]
+
+    private let dateResults: [Result<TrainingHistoryDates, Error>]
+    private let listResults: [Result<TrainingHistoryPage, Error>]
+    private let detailResults: [Result<TrainingHistoryReadDetail, Error>]
+    private var dateCompletions: [DispatchSemaphore] = []
+    private var listCompletions: [DispatchSemaphore] = []
+    private var detailCompletions: [DispatchSemaphore] = []
+    private let lock = NSLock()
+
+    init(
+        dateResults: [Result<TrainingHistoryDates, Error>] = [],
+        listResults: [Result<TrainingHistoryPage, Error>],
+        detailResults: [Result<TrainingHistoryReadDetail, Error>]
+    ) {
+        self.dateResults = dateResults
+        self.listResults = listResults
+        self.detailResults = detailResults
+        dateRequestStarted = dateResults.map { _ in XCTestExpectation(description: "date request started") }
+        listRequestStarted = listResults.map { _ in XCTestExpectation(description: "list request started") }
+        detailRequestStarted = detailResults.map { _ in XCTestExpectation(description: "detail request started") }
+    }
+
+    func trainingDates(ownerID: Int, in range: TrainingHistoryDateRange) throws -> TrainingHistoryDates {
+        let request = lock.withLock { () -> (XCTestExpectation, DispatchSemaphore, Result<TrainingHistoryDates, Error>) in
+            let index = dateCompletions.count
+            let completion = DispatchSemaphore(value: 0)
+            dateCompletions.append(completion)
+            return (dateRequestStarted[index], completion, dateResults[index])
+        }
+        request.0.fulfill()
+        request.1.wait()
+        return try request.2.get()
+    }
+
+    func trainingHistory(_ query: TrainingHistoryListQuery) throws -> TrainingHistoryPage {
+        let request = lock.withLock { () -> (XCTestExpectation, DispatchSemaphore, Result<TrainingHistoryPage, Error>) in
+            let index = listCompletions.count
+            let completion = DispatchSemaphore(value: 0)
+            listCompletions.append(completion)
+            return (listRequestStarted[index], completion, listResults[index])
+        }
+        request.0.fulfill()
+        request.1.wait()
+        return try request.2.get()
+    }
+
+    func trainingHistoryDetail(id: Int, ownerID: Int) throws -> TrainingHistoryReadDetail {
+        let request = lock.withLock { () -> (XCTestExpectation, DispatchSemaphore, Result<TrainingHistoryReadDetail, Error>) in
+            let index = detailCompletions.count
+            let completion = DispatchSemaphore(value: 0)
+            detailCompletions.append(completion)
+            return (detailRequestStarted[index], completion, detailResults[index])
+        }
+        request.0.fulfill()
+        request.1.wait()
+        return try request.2.get()
+    }
+
+    func completeDateRequest(at index: Int) {
+        _ = lock.withLock { dateCompletions[index].signal() }
+    }
+
+    func completeListRequest(at index: Int) {
+        _ = lock.withLock { listCompletions[index].signal() }
+    }
+
+    func completeDetailRequest(at index: Int) {
+        _ = lock.withLock { detailCompletions[index].signal() }
     }
 }
 
@@ -242,9 +481,9 @@ private func makePage(histories: [TrainingHistoryItem]) -> TrainingHistoryPage {
     )
 }
 
-private func makeDetail() -> TrainingHistoryReadDetail {
+private func makeDetail(historyID: Int = 42) -> TrainingHistoryReadDetail {
     TrainingHistoryReadDetail(
-        history: makeHistory(id: 42),
+        history: makeHistory(id: historyID),
         actions: [
             TrainingHistoryDetailAction(
                 actionID: 1,
