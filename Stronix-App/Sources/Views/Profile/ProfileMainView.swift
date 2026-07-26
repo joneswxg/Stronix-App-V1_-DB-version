@@ -7,6 +7,7 @@ struct ProfileMainView: View {
     @State private var showArticles = false
     @State private var showTools = false
     @State private var showGuide = false
+    @StateObject private var authViewModel = AuthViewModel()
     @EnvironmentObject private var userSession: UserSession
     @Environment(\.theme) private var theme: AppTheme
     
@@ -139,6 +140,7 @@ struct ProfileMainView: View {
                                 )
                                     .cornerRadius(12)
                             }
+                            .disabled(authViewModel.isLoggingOut)
                             .padding(.top, 20)
                         }
                     }
@@ -166,16 +168,22 @@ struct ProfileMainView: View {
         .sheet(isPresented: $showGuide) {
             GuideView()
         }
-    }
-    
-    private func logout() {
-        Task {
-            do {
-                try await userSession.logout()
-            } catch {
-                // Keep the authenticated state when the protected session cannot be cleared.
-            }
+        .alert("auth.feedback.logoutFailed", isPresented: authErrorBinding) {
+            Button("auth.action.confirm", role: .cancel) { authViewModel.errorMessage = nil }
+        } message: {
+            Text(authViewModel.errorMessage ?? AppStrings.text("auth.error.generic"))
         }
+    }
+
+    private var authErrorBinding: Binding<Bool> {
+        Binding(
+            get: { authViewModel.errorMessage != nil },
+            set: { if !$0 { authViewModel.errorMessage = nil } }
+        )
+    }
+
+    private func logout() {
+        Task { await authViewModel.logout(using: userSession) }
     }
     
     private func shareApp() {

@@ -88,20 +88,6 @@ final class AuthenticationUseCasesTests: XCTestCase {
     }
 }
 
-private final class RecordingSessionStore: LocalSessionStore {
-    var loadedSession: LocalSessionReference?
-    var savedSession: LocalSessionReference?
-    var clearError: Error?
-
-    func load() throws -> LocalSessionReference? { loadedSession }
-    func save(_ session: LocalSessionReference) throws { savedSession = session }
-    func clear() throws {
-        if let clearError { throw clearError }
-        loadedSession = nil
-        savedSession = nil
-    }
-}
-
 private enum TestError: Error {
     case expected
 }

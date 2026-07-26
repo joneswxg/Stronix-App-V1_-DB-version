@@ -17,38 +17,53 @@ struct AuthenticationUseCases {
     }
 
     func register(_ registration: AuthRegistration) async throws -> User {
+        try Task.checkCancellation()
         let validated = try validate(registration)
+        try Task.checkCancellation()
         let user = try await repository.register(validated)
+        try Task.checkCancellation()
         try saveSession(for: user)
+        try Task.checkCancellation()
         return user
     }
 
     func login(email: String, password: String) async throws -> User {
+        try Task.checkCancellation()
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard isValidEmail(trimmedEmail), !password.isEmpty else {
             throw AuthError.invalidCredentials
         }
+        try Task.checkCancellation()
         let user = try await repository.authenticate(email: trimmedEmail, password: password)
+        try Task.checkCancellation()
         try saveSession(for: user)
+        try Task.checkCancellation()
         return user
     }
 
     func restoreSession() async throws -> User? {
+        try Task.checkCancellation()
         legacyDefaults.removeObject(forKey: legacySessionKey)
         let reference: LocalSessionReference?
         do {
             reference = try sessionStore.load()
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             try? sessionStore.clear()
             return nil
         }
         guard let reference else { return nil }
+        try Task.checkCancellation()
         do {
             guard let user = try await repository.user(id: reference.userID) else {
                 try sessionStore.clear()
                 return nil
             }
+            try Task.checkCancellation()
             return user
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as AuthError where error == .databaseUnavailable {
             throw error
         } catch {
@@ -58,11 +73,13 @@ struct AuthenticationUseCases {
     }
 
     func logout() async throws {
+        try Task.checkCancellation()
         do {
             try sessionStore.clear()
         } catch {
             throw AuthError.sessionUnavailable
         }
+        try Task.checkCancellation()
     }
 
     private func saveSession(for user: User) throws {

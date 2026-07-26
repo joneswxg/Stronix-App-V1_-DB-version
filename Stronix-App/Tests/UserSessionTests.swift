@@ -55,6 +55,53 @@ final class UserSessionTests: XCTestCase {
         XCTAssertEqual(session.state, .authenticated(user))
         XCTAssertEqual(resetter.resetCount, 0)
     }
+    func testNewerLogoutCancelsOlderLoginBeforeItCanAuthenticate() async throws {
+        let user = sessionTestUser(id: 11)
+        let operations = SuspendingAuthenticationOperations(user: user)
+        let session = UserSession(operations: operations)
+
+        let login = Task { try await session.login(email: user.email, password: "password") }
+        await fulfillment(of: [operations.loginStarted])
+
+        try await session.logout()
+        operations.completeLogin()
+        try await login.value
+
+        XCTAssertTrue(operations.loginWasCancelled)
+        XCTAssertEqual(session.state, .unauthenticated)
+    }
+}
+
+private final class SuspendingAuthenticationOperations: AuthenticationOperating {
+    let loginStarted = XCTestExpectation(description: "Login started")
+    private let user: User
+    private var continuation: CheckedContinuation<User, Error>?
+    private(set) var loginWasCancelled = false
+
+    init(user: User) {
+        self.user = user
+    }
+
+    func register(_ registration: AuthRegistration) async throws -> User { user }
+
+    func login(email: String, password: String) async throws -> User {
+        loginStarted.fulfill()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation = $0 }
+        } onCancel: {
+            self.loginWasCancelled = true
+            self.continuation?.resume(throwing: CancellationError())
+            self.continuation = nil
+        }
+    }
+
+    func restoreSession() async throws -> User? { nil }
+    func logout() async throws {}
+
+    func completeLogin() {
+        continuation?.resume(returning: user)
+        continuation = nil
+    }
 }
 
 private final class AuthenticationOperationsStub: AuthenticationOperating {

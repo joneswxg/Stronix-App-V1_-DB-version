@@ -43,6 +43,31 @@ final class ResultAuthRepository: AuthRepository {
     }
 }
 
+final class RecordingSessionStore: LocalSessionStore {
+    var loadedSession: LocalSessionReference?
+    private(set) var savedSession: LocalSessionReference?
+    var saveError: Error?
+    var clearError: Error?
+    private(set) var saveCallCount = 0
+    private(set) var clearCallCount = 0
+
+    func load() throws -> LocalSessionReference? { loadedSession }
+
+    func save(_ session: LocalSessionReference) throws {
+        saveCallCount += 1
+        if let saveError { throw saveError }
+        savedSession = session
+        loadedSession = session
+    }
+
+    func clear() throws {
+        clearCallCount += 1
+        if let clearError { throw clearError }
+        loadedSession = nil
+        savedSession = nil
+    }
+}
+
 final class ResultTrainingHistoryPersistence: TrainingHistoryPersisting {
     var result: Result<SaveTrainingHistoryResponse, Error>
     private(set) var requests: [SaveTrainingHistoryRequest] = []

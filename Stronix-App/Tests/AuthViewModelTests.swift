@@ -79,6 +79,19 @@ final class AuthViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.isRegistering)
     }
 
+    func testLogoutMapsPersistenceFailure() async {
+        let session = AuthSessionIntentStub()
+        session.logoutError = AuthError.sessionUnavailable
+        let viewModel = AuthViewModel()
+
+        await viewModel.logout(using: session)
+        await viewModel.logout(using: session)
+
+        XCTAssertEqual(session.logoutCallCount, 2)
+        XCTAssertFalse(viewModel.isLoggingOut)
+        XCTAssertEqual(viewModel.errorMessage, AppStrings.text("auth.error.sessionUnavailable"))
+    }
+
     private func validRegistrationViewModel() -> AuthViewModel {
         let viewModel = AuthViewModel()
         viewModel.registrationUsername = "member"
@@ -93,7 +106,9 @@ final class AuthViewModelTests: XCTestCase {
 @MainActor
 private final class AuthSessionIntentStub: AuthSessionIntending {
     var loginError: Error?
+    var logoutError: Error?
     var registerCallCount = 0
+    var logoutCallCount = 0
     var registration: AuthRegistration?
 
     func login(email: String, password: String) async throws {
@@ -103,5 +118,10 @@ private final class AuthSessionIntentStub: AuthSessionIntending {
     func register(_ registration: AuthRegistration) async throws {
         registerCallCount += 1
         self.registration = registration
+    }
+
+    func logout() async throws {
+        logoutCallCount += 1
+        if let logoutError { throw logoutError }
     }
 }
