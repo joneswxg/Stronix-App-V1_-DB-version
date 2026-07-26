@@ -92,7 +92,10 @@ final class UserSession: ObservableObject, CurrentUserProviding {
     var isAuthenticated: Bool { currentUser != nil }
 
     func registerResetter(_ resetter: any UserScopedStateResetting) {
-        resetters.removeAll { $0.value == nil }
+        resetters.removeAll { existing in
+            guard let value = existing.value else { return true }
+            return value === resetter
+        }
         resetters.append(WeakUserScopedResetter(resetter))
     }
 

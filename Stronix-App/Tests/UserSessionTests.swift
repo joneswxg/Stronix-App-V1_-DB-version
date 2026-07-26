@@ -55,6 +55,20 @@ final class UserSessionTests: XCTestCase {
         XCTAssertEqual(session.state, .authenticated(user))
         XCTAssertEqual(resetter.resetCount, 0)
     }
+    func testRegisteringTheSameResetterAgainDoesNotDuplicateScopeReset() async throws {
+        let user = sessionTestUser(id: 12)
+        let operations = AuthenticationOperationsStub(restoredUser: user)
+        let resetter = RecordingUserScopedResetter()
+        let session = UserSession(operations: operations)
+
+        session.registerResetter(resetter)
+        session.registerResetter(resetter)
+        await session.restore()
+        try await session.logout()
+
+        XCTAssertEqual(resetter.resetCount, 1)
+    }
+
     func testNewerLogoutCancelsOlderLoginBeforeItCanAuthenticate() async throws {
         let user = sessionTestUser(id: 11)
         let operations = SuspendingAuthenticationOperations(user: user)
