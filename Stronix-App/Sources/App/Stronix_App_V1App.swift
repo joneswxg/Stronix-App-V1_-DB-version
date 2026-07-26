@@ -3,8 +3,8 @@ import SwiftUI
 @main
 struct Stronix_App_V1App: App {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var databaseState = DatabaseStartupState.preparing
     @StateObject private var userSession: UserSession
+    @StateObject private var startupCoordinator: AppStartupCoordinator
 
     init() {
         let repository = SQLiteAuthRepository()
@@ -12,7 +12,15 @@ struct Stronix_App_V1App: App {
             repository: repository,
             sessionStore: KeychainLocalSessionStore()
         )
-        _userSession = StateObject(wrappedValue: UserSession(operations: useCases))
+        let userSession = UserSession(operations: useCases)
+        _userSession = StateObject(wrappedValue: userSession)
+        _startupCoordinator = StateObject(
+            wrappedValue: AppStartupCoordinator(
+                database: DatabaseManager.shared,
+                arguments: ProcessInfo.processInfo.arguments,
+                session: userSession
+            )
+        )
 
         guard !Self.isRunningUnitTests else { return }
         DispatchQueue.main.async {
@@ -23,32 +31,28 @@ struct Stronix_App_V1App: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                switch databaseState {
-                case .preparing:
+                switch startupCoordinator.state {
+                case .preparingDatabase:
                     ProgressView("正在准备本地数据库…")
+                case .restoringSession:
+                    ProgressView("正在恢复登录状态…")
                 case .ready:
-                    switch userSession.state {
-                    case .restoring:
-                        ProgressView("正在恢复登录状态…")
-                    case .unauthenticated, .authenticated:
-                        MainTabView()
-                            .id(userSession.scopeID)
-                            .withAppTheme()
-                    }
-                case .failed(let message):
-                    DatabaseStartupFailureView(
-                        message: message,
-                        retry: retryDatabasePreparation
+                    MainTabView()
+                        .id(userSession.scopeID)
+                        .withAppTheme()
+                case .blocked(let reason):
+                    DatabaseStartupBlockedView(
+                        reason: reason,
+                        retry: {
+                            Task { await startupCoordinator.retry() }
+                        }
                     )
-                case .incompatible(let message):
-                    DatabaseStartupIncompatibilityView(message: message)
                 }
             }
             .environmentObject(userSession)
             .task {
                 guard !Self.isRunningUnitTests else { return }
-                guard case .preparing = databaseState else { return }
-                prepareDatabase()
+                await startupCoordinator.start()
             }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -59,52 +63,6 @@ struct Stronix_App_V1App: App {
 
     private static var isRunningUnitTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    }
-
-    private func prepareDatabase() {
-        runDatabasePreparation {
-            DatabaseManager.shared.prepareForStartup(
-                arguments: ProcessInfo.processInfo.arguments
-            )
-        }
-    }
-
-    private func retryDatabasePreparation() {
-        runDatabasePreparation {
-            DatabaseManager.shared.retryPreparation()
-        }
-    }
-
-    private func runDatabasePreparation(
-        _ operation: @escaping () -> DatabasePreparationResult
-    ) {
-        databaseState = .preparing
-        Task.detached(priority: .userInitiated) {
-            let result = operation()
-            await MainActor.run {
-                switch result {
-                case .ready, .recovered:
-                    databaseState = .ready
-                case .incompatible:
-                    print("数据库生命周期不兼容: \(result.diagnostic.summary)")
-                    databaseState = .incompatible(
-                        "本地数据库由较新版本的 App 创建，请更新 App 后再继续使用。"
-                    )
-                case .failed:
-                    print("数据库生命周期准备失败: \(result.diagnostic.summary)")
-                    databaseState = .failed("本地数据库准备失败，请重试或联系支持。")
-                case .unrecoverable:
-                    print("数据库恢复失败: \(result.diagnostic.summary)")
-                    databaseState = .failed("本地数据库恢复失败，请重试或联系支持。")
-                }
-            }
-            switch result {
-            case .ready, .recovered:
-                await userSession.restore()
-            default:
-                break
-            }
-        }
     }
 
     private func handleScenePhaseChange(from oldPhase: ScenePhase, to newPhase: ScenePhase) {
@@ -123,50 +81,44 @@ struct Stronix_App_V1App: App {
     }
 }
 
-private enum DatabaseStartupState {
-    case preparing
-    case ready
-    case failed(String)
-    case incompatible(String)
-}
-
-private struct DatabaseStartupIncompatibilityView: View {
-    let message: String
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "externaldrive.badge.exclamationmark")
-                .font(.system(size: 44))
-                .foregroundStyle(.orange)
-            Text("本地数据库需要更新")
-                .font(.headline)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(24)
-    }
-}
-
-private struct DatabaseStartupFailureView: View {
-    let message: String
+private struct DatabaseStartupBlockedView: View {
+    let reason: DatabaseStartupBlockReason
     let retry: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "externaldrive.badge.exclamationmark")
-                .font(.system(size: 44))
-                .foregroundStyle(.red)
-            Text("本地数据库准备失败")
-                .font(.headline)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("重试", action: retry)
-                .buttonStyle(.borderedProminent)
+        ContentStateView(
+            kind: contentStateKind,
+            symbol: "externaldrive.badge.exclamationmark",
+            title: title,
+            message: message,
+            actionTitle: reason.permitsRetry ? "重试" : nil,
+            action: reason.permitsRetry ? retry : nil
+        )
+    }
+
+    private var contentStateKind: ContentStateKind {
+        reason == .incompatibleSchema ? .warning : .error
+    }
+
+    private var title: LocalizedStringKey {
+        switch reason {
+        case .incompatibleSchema:
+            "本地数据库需要更新"
+        case .recoverablePreparationFailure:
+            "本地数据库准备失败"
+        case .unrecoverableRecoveryFailure:
+            "无法恢复本地数据库"
         }
-        .padding(24)
+    }
+
+    private var message: LocalizedStringKey {
+        switch reason {
+        case .incompatibleSchema:
+            "本地数据库由较新版本的 App 创建，请更新 App 后再继续使用。"
+        case .recoverablePreparationFailure:
+            "本地数据库准备失败，请重试或联系支持。"
+        case .unrecoverableRecoveryFailure:
+            "为了保护本地数据，App 已停止启动。请联系支持。"
+        }
     }
 }

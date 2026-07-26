@@ -54,11 +54,9 @@ struct DatabaseLifecycleDiagnostic: Equatable {
     let recoveryStatus: DatabaseRecoveryStatus
     let preparation: DatabasePreparation?
 
+    /// A log-safe operational summary that excludes storage paths and database-derived identifiers.
     var summary: String {
         let fields = [
-            databaseLocation.map { "database=\($0)" },
-            schemaVersion.map { "schema=\($0)" },
-            supportedSchemaVersion.map { "supportedSchema=\($0)" },
             foreignKeysEnabled.map { "foreignKeys=\($0)" },
             busyTimeoutMilliseconds.map { "busyTimeoutMs=\($0)" },
             journalMode.map { "journalMode=\($0)" },
