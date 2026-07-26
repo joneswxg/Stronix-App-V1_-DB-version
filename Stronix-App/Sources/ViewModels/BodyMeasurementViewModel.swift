@@ -87,46 +87,58 @@ final class BodyMeasurementViewModel: ObservableObject, UserScopedStateResetting
     }
 
     func addMeasurement(_ draft: BodyMeasurementDraft) async -> Bool {
+        let generation = loadGeneration
         do {
             let measurement = try await operations.createMeasurement(draft)
+            guard generation == loadGeneration else { return false }
             measurements.append(measurement)
             sortMeasurements()
             selectedDataPoint = measurement
+            errorMessage = nil
             return true
         } catch {
+            guard generation == loadGeneration else { return false }
             errorMessage = message(for: error)
             return false
         }
     }
 
     func updateMeasurement(id: Int, with draft: BodyMeasurementDraft) async -> Bool {
+        let generation = loadGeneration
         do {
             let measurement = try await operations.updateMeasurement(id: id, with: draft)
+            guard generation == loadGeneration else { return false }
             guard let index = measurements.firstIndex(where: { $0.id == id }) else {
                 await loadMeasurements()
-                return true
+                return generation == loadGeneration
             }
             measurements[index] = measurement
             sortMeasurements()
             if selectedDataPoint?.id == id {
                 selectedDataPoint = measurement
             }
+            errorMessage = nil
             return true
         } catch {
+            guard generation == loadGeneration else { return false }
             errorMessage = message(for: error)
             return false
         }
     }
 
     func deleteMeasurement(_ measurementID: Int) async -> Bool {
+        let generation = loadGeneration
         do {
             try await operations.deleteMeasurement(id: measurementID)
+            guard generation == loadGeneration else { return false }
             measurements.removeAll { $0.id == measurementID }
             if selectedDataPoint?.id == measurementID {
                 selectedDataPoint = latestMeasurement
             }
+            errorMessage = nil
             return true
         } catch {
+            guard generation == loadGeneration else { return false }
             errorMessage = message(for: error)
             return false
         }

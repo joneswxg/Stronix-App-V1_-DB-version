@@ -98,7 +98,16 @@ struct AddMeasurementSheet: View {
                     )
                 }
                 .padding(.horizontal, 20)
-                
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .font(.system(size: 14))
+                        .foregroundColor(theme.error)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                }
+
                 // 提示信息
                 VStack(spacing: 4) {
                     Text("由于报告纸上只会显示小数点一位数，")
