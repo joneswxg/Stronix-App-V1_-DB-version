@@ -63,7 +63,7 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
         XCTAssertTrue(planUpdater.calls.isEmpty)
     }
 
-    func testRetryAfterPlanFailureDoesNotSaveHistoryAgain() async {
+    func testRetryAfterPlanFailureDelegatesHistorySaveToPersistenceSeam() async {
         let history = ResultTrainingHistoryPersistence()
         let planUpdater = ResultUserPlanWriter(results: [.failure(TestError.failed), .success(())])
         let useCase = CompleteTrainingUseCase(historyPersistence: history, planWriter: planUpdater)
@@ -74,7 +74,7 @@ final class CompleteTrainingUseCaseTests: XCTestCase {
 
         XCTAssertPlanUpdateFailed(firstResult)
         XCTAssertCompleted(retryResult)
-        XCTAssertEqual(history.requests.count, 1)
+        XCTAssertEqual(history.requests.count, 2)
         XCTAssertEqual(planUpdater.calls.count, 2)
     }
 
