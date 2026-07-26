@@ -9,7 +9,9 @@ The files in this directory are the source of truth for the bundled local SQLite
 - `seeds/template_plans.json` contains the built-in Template Plan catalog, ordered actions, and ordered sets.
 - `generate_baseline_db.py` builds and validates the checked-in database artifact.
 
-Generate the bundle database from the repository root:
+## Intentional bundle publishing
+
+Generate the bundle database from the repository root only when intentionally updating the checked-in artifact:
 
 ```bash
 python3 tools/database/validate_action_images.py
@@ -17,9 +19,17 @@ python3 tools/database/generate_baseline_db.py \
   --output Stronix-App/Resources/Database/database_stronix.db
 ```
 
-`action_images.json` is build-time governance data, not a runtime resource. It is sorted by action ID and records the action ID, external ID, and exact bundle-relative GIF path. The validator checks every action has one mapping, every mapping identifies the matching action and existing GIF file, and paths match the existing `actions.json` `gifUrl` values. It does not alter the seed catalog or runtime image resolution.
+The generator creates a fresh temporary database, imports all seed rows in deterministic ID order, inserts the immutable `20260721_0001_baseline` source-baseline ledger record, verifies the append-only ledger triggers, runs integrity and foreign-key checks, then atomically replaces the specified output. Future migrations apply after this source baseline is copied to the mutable Documents database; the source baseline never represents a runtime-prepared Documents database.
 
-The generator creates a fresh temporary database, imports all seed rows in deterministic ID order, inserts the immutable `20260721_0001_baseline` ledger record, verifies the append-only ledger triggers, runs integrity and foreign-key checks, then atomically replaces the output. Future migrations may only append records to `schema_migrations`; changing or deleting a completed record is rejected by the database.
+## Non-mutating bundled-baseline verification
+
+Verify the tracked bundle without replacing it:
+
+```bash
+python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
+```
+
+Verification generates a candidate only in temporary storage, opens `Stronix-App/Resources/Database/database_stronix.db` read-only, validates both databases against the source-baseline contract, and compares logical fingerprints. It does not compare SQLite file bytes, write beside the tracked bundle, or access a user's Documents database. Use `--bundle <path>` only to verify an explicit alternate bundle read-only.
 
 Expected static catalog counts:
 

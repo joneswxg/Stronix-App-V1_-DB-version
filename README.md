@@ -17,7 +17,20 @@ python3 tools/database/generate_baseline_db.py \
 
 ## Build CI
 
-Pull requests and pushes to `main` receive independent Debug and Release simulator build results. See [Phase 8.7 Deterministic Simulator Build CI](docs/remediation/phase-8.7-deterministic-build-ci.md) for the declared Xcode/runtime inputs and exact local commands equivalent to CI.
+Pull requests and pushes to `main` receive independent Debug and Release simulator build results plus a **Repository integrity checks** job that runs on Linux without Xcode or a simulator. See [Phase 8.7 Deterministic Simulator Build CI](docs/remediation/phase-8.7-deterministic-build-ci.md) for simulator inputs and [Phase 8.9 Repository Integrity CI](docs/remediation/phase-8.9-repository-integrity-ci.md) for the fast quality gate.
+
+Run its checks locally from the repository root:
+
+```bash
+sh tools/check_tracked_noise.sh
+python3 tools/verify_file_permissions.py
+python3 tools/database/validate_action_images.py
+python3 -m unittest tools.database.tests.test_action_image_manifest
+python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
+python3 -m unittest tools.database.tests.test_bundled_baseline_contract
+python3 -m unittest tools.tests.test_repository_integrity_ci
+python3 tools/verify_repository_integrity_ci.py
+```
 
 D1 技术框架选型
 1.iOS App ←→ 本地Swift服务层 ←→ 本地SQLite数据库

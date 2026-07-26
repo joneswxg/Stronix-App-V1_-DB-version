@@ -42,20 +42,37 @@ MUTABLE_TABLES = (
 
 def parse_args() -> argparse.Namespace:
     script_dir = Path(__file__).resolve().parent
-    parser = argparse.ArgumentParser(
-        description="Generate the clean Stronix SQLite baseline database."
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=script_dir.parents[1]
+    default_bundle = (
+        script_dir.parents[1]
         / "Stronix-App"
         / "Resources"
         / "Database"
-        / "database_stronix.db",
-        help="Database path to replace after generation and validation.",
+        / "database_stronix.db"
     )
-    return parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Generate or verify the clean Stronix SQLite source baseline."
+    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--output",
+        type=Path,
+        help="Database path to replace after intentional generation and validation.",
+    )
+    mode.add_argument(
+        "--verify-bundled-baseline",
+        action="store_true",
+        help="Generate a temporary candidate and compare it with the bundled source baseline.",
+    )
+    parser.add_argument(
+        "--bundle",
+        type=Path,
+        default=default_bundle,
+        help="Bundled source-baseline path to read only during verification.",
+    )
+    args = parser.parse_args()
+    if not args.output and not args.verify_bundled_baseline:
+        args.output = default_bundle
+    return args
 
 
 def read_lookup_rows(path: Path) -> list[tuple[int, str, str]]:
@@ -388,8 +405,40 @@ def generate(output: Path) -> str:
         raise
 
 
+def open_read_only_database(path: Path) -> sqlite3.Connection:
+    bundle = path.resolve()
+    if not bundle.is_file():
+        raise ValueError(f"Bundled source baseline is missing: {bundle}")
+    return sqlite3.connect(f"file:{bundle.as_posix()}?mode=ro", uri=True)
+
+
+def verify_bundled_baseline(bundle: Path) -> tuple[str, str]:
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        candidate = Path(temporary_directory) / "database_stronix.db"
+        generated_fingerprint = generate(candidate)
+        connection = open_read_only_database(bundle)
+        try:
+            validate_database(connection)
+            bundled_fingerprint = logical_fingerprint(connection)
+        finally:
+            connection.close()
+
+    if bundled_fingerprint != generated_fingerprint:
+        raise ValueError(
+            "Bundled source baseline logical contract mismatch: "
+            f"generated={generated_fingerprint}, bundled={bundled_fingerprint}"
+        )
+    return generated_fingerprint, bundled_fingerprint
+
+
 def main() -> None:
     args = parse_args()
+    if args.verify_bundled_baseline:
+        generated_fingerprint, bundled_fingerprint = verify_bundled_baseline(args.bundle)
+        print(f"Verified bundled source baseline: {args.bundle.resolve()}")
+        print(f"Logical fingerprint: {bundled_fingerprint}")
+        return
+
     fingerprint = generate(args.output)
     print(f"Generated {args.output.resolve()}")
     print(f"Logical fingerprint: {fingerprint}")
