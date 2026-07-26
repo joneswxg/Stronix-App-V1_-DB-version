@@ -15,6 +15,10 @@ python3 tools/database/generate_baseline_db.py \
   --output Stronix-App/Resources/Database/database_stronix.db
 ```
 
+## Build CI
+
+Pull requests and pushes to `main` receive independent Debug and Release simulator build results. See [Phase 8.7 Deterministic Simulator Build CI](docs/remediation/phase-8.7-deterministic-build-ci.md) for the declared Xcode/runtime inputs and exact local commands equivalent to CI.
+
 D1 技术框架选型
 1.iOS App ←→ 本地Swift服务层 ←→ 本地SQLite数据库
 2.后端数据库: SQLite

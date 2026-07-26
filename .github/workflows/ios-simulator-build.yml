@@ -1,0 +1,145 @@
+name: iOS Simulator Builds
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.configuration }} simulator build
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration:
+          - Debug
+          - Release
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      PROJECT: Stronix-App-V1.xcodeproj
+      SCHEME: Stronix-App-V1
+      DESTINATION: platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5
+      SHARED_SCHEME: Stronix-App-V1.xcodeproj/xcshareddata/xcschemes/Stronix-App-V1.xcscheme
+      PACKAGE_RESOLVED: Stronix-App-V1.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+      CONFIGURATION: ${{ matrix.configuration }}
+      DERIVED_DATA_PATH: ${{ runner.temp }}/stronix-derived-data-${{ matrix.configuration }}
+      SOURCE_PACKAGES_PATH: ${{ runner.temp }}/stronix-source-packages-${{ matrix.configuration }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Report build environment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Selected developer directory: ${DEVELOPER_DIR}"
+          xcode-select --print-path
+
+          xcode_version="$(xcodebuild -version)"
+          printf '%s\n' "${xcode_version}"
+          if [[ "${xcode_version}" != $'Xcode 26.6\nBuild version 17F113' ]]; then
+            echo "Expected Xcode 26.6 (build 17F113)." >&2
+            exit 1
+          fi
+
+          echo "Installed simulator runtimes:"
+          xcrun simctl list runtimes available
+          echo "Available simulator devices:"
+          xcrun simctl list devices available
+
+          xcrun simctl list runtimes available -j > "${RUNNER_TEMP}/simulator-runtimes.json"
+          xcrun simctl list devices available -j > "${RUNNER_TEMP}/simulator-devices.json"
+          python3 - "${RUNNER_TEMP}/simulator-runtimes.json" "${RUNNER_TEMP}/simulator-devices.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as runtimes_file:
+              runtimes = json.load(runtimes_file)["runtimes"]
+
+          runtime = next(
+              (
+                  candidate
+                  for candidate in runtimes
+                  if candidate.get("name") == "iOS 26.5"
+                  and candidate.get("isAvailable", True)
+              ),
+              None,
+          )
+          if runtime is None:
+              raise SystemExit("Required iOS 26.5 simulator runtime is unavailable.")
+
+          with open(sys.argv[2], encoding="utf-8") as devices_file:
+              devices = json.load(devices_file)["devices"]
+
+          matching_devices = [
+              device
+              for device in devices.get(runtime["identifier"], [])
+              if device.get("name") == "iPhone 17 Pro"
+              and device.get("isAvailable", True)
+          ]
+          if not matching_devices:
+              raise SystemExit(
+                  "Required iPhone 17 Pro device is unavailable for iOS 26.5."
+              )
+
+          print(f"Validated runtime: {runtime['name']} ({runtime['identifier']})")
+          print(
+              "Validated destination device: "
+              f"{matching_devices[0]['name']} ({matching_devices[0]['udid']})"
+          )
+          PY
+
+          echo "Project: ${PROJECT}"
+          echo "Shared scheme: ${SCHEME} (${SHARED_SCHEME})"
+          echo "Configuration: ${CONFIGURATION}"
+          echo "Destination: ${DESTINATION}"
+          echo "DerivedData: ${DERIVED_DATA_PATH}"
+          echo "Source packages: ${SOURCE_PACKAGES_PATH}"
+
+          git ls-files --error-unmatch "${SHARED_SCHEME}" >/dev/null
+          git ls-files --error-unmatch "${PACKAGE_RESOLVED}" >/dev/null
+
+          echo "Resolved Swift package revisions:"
+          python3 - "${PACKAGE_RESOLVED}" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as resolved_file:
+              pins = json.load(resolved_file)["pins"]
+
+          for pin in pins:
+              state = pin["state"]
+              requirement = state.get("version") or state.get("branch") or "revision"
+              print(f"- {pin['identity']}: {requirement} @ {state['revision']}")
+          PY
+
+      - name: Build ${{ matrix.configuration }} for iOS Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          xcodebuild \
+            -project "${PROJECT}" \
+            -scheme "${SCHEME}" \
+            -configuration "${CONFIGURATION}" \
+            -destination "${DESTINATION}" \
+            -derivedDataPath "${DERIVED_DATA_PATH}" \
+            -clonedSourcePackagesDirPath "${SOURCE_PACKAGES_PATH}" \
+            -disableAutomaticPackageResolution \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -skipPackageUpdates \
+            -disablePackageRepositoryCache \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Verify package resolution is unchanged
+        shell: bash
+        run: git diff --exit-code -- "${PACKAGE_RESOLVED}"
