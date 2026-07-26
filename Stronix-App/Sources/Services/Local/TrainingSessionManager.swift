@@ -71,7 +71,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     private var savedRestTime: Int = 0
     private var wasRestTimerRunning = false
     
-    private init() {}
+    init() {}
     
     // MARK: - 训练控制方法
     

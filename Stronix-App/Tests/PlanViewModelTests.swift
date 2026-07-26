@@ -136,18 +136,21 @@ final class PlanViewModelTests: XCTestCase {
     func testClearDataIgnoresACompletedCancelledLoad() async {
         let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
         let userPlan = makePlan(id: 2, name: "我的计划", isTemplate: false)
-        let repository = MockPlanRepository(
-            templatePlansResult: .success([template]),
-            userPlansResult: .success([userPlan]),
-            delayNanoseconds: 100_000_000
+        let repository = SuspendingPlanRepository(
+            templatePlans: [template],
+            userPlans: [userPlan]
         )
         let viewModel = PlanViewModel(repository: repository)
 
         let load = Task { @MainActor in
             await viewModel.loadInitialData()
         }
-        try? await Task.sleep(nanoseconds: 10_000_000)
+        await fulfillment(
+            of: [repository.templateRequestStarted, repository.userRequestStarted],
+            timeout: 1
+        )
         viewModel.clearData()
+        repository.completeRequests()
         await load.value
 
         XCTAssertTrue(viewModel.templatePlans.isEmpty)
@@ -312,6 +315,58 @@ final class PlanViewModelTests: XCTestCase {
 
 private enum TestError: Error {
     case repositoryFailure
+}
+
+private final class SuspendingPlanRepository: PlanRepository, @unchecked Sendable {
+    let templateRequestStarted = XCTestExpectation(description: "template plans request started")
+    let userRequestStarted = XCTestExpectation(description: "user plans request started")
+
+    private let storedTemplatePlans: [TrainingPlan]
+    private let storedUserPlans: [TrainingPlan]
+    private let lock = NSLock()
+    private var templateContinuation: CheckedContinuation<[TrainingPlan], Error>?
+    private var userContinuation: CheckedContinuation<[TrainingPlan], Error>?
+
+    init(templatePlans: [TrainingPlan], userPlans: [TrainingPlan]) {
+        storedTemplatePlans = templatePlans
+        storedUserPlans = userPlans
+    }
+
+    func templatePlans() async throws -> [TrainingPlan] {
+        templateRequestStarted.fulfill()
+        return try await withCheckedThrowingContinuation { continuation in
+            lock.withLock { templateContinuation = continuation }
+        }
+    }
+
+    func userPlans() async throws -> [TrainingPlan] {
+        userRequestStarted.fulfill()
+        return try await withCheckedThrowingContinuation { continuation in
+            lock.withLock { userContinuation = continuation }
+        }
+    }
+
+    func completeRequests() {
+        let continuations = lock.withLock { () -> (
+            CheckedContinuation<[TrainingPlan], Error>?,
+            CheckedContinuation<[TrainingPlan], Error>?
+        ) in
+            defer {
+                templateContinuation = nil
+                userContinuation = nil
+            }
+            return (templateContinuation, userContinuation)
+        }
+        continuations.0?.resume(returning: storedTemplatePlans)
+        continuations.1?.resume(returning: storedUserPlans)
+    }
+
+    func templatePlanDetail(id: Int) async throws -> TrainingPlan { storedTemplatePlans[0] }
+    func userPlanDetail(id: Int) async throws -> TrainingPlan { storedUserPlans[0] }
+    func copyTemplatePlan(id: Int) async throws -> CreatePlanResponse { CreatePlanResponse(plan_id: 0) }
+    func createUserPlan(_ draft: PlanDraft) async throws -> CreatePlanResponse { CreatePlanResponse(plan_id: 0) }
+    func updateUserPlan(id: Int, planData: UpdatePlanRequest) async throws {}
+    func deleteUserPlan(id: Int) async throws {}
 }
 
 private final class MockPlanRepository: PlanRepository {

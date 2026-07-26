@@ -72,6 +72,65 @@ final class BodyMeasurementViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.showingAddSheet)
         XCTAssertFalse(viewModel.isLoading)
     }
+
+    func testDelayedUserALoadCannotRepopulateMeasurementsAfterScopeReset() async {
+        let userAMeasurement = measurement(id: 1, timestamp: Date(), weight: 70)
+        let operations = SuspendingBodyMeasurementOperations(measurements: [userAMeasurement])
+        let viewModel = BodyMeasurementViewModel(operations: operations)
+
+        let load = Task { await viewModel.loadMeasurements() }
+        await fulfillment(of: [operations.listRequestStarted], timeout: 1)
+
+        viewModel.resetUserScopedState()
+        operations.completeListRequest()
+        await load.value
+
+        XCTAssertTrue(viewModel.measurements.isEmpty)
+        XCTAssertNil(viewModel.selectedDataPoint)
+        XCTAssertNil(viewModel.errorMessage)
+        XCTAssertFalse(viewModel.isLoading)
+    }
+}
+
+private final class SuspendingBodyMeasurementOperations: BodyMeasurementOperating, @unchecked Sendable {
+    let listRequestStarted = XCTestExpectation(description: "measurement list request started")
+
+    private let measurements: [BodyMeasurement]
+    private let lock = NSLock()
+    private var listContinuation: CheckedContinuation<[BodyMeasurement], Error>?
+
+    init(measurements: [BodyMeasurement]) {
+        self.measurements = measurements
+    }
+
+    func listMeasurements() async throws -> [BodyMeasurement] {
+        listRequestStarted.fulfill()
+        return try await withCheckedThrowingContinuation { continuation in
+            lock.withLock { listContinuation = continuation }
+        }
+    }
+
+    func completeListRequest() {
+        let continuation = lock.withLock {
+            defer { listContinuation = nil }
+            return listContinuation
+        }
+        continuation?.resume(returning: measurements)
+    }
+
+    func measurement(id: Int) async throws -> BodyMeasurement {
+        try XCTUnwrap(measurements.first { $0.id == id })
+    }
+
+    func createMeasurement(_ draft: BodyMeasurementDraft) async throws -> BodyMeasurement {
+        throw BodyMeasurementRepositoryError.notFoundOrUnauthorized
+    }
+
+    func updateMeasurement(id: Int, with draft: BodyMeasurementDraft) async throws -> BodyMeasurement {
+        throw BodyMeasurementRepositoryError.notFoundOrUnauthorized
+    }
+
+    func deleteMeasurement(id: Int) async throws {}
 }
 
 private final class BodyMeasurementOperationsStub: BodyMeasurementOperating, @unchecked Sendable {
