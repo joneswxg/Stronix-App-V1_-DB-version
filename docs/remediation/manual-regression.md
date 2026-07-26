@@ -357,7 +357,9 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 ## Phase 8.1: Risk Verification Gate
 
-The P0/P1 traceability matrix is maintained in [`phase-8.1-risk-verification-matrix.md`](phase-8.1-risk-verification-matrix.md). It maps database readiness, plans, training/history, authentication/session, and body-measurement outcomes to automated seams and the manual paths in this checklist.
+The P0/P1 traceability matrix is maintained in [`phase-8.1-risk-verification-matrix.md`](phase-8.1-risk-verification-matrix.md). It maps database readiness, plans, training/history, authentication/session, and body-measurement outcomes to automated seams, CI/supporting checks, and the manual paths in this checklist.
+
+[`phase-8.11-release-quality-gate.md`](phase-8.11-release-quality-gate.md) is the final candidate-specific P0/P1 decision record. Earlier entries in this checklist do not count as Phase 8.11 evidence unless they identify the candidate commit, completed scope, environment, and observed result.
 
 Run the CI-oriented XCTest plan serially:
 
@@ -367,7 +369,7 @@ xcodebuild \
   -project Stronix-App-V1.xcodeproj \
   -scheme Stronix-App-V1 \
   -testPlan StronixRiskVerification \
-  -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' \
   -parallel-testing-enabled NO \
   -maximum-concurrent-test-simulator-destinations 1 \
   -derivedDataPath /tmp/stronix-phase-8-1-tests \
