@@ -147,3 +147,39 @@ jobs:
       - name: Verify package resolution is unchanged
         shell: bash
         run: git diff --exit-code -- "${PACKAGE_RESOLVED}"
+
+  repository-integrity:
+    name: Repository integrity checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Verify tracked repository noise
+        shell: bash
+        run: sh tools/check_tracked_noise.sh
+
+      - name: Verify Git index permissions
+        shell: bash
+        run: python3 tools/verify_file_permissions.py
+
+      - name: Validate action-image manifest
+        shell: bash
+        run: python3 tools/database/validate_action_images.py
+
+      - name: Run action-image manifest tests
+        shell: bash
+        run: python3 -m unittest tools.database.tests.test_action_image_manifest
+
+      - name: Verify bundled SQLite baseline contract
+        shell: bash
+        run: python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
+
+      - name: Run repository-integrity CI contract tests
+        shell: bash
+        run: python3 -m unittest tools.tests.test_repository_integrity_ci
+
+      - name: Verify repository-integrity CI contract
+        shell: bash
+        run: python3 tools/verify_repository_integrity_ci.py
