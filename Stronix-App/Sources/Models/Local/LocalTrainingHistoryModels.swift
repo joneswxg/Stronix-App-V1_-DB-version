@@ -338,6 +338,20 @@ struct SaveTrainingHistoryRequest: Codable {
     let duration: Int // 分钟
     let note: String?
     let details: [TrainingHistoryDetail]
+
+    func withSessionID(_ sessionID: Int) -> SaveTrainingHistoryRequest {
+        SaveTrainingHistoryRequest(
+            plan_id: plan_id,
+            session_id: sessionID,
+            plan_name: plan_name,
+            plan_description: plan_description,
+            training_date: training_date,
+            volume: volume,
+            duration: duration,
+            note: note,
+            details: details
+        )
+    }
 }
 
 /// 训练历史详情模型（前端兼容层）

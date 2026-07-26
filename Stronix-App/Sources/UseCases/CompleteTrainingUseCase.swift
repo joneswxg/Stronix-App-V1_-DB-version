@@ -1,6 +1,7 @@
 import Foundation
 
 protocol TrainingHistoryPersisting {
+    /// Persists history idempotently for the authenticated owner and request session_id.
     func saveTrainingHistory(_ request: SaveTrainingHistoryRequest) async throws -> SaveTrainingHistoryResponse
 }
 
@@ -17,9 +18,18 @@ struct TrainingCompletionSnapshot: Identifiable {
         planDraft: PlanDraft?
     ) {
         self.id = id
-        self.historyRequest = historyRequest
+        self.historyRequest = historyRequest.withSessionID(Self.sessionID(for: id))
         self.planID = planID
         self.planDraft = planDraft
+    }
+
+    static func sessionID(for id: UUID) -> Int {
+        let offsetBasis: UInt64 = 14_695_981_039_346_656_037
+        let prime: UInt64 = 1_099_511_628_211
+        let hash = id.uuidString.utf8.reduce(offsetBasis) { partial, byte in
+            (partial ^ UInt64(byte)) &* prime
+        }
+        return Int(hash & 0x3FFF_FFFF_FFFF_FFFF) + 10_000
     }
 }
 
@@ -62,7 +72,6 @@ protocol CompleteTrainingExecuting: AnyObject {
 final class CompleteTrainingUseCase: CompleteTrainingExecuting {
     private let historyPersistence: any TrainingHistoryPersisting
     private let planWriter: any UserPlanWriting
-    private var savedHistorySnapshotIDs: Set<UUID> = []
 
     init(
         historyPersistence: any TrainingHistoryPersisting,
@@ -76,13 +85,10 @@ final class CompleteTrainingUseCase: CompleteTrainingExecuting {
         snapshot: TrainingCompletionSnapshot,
         choice: TrainingCompletionChoice
     ) async -> TrainingCompletionResult {
-        if !savedHistorySnapshotIDs.contains(snapshot.id) {
-            do {
-                _ = try await historyPersistence.saveTrainingHistory(snapshot.historyRequest)
-                savedHistorySnapshotIDs.insert(snapshot.id)
-            } catch {
-                return .historySaveFailed(error)
-            }
+        do {
+            _ = try await historyPersistence.saveTrainingHistory(snapshot.historyRequest)
+        } catch {
+            return .historySaveFailed(error)
         }
 
         guard choice == .saveHistoryAndUpdatePlan else {

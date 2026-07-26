@@ -70,6 +70,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     private var savedSetTimers: [String: Int] = [:]
     private var savedRestTime: Int = 0
     private var wasRestTimerRunning = false
+    private var completionSnapshotID: UUID?
     
     init() {}
     
@@ -87,7 +88,8 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
         editingActions = actions.map { MutableTrainingAction(from: $0) }
         completedSets.removeAll()
         setNotes.removeAll()
-        
+        completionSnapshotID = UUID()
+
         isTrainingActive = true
         trainingStartTime = Date()
         totalTrainingTime = 0
@@ -110,7 +112,8 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
         editingActions.removeAll()
         completedSets.removeAll()
         setNotes.removeAll()
-        
+        completionSnapshotID = nil
+
         stopTrainingTimer()
         stopAllSetTimers()  // 停止所有组休息计时器
         stopRestTimer()     // 停止浮动休息计时器
@@ -435,9 +438,12 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
             }
         }
 
+        let snapshotID = completionSnapshotID ?? UUID()
+        completionSnapshotID = snapshotID
+
         let historyRequest = SaveTrainingHistoryRequest(
             plan_id: currentPlan.id,
-            session_id: Int.random(in: 1000...9999),
+            session_id: TrainingCompletionSnapshot.sessionID(for: snapshotID),
             plan_name: planName,
             plan_description: currentPlan.description,
             training_date: ISO8601DateFormatter().string(from: trainingStartTime ?? Date()),
@@ -470,6 +476,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
         )
 
         return TrainingCompletionSnapshot(
+            id: snapshotID,
             historyRequest: historyRequest,
             planID: currentPlan.id,
             planDraft: planDraft

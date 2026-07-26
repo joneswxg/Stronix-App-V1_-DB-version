@@ -8,10 +8,12 @@ protocol TrainingHistorySaving: TrainingHistoryPersisting {
 /// 保持原有接口，内部调用LocalTrainingHistoryService
 class TrainingHistoryService: ObservableObject, TrainingHistorySaving {
     static let shared = TrainingHistoryService()
-    
-    private let localService = LocalTrainingHistoryService.shared
-    
-    private init() {}
+
+    private let localService: LocalTrainingHistoryService
+
+    init(localService: LocalTrainingHistoryService = .shared) {
+        self.localService = localService
+    }
     
     /// 保存训练历史（本地化）
     func saveTrainingHistory(_ request: SaveTrainingHistoryRequest) async throws -> SaveTrainingHistoryResponse {

@@ -7,7 +7,9 @@ import SQLite
 
 class LocalTrainingHistoryService {
     static let shared = LocalTrainingHistoryService()
-    private let dbManager = DatabaseManager.shared
+
+    private let connectionProvider: () -> Connection?
+    private let currentUserProvider: any CurrentUserProviding
     
     // MARK: - 数据库表定义（与Python代码保持一致）
     private let training_history = Table("training_history")
@@ -73,29 +75,36 @@ class LocalTrainingHistoryService {
     private let a_name = Expression<String>("name")
     private let a_name_en = Expression<String?>("name_en")
     
-    private init() {}
+    init(
+        connectionProvider: @escaping () -> Connection? = { DatabaseManager.shared.getConnection() },
+        currentUserProvider: any CurrentUserProviding = CurrentUserContext.shared
+    ) {
+        self.connectionProvider = connectionProvider
+        self.currentUserProvider = currentUserProvider
+    }
+
+    private func currentUserID(_ providedUserID: Int?) throws -> Int {
+        if let providedUserID {
+            guard currentUserProvider.currentUserID == providedUserID else {
+                throw LocalTrainingHistoryError.unauthorized("用户未登录")
+            }
+            return providedUserID
+        }
+        guard let currentUserID = currentUserProvider.currentUserID else {
+            throw LocalTrainingHistoryError.unauthorized("用户未登录")
+        }
+        return currentUserID
+    }
     
     // MARK: - 保存训练历史
     /// 保存训练历史
     /// 迁移自 Backend-Reference save_training_history
     func saveTrainingHistory(_ request: SaveTrainingHistoryRequest, user_id: Int? = nil, language: String = "zh_CN") async throws -> SaveTrainingHistoryResponse {
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         // 转换为本地请求模型
         let localRequest = LocalSaveTrainingHistoryRequest(from: request)
@@ -108,7 +117,17 @@ class LocalTrainingHistoryService {
         
         do {
             var historyId: Int = 0
-            try db.transaction {
+            try db.transaction(.immediate) {
+                let existingHistory = training_history
+                    .filter(th_user_id == currentUserId && th_session_id == localRequest.session_id)
+                    .select(th_id)
+                    .limit(1)
+                if let row = try db.pluck(existingHistory) {
+                    historyId = row[th_id]
+                    print("✅ 训练历史已存在，ID: \(historyId)")
+                    return
+                }
+
                 // 如果有plan_id，验证计划是否存在且属于用户
                 if let planId = localRequest.plan_id {
                     let planExists = try db.scalar(training_plans.filter(tp_id == planId && tp_user_id == currentUserId).count) > 0
@@ -172,23 +191,11 @@ class LocalTrainingHistoryService {
         print("📝 计划名称: \(request.name)")
         print("🏃‍♂️ 动作数量: \(request.actions.count)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         // 转换为本地请求模型
         let localRequest = LocalUpdatePlanFromTrainingRequest(from: request)
@@ -287,24 +294,11 @@ class LocalTrainingHistoryService {
     func getTrainingHistory(user_id: Int? = nil, page: Int = 1, limit: Int = 20, planId: Int? = nil, startDate: String? = nil, endDate: String? = nil, language: String = "zh_CN") async throws -> TrainingHistoryListResponse {
         print("🔍 LocalTrainingHistoryService.getTrainingHistory 调用参数: page=\(page), limit=\(limit), planId=\(planId ?? 0), startDate=\(startDate ?? ""), endDate=\(endDate ?? "")")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
         
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                print("❌ 用户未登录，无法获取训练历史")
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 使用SQLite.swift的类型安全查询方式
@@ -436,23 +430,11 @@ class LocalTrainingHistoryService {
     func getTrainingDates(startDate: String, endDate: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> TrainingDatesResponse {
         print("🗓️ LocalTrainingHistoryService.getTrainingDates: \(startDate) 到 \(endDate)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 查询指定日期范围内的训练日期（去重）
@@ -493,23 +475,11 @@ class LocalTrainingHistoryService {
     func getTrainingHistoryDetail(historyId: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> TrainingHistoryDetailResponse {
         print("🔄 LocalTrainingHistoryService.getTrainingHistoryDetail，ID: \(historyId)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 获取训练历史基本信息
@@ -582,23 +552,11 @@ class LocalTrainingHistoryService {
     func updateTrainingHistory(historyId: Int, request: UpdateTrainingHistoryRequest, user_id: Int? = nil, language: String = "zh_CN") async throws {
         print("🔄 LocalTrainingHistoryService.updateTrainingHistory，ID: \(historyId)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             try db.transaction {
@@ -656,23 +614,11 @@ class LocalTrainingHistoryService {
     func deleteTrainingHistory(historyId: Int, user_id: Int? = nil, language: String = "zh_CN") async throws {
         print("🗑️ LocalTrainingHistoryService.deleteTrainingHistory，ID: \(historyId)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             try db.transaction {
@@ -704,23 +650,11 @@ class LocalTrainingHistoryService {
     func getTrainingStatistics(timeRange: String = "week", user_id: Int? = nil, language: String = "zh_CN") async throws -> TrainingStatisticsResponse {
         print("📊 LocalTrainingHistoryService.getTrainingStatistics，时间范围: \(timeRange)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 根据时间范围构建完整的SQL查询
@@ -1142,23 +1076,11 @@ class LocalTrainingHistoryService {
     
     /// 获取按身体部位和周统计的训练容量数据
     func getWeeklyVolumeByBodyPart(bodyPart: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> [VolumeTrendData] {
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 按周分组，获取过去10周的数据，按身体部位筛选
@@ -1197,23 +1119,11 @@ class LocalTrainingHistoryService {
     
     /// 获取按身体部位和周统计的训练时长数据
     func getWeeklyDurationByBodyPart(bodyPart: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> [DurationTrendData] {
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 按周分组，获取过去10周的数据，按身体部位筛选
@@ -1254,23 +1164,11 @@ class LocalTrainingHistoryService {
     func getMonthlyVolumeByBodyPart(bodyPart: String, year: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> [VolumeTrendData] {
         print("📊 LocalTrainingHistoryService.getMonthlyVolumeByBodyPart: \(bodyPart), year: \(year)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 构建SQL查询，按月统计指定年份的训练容量
@@ -1333,23 +1231,11 @@ class LocalTrainingHistoryService {
     func getMonthlyDurationByBodyPart(bodyPart: String, year: Int, user_id: Int? = nil, language: String = "zh_CN") async throws -> [DurationTrendData] {
         print("📊 LocalTrainingHistoryService.getMonthlyDurationByBodyPart: \(bodyPart), year: \(year)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 构建SQL查询，按月统计指定年份的训练时长
@@ -1412,23 +1298,11 @@ class LocalTrainingHistoryService {
     func getActionProgress(actionName: String, user_id: Int? = nil, language: String = "zh_CN") async throws -> ActionProgressResponse {
         print("💪 LocalTrainingHistoryService.getActionProgress: \(actionName)")
         
-        guard let db = dbManager.getConnection() else {
+        guard let db = connectionProvider() else {
             throw LocalTrainingHistoryError.databaseNotInitialized
         }
-        
-        // 获取当前用户ID
-        let currentUserId: Int
-        if let providedUserId = user_id {
-            guard CurrentUserContext.shared.currentUserID == providedUserId else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = providedUserId
-        } else {
-            guard let currentUser = CurrentUserContext.shared.currentUser else {
-                throw LocalTrainingHistoryError.unauthorized("用户未登录")
-            }
-            currentUserId = currentUser.id
-        }
+
+        let currentUserId = try currentUserID(user_id)
         
         do {
             // 查找动作ID（模糊匹配动作名称）
