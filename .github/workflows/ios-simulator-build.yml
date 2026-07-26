@@ -28,8 +28,6 @@ jobs:
       SHARED_SCHEME: Stronix-App-V1.xcodeproj/xcshareddata/xcschemes/Stronix-App-V1.xcscheme
       PACKAGE_RESOLVED: Stronix-App-V1.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
       CONFIGURATION: ${{ matrix.configuration }}
-      DERIVED_DATA_PATH: ${{ runner.temp }}/stronix-derived-data-${{ matrix.configuration }}
-      SOURCE_PACKAGES_PATH: ${{ runner.temp }}/stronix-source-packages-${{ matrix.configuration }}
 
     steps:
       - name: Check out repository
@@ -37,6 +35,9 @@ jobs:
 
       - name: Report build environment
         shell: bash
+        env:
+          DERIVED_DATA_PATH: ${{ runner.temp }}/stronix-derived-data-${{ matrix.configuration }}
+          SOURCE_PACKAGES_PATH: ${{ runner.temp }}/stronix-source-packages-${{ matrix.configuration }}
         run: |
           set -euo pipefail
 
@@ -123,6 +124,9 @@ jobs:
 
       - name: Build ${{ matrix.configuration }} for iOS Simulator
         shell: bash
+        env:
+          DERIVED_DATA_PATH: ${{ runner.temp }}/stronix-derived-data-${{ matrix.configuration }}
+          SOURCE_PACKAGES_PATH: ${{ runner.temp }}/stronix-source-packages-${{ matrix.configuration }}
         run: |
           set -euo pipefail
 
