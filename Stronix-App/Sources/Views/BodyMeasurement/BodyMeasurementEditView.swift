@@ -107,7 +107,16 @@ struct BodyMeasurementEditView: View {
                 )
             }
             .padding(.horizontal, 20)
-            
+
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.system(size: 14))
+                    .foregroundColor(theme.error)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+            }
+
             Spacer()
             
             // 保存按钮

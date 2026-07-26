@@ -272,14 +272,16 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 1. Sign in as User A and add at least two body measurements.
 2. Open overview, list, detail, and change; edit one record's date and values, then confirm the same persisted record remains selected in detail and all screens refresh.
 3. Delete the selected record from detail; confirm overview, list, and change no longer show it and selection moves to a remaining record or the explicit empty state.
-4. Log out, sign in as User B, and confirm no User A measurements, charts, selections, or sheets appear. Log back in as User A and confirm persisted records reload.
-5. Open Profile → User Info for a user with populated and unset profile values. Confirm gender, height, and weight match the active user, unsupported fields are absent, and the screen explicitly states that editing is unavailable.
+4. Log out, sign in as User B, and confirm no User A measurements, charts, selections, add sheet, or edit route appear. Log back in as User A and confirm persisted records reload.
+5. With a controllable persistence failure, attempt an add, date/value edit, and delete. Confirm the entered add/edit form stays open with its values intact, a safe error is visible, loaded records and the selected record remain unchanged, and a retry succeeds.
+6. Open Profile → User Info for a user with populated and unset profile values. Confirm gender, height, and weight match the active user, unsupported fields are absent, and the screen explicitly states that editing is unavailable.
 
 **Expected**:
 
 - Overview, list, detail, edit, and change observe one user-scoped persisted record set.
 - Add, date/value edit, and delete immediately update all affected screens without stale or sample data.
-- Account transitions clear the outgoing scope before loading the next user.
+- Account transitions clear the outgoing scope before loading the next user, and no late outgoing operation publishes body-measurement state.
+- A failed body-measurement mutation keeps its form and loaded/selected data intact, shows a safe error, and permits a successful retry.
 - Profile shows only actual persisted fields and does not expose a no-op save action.
 
 **Result**: Pending manual verification
