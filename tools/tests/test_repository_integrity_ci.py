@@ -22,6 +22,8 @@ VALID_JOB = """  repository-integrity:
         run: python3 -m unittest tools.database.tests.test_action_image_manifest
       - name: Verify bundled SQLite baseline contract
         run: python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
+      - name: Run bundled-baseline contract tests
+        run: python3 -m unittest tools.database.tests.test_bundled_baseline_contract
       - name: Verify repository-integrity CI contract
         run: python3 tools/verify_repository_integrity_ci.py
 """

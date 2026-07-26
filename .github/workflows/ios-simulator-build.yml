@@ -176,6 +176,10 @@ jobs:
         shell: bash
         run: python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
 
+      - name: Run bundled-baseline contract tests
+        shell: bash
+        run: python3 -m unittest tools.database.tests.test_bundled_baseline_contract
+
       - name: Run repository-integrity CI contract tests
         shell: bash
         run: python3 -m unittest tools.tests.test_repository_integrity_ci

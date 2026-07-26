@@ -25,6 +25,8 @@ REQUIRED_JOB_SNIPPETS = {
     "action-image tests command": "python3 -m unittest tools.database.tests.test_action_image_manifest",
     "baseline step": "name: Verify bundled SQLite baseline contract",
     "baseline command": "python3 tools/database/generate_baseline_db.py --verify-bundled-baseline",
+    "baseline tests step": "name: Run bundled-baseline contract tests",
+    "baseline tests command": "python3 -m unittest tools.database.tests.test_bundled_baseline_contract",
     "contract checker step": "name: Verify repository-integrity CI contract",
     "contract checker command": "python3 tools/verify_repository_integrity_ci.py",
 }

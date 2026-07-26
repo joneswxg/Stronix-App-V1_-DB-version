@@ -27,6 +27,8 @@ python3 tools/verify_file_permissions.py
 python3 tools/database/validate_action_images.py
 python3 -m unittest tools.database.tests.test_action_image_manifest
 python3 tools/database/generate_baseline_db.py --verify-bundled-baseline
+python3 -m unittest tools.database.tests.test_bundled_baseline_contract
+python3 -m unittest tools.tests.test_repository_integrity_ci
 python3 tools/verify_repository_integrity_ci.py
 ```
 
