@@ -12,12 +12,12 @@ final class HistoryCalendarViewModel: ObservableObject, UserScopedStateResetting
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var trainingDatesInMonth: Set<String> = []
 
-    private let repository: TrainingHistoryRepository
+    private let loadTrainingDates: LoadTrainingDatesUseCase
     private var loadTask: Task<Void, Never>?
     private var loadGeneration = 0
 
     init(repository: TrainingHistoryRepository) {
-        self.repository = repository
+        loadTrainingDates = LoadTrainingDatesUseCase(repository: repository)
     }
 
     func load(date: Date, ownerID: Int?) async {
@@ -34,12 +34,10 @@ final class HistoryCalendarViewModel: ObservableObject, UserScopedStateResetting
 
         let generation = loadGeneration
         let range = dateRange(for: date)
-        let repository = repository
+        let loadTrainingDates = loadTrainingDates
         let task = Task { [weak self] in
             do {
-                let dates = try await Task.detached {
-                    try repository.trainingDates(ownerID: ownerID, in: range)
-                }.value
+                let dates = try await loadTrainingDates.execute(ownerID: ownerID, range: range)
                 guard !Task.isCancelled, generation == self?.loadGeneration else { return }
                 self?.trainingDatesInMonth = Set(dates.dates)
                 self?.phase = .success

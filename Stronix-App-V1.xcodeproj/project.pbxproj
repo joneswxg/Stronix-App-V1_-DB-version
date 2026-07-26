@@ -87,6 +87,7 @@
 				UseCases/CompleteTrainingUseCase.swift,
 				UseCases/CopyTemplatePlanUseCase.swift,
 				UseCases/CreateUserPlanUseCase.swift,
+				UseCases/LoadTrainingDatesUseCase.swift,
 				ViewModels/ActionHistoryViewModel.swift,
 				ViewModels/HistoryCalendarViewModel.swift,
 				ViewModels/HistoryListViewModel.swift,
