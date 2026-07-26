@@ -75,7 +75,7 @@ final class PlanRepositoryTests: XCTestCase {
         let templateBefore = try repository.templatePlanDetail(id: 1)
         let result = try repository.copyTemplatePlan(id: 1, ownerID: ownerID)
         let copy = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
-        let copiedAction = try XCTUnwrap(copy.actions?.first)
+        let copiedActionIDs = try XCTUnwrap(copy.actions?.map(\.id))
 
         try repository.updateUserPlan(
             id: result.plan_id,
@@ -86,13 +86,24 @@ final class PlanRepositoryTests: XCTestCase {
                 duration: 50,
                 actions: [
                     UpdatePlanAction(
-                        action_id: copiedAction.id,
+                        action_id: copiedActionIDs[1],
                         order: 1,
                         rest: 120,
                         note: "编辑后的备注",
                         record_bilateral: false,
                         sets: [
-                            UpdatePlanSet(order: 1, weight: 30, reps: 8, notes: "编辑后的组")
+                            UpdatePlanSet(order: 1, weight: 30, reps: 8, notes: "编辑后的第一组"),
+                            UpdatePlanSet(order: 2, weight: 35, reps: 6, notes: "编辑后的第二组")
+                        ]
+                    ),
+                    UpdatePlanAction(
+                        action_id: copiedActionIDs[0],
+                        order: 2,
+                        rest: 90,
+                        note: "保留的第二动作",
+                        record_bilateral: true,
+                        sets: [
+                            UpdatePlanSet(order: 1, reps: 10, left_weight: 12, right_weight: 14, notes: "双侧组")
                         ]
                     )
                 ]
@@ -106,8 +117,16 @@ final class PlanRepositoryTests: XCTestCase {
         XCTAssertEqual(templateAfter.actions?.map(\.id), templateBefore.actions?.map(\.id))
         XCTAssertEqual(templateAfter.actions?.first?.sets.map(\.reps), templateBefore.actions?.first?.sets.map(\.reps))
         XCTAssertEqual(editedCopy.name, "已编辑的副本")
-        XCTAssertEqual(editedCopy.actions?.first?.restTime, 120)
-        XCTAssertEqual(editedCopy.actions?.first?.sets.first?.weight, 30)
+        XCTAssertEqual(editedCopy.actions?.map(\.id), [copiedActionIDs[1], copiedActionIDs[0]])
+        XCTAssertEqual(editedCopy.actions?.map(\.restTime), [120, 90])
+        XCTAssertEqual(editedCopy.actions?.map(\.notes), ["编辑后的备注", "保留的第二动作"])
+        XCTAssertEqual(editedCopy.actions?.map(\.recordBilateral), [false, true])
+        XCTAssertEqual(editedCopy.actions?.first?.sets.map(\.weight), [30, 35])
+        XCTAssertEqual(editedCopy.actions?.first?.sets.map(\.reps), [8, 6])
+        XCTAssertEqual(editedCopy.actions?.last?.sets.map(\.leftWeight), [12])
+        XCTAssertEqual(editedCopy.actions?.last?.sets.map(\.rightWeight), [14])
+        XCTAssertEqual(try rowCount(in: "plan_actions", planID: result.plan_id), 2)
+        XCTAssertEqual(try rowCount(in: "plan_sets", planID: result.plan_id), 3)
         XCTAssertThrowsError(try repository.userPlanDetail(id: result.plan_id, ownerID: otherOwnerID))
     }
 
@@ -283,6 +302,126 @@ final class PlanRepositoryTests: XCTestCase {
         XCTAssertEqual(after.actions?.map(\.id), before.actions?.map(\.id))
     }
 
+    func testDeleteOwnedUserPlanRemovesItFromReadsAndCascadesOwnedContent() throws {
+        let templateBefore = try repository.templatePlanDetail(id: 1)
+        let result = try repository.copyTemplatePlan(id: templateBefore.id, ownerID: ownerID)
+
+        XCTAssertGreaterThan(try rowCount(in: "plan_actions", planID: result.plan_id), 0)
+        XCTAssertGreaterThan(try rowCount(in: "plan_sets", planID: result.plan_id), 0)
+
+        try repository.deleteUserPlan(id: result.plan_id, ownerID: ownerID)
+
+        XCTAssertFalse(try repository.userPlans(ownerID: ownerID).contains { $0.id == result.plan_id })
+        XCTAssertThrowsError(try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)) { error in
+            XCTAssertEqual((error as? LocalPlanError)?.code, 404)
+        }
+        XCTAssertEqual(try rowCount(in: "training_plans", planID: result.plan_id), 0)
+        XCTAssertEqual(try rowCount(in: "plan_actions", planID: result.plan_id), 0)
+        XCTAssertEqual(try rowCount(in: "plan_sets", planID: result.plan_id), 0)
+
+        let templateAfter = try repository.templatePlanDetail(id: templateBefore.id)
+        assertPlanContent(templateAfter, equals: templateBefore)
+    }
+
+    func testCreateRollsBackPlanAndOwnedContentWhenSetPersistenceFails() throws {
+        let draft = try makeValidDraft(name: "创建回滚")
+        try installPlanSetInsertFailureTrigger()
+
+        XCTAssertThrowsError(try repository.createUserPlan(draft, ownerID: ownerID))
+
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM training_plans WHERE user_id = ?", ownerID) as? Int64, 0)
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM plan_actions") as? Int64, 0)
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM plan_sets") as? Int64, 0)
+    }
+
+    func testCopyRollsBackPlanAndOwnedContentWhenSetPersistenceFails() throws {
+        let templateBefore = try repository.templatePlanDetail(id: 1)
+        try installPlanSetInsertFailureTrigger()
+
+        XCTAssertThrowsError(try repository.copyTemplatePlan(id: templateBefore.id, ownerID: ownerID))
+
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM training_plans WHERE user_id = ?", ownerID) as? Int64, 0)
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM plan_actions") as? Int64, 0)
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM plan_sets") as? Int64, 0)
+        assertPlanContent(try repository.templatePlanDetail(id: templateBefore.id), equals: templateBefore)
+    }
+
+    func testUpdateRollsBackPriorPlanAndOwnedContentWhenSetPersistenceFails() throws {
+        let result = try repository.copyTemplatePlan(id: 1, ownerID: ownerID)
+        let before = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
+        let actionID = try XCTUnwrap(before.actions?.last?.id)
+        let actionCountBefore = try rowCount(in: "plan_actions", planID: result.plan_id)
+        let setCountBefore = try rowCount(in: "plan_sets", planID: result.plan_id)
+        try installPlanSetInsertFailureTrigger()
+
+        XCTAssertThrowsError(
+            try repository.updateUserPlan(
+                id: result.plan_id,
+                planData: UpdatePlanRequest(
+                    name: "不应保存的更新",
+                    description: "事务失败",
+                    difficulty: "advanced",
+                    duration: 99,
+                    actions: [
+                        UpdatePlanAction(
+                            action_id: actionID,
+                            order: 1,
+                            rest: 180,
+                            note: "不应保存",
+                            sets: [UpdatePlanSet(order: 1, weight: 99, reps: 3)]
+                        )
+                    ]
+                ),
+                ownerID: ownerID
+            )
+        )
+
+        let after = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
+        assertPlanContent(after, equals: before)
+        XCTAssertEqual(try rowCount(in: "plan_actions", planID: result.plan_id), actionCountBefore)
+        XCTAssertEqual(try rowCount(in: "plan_sets", planID: result.plan_id), setCountBefore)
+    }
+
+    func testServiceRejectsForgedOwnerIDsAcrossPlanMutationsWithoutChangingData() async throws {
+        let existing = try repository.copyTemplatePlan(id: 1, ownerID: ownerID)
+        let before = try repository.userPlanDetail(id: existing.plan_id, ownerID: ownerID)
+        let draft = try makeValidDraft(name: "伪造创建")
+        let actionID = try XCTUnwrap(before.actions?.first?.id)
+        let service = LocalPlanService(
+            connectionProvider: { self.connection },
+            authenticatedUserIDProvider: { self.ownerID }
+        )
+
+        await assertUnauthorized {
+            try await service.createPlan(draft, user_id: self.otherOwnerID)
+        }
+        await assertUnauthorized {
+            try await service.copyTemplatePlan(templateId: 1, user_id: self.otherOwnerID)
+        }
+        await assertUnauthorized {
+            try await service.updatePlan(
+                planId: existing.plan_id,
+                planData: UpdatePlanRequest(
+                    name: "伪造更新",
+                    actions: [
+                        UpdatePlanAction(
+                            action_id: actionID,
+                            order: 1,
+                            sets: [UpdatePlanSet(order: 1, weight: 1, reps: 1)]
+                        )
+                    ]
+                ),
+                user_id: self.otherOwnerID
+            )
+        }
+        await assertUnauthorized {
+            try await service.deletePlan(planId: existing.plan_id, user_id: self.otherOwnerID)
+        }
+
+        XCTAssertEqual(try connection.scalar("SELECT COUNT(*) FROM training_plans") as? Int64, 1)
+        assertPlanContent(try repository.userPlanDetail(id: existing.plan_id, ownerID: ownerID), equals: before)
+    }
+
     func testServiceRejectsAnotherUsersID() async throws {
         let service = LocalPlanService(
             connectionProvider: { self.connection },
@@ -333,20 +472,41 @@ final class PlanRepositoryTests: XCTestCase {
         }
     }
 
-    func testUserPlanListActionCountMatchesDetailAndCopyStartsTraining() throws {
+    func testOnlyEligibleUserPlanStartsPersonalTraining() throws {
         let result = try repository.copyTemplatePlan(id: 1, ownerID: ownerID)
         let listedPlan = try XCTUnwrap(try repository.userPlans(ownerID: ownerID).first)
         let detailedPlan = try repository.userPlanDetail(id: result.plan_id, ownerID: ownerID)
+        let templatePlan = try repository.templatePlanDetail(id: 1)
+        let emptyUserPlan = TrainingPlan(
+            id: result.plan_id,
+            name: "空用户计划",
+            creator: "我",
+            createdDate: "",
+            lastTraining: "",
+            volume: 0,
+            actions: []
+        )
         XCTAssertEqual(listedPlan.id, result.plan_id)
         XCTAssertEqual(listedPlan.actions?.count, detailedPlan.actions?.count)
 
         let manager = TrainingSessionManager.shared
         manager.stopTraining()
+        defer { manager.stopTraining() }
+
+        manager.startTraining(with: templatePlan)
+        XCTAssertFalse(manager.isTrainingActive)
+        XCTAssertNil(manager.currentPlan)
+        XCTAssertTrue(manager.editingActions.isEmpty)
+
+        manager.startTraining(with: emptyUserPlan)
+        XCTAssertFalse(manager.isTrainingActive)
+        XCTAssertNil(manager.currentPlan)
+        XCTAssertTrue(manager.editingActions.isEmpty)
+
         manager.startTraining(with: detailedPlan)
         XCTAssertTrue(manager.isTrainingActive)
         XCTAssertEqual(manager.currentPlan?.id, detailedPlan.id)
         XCTAssertEqual(manager.editingActions.count, detailedPlan.actions?.count)
-        manager.stopTraining()
     }
 
     func testServiceMapsMissingConnectionToDatabaseError() async {
@@ -379,6 +539,87 @@ final class PlanRepositoryTests: XCTestCase {
             guard case .operationFailed = error as? DatabaseError else {
                 return XCTFail("Expected DatabaseError.operationFailed, got \(error)")
             }
+        }
+    }
+
+    private func makeValidDraft(name: String) throws -> PlanDraft {
+        let actionIDs = try XCTUnwrap(try repository.templatePlanDetail(id: 1).actions?.map(\.id))
+        return PlanDraft(
+            name: name,
+            description: "事务验证",
+            difficulty: "intermediate",
+            duration: 30,
+            actions: [
+                PlanActionDraft(
+                    actionID: actionIDs[0],
+                    rest: 60,
+                    note: "第一动作",
+                    sets: [PlanSetDraft(weight: 20, reps: 10, notes: "第一组")]
+                ),
+                PlanActionDraft(
+                    actionID: actionIDs[1],
+                    rest: 75,
+                    note: "第二动作",
+                    recordBilateral: true,
+                    sets: [PlanSetDraft(reps: 8, leftWeight: 10, rightWeight: 12, notes: "第二组")]
+                )
+            ]
+        )
+    }
+
+    private func installPlanSetInsertFailureTrigger() throws {
+        try connection.execute(
+            """
+            CREATE TEMP TRIGGER phase_8_4_fail_plan_set_insert
+            BEFORE INSERT ON plan_sets
+            BEGIN
+                SELECT RAISE(ABORT, 'phase 8.4 injected plan set failure');
+            END
+            """
+        )
+    }
+
+    private func rowCount(in table: String, planID: Int) throws -> Int64 {
+        let column = table == "training_plans" ? "id" : "plan_id"
+        return try XCTUnwrap(try connection.scalar("SELECT COUNT(*) FROM \(table) WHERE \(column) = ?", planID) as? Int64)
+    }
+
+    private func assertPlanContent(
+        _ actual: TrainingPlan,
+        equals expected: TrainingPlan,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(actual.id, expected.id, file: file, line: line)
+        XCTAssertEqual(actual.name, expected.name, file: file, line: line)
+        XCTAssertEqual(actual.description, expected.description, file: file, line: line)
+        XCTAssertEqual(actual.difficulty, expected.difficulty, file: file, line: line)
+        XCTAssertEqual(actual.duration, expected.duration, file: file, line: line)
+        XCTAssertEqual(actual.isTemplate, expected.isTemplate, file: file, line: line)
+        XCTAssertEqual(actual.templateId, expected.templateId, file: file, line: line)
+        XCTAssertEqual(actual.actions?.map(\.id), expected.actions?.map(\.id), file: file, line: line)
+        XCTAssertEqual(actual.actions?.map(\.restTime), expected.actions?.map(\.restTime), file: file, line: line)
+        XCTAssertEqual(actual.actions?.map(\.notes), expected.actions?.map(\.notes), file: file, line: line)
+        XCTAssertEqual(actual.actions?.map(\.recordBilateral), expected.actions?.map(\.recordBilateral), file: file, line: line)
+        XCTAssertEqual(actual.actions?.map { $0.sets.map(\.weight) }, expected.actions?.map { $0.sets.map(\.weight) }, file: file, line: line)
+        XCTAssertEqual(actual.actions?.map { $0.sets.map(\.reps) }, expected.actions?.map { $0.sets.map(\.reps) }, file: file, line: line)
+        XCTAssertEqual(actual.actions?.map { $0.sets.map(\.leftWeight) }, expected.actions?.map { $0.sets.map(\.leftWeight) }, file: file, line: line)
+        XCTAssertEqual(actual.actions?.map { $0.sets.map(\.rightWeight) }, expected.actions?.map { $0.sets.map(\.rightWeight) }, file: file, line: line)
+        XCTAssertEqual(actual.actions?.map { $0.sets.map(\.notes) }, expected.actions?.map { $0.sets.map(\.notes) }, file: file, line: line)
+    }
+
+    private func assertUnauthorized<T>(
+        _ operation: () async throws -> T,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        do {
+            _ = try await operation()
+            XCTFail("Expected an unauthorized plan mutation", file: file, line: line)
+        } catch let error as LocalPlanError {
+            XCTAssertEqual(error.code, 401, file: file, line: line)
+        } catch {
+            XCTFail("Expected LocalPlanError.unauthorized, got \(error)", file: file, line: line)
         }
     }
 }

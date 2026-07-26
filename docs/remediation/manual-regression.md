@@ -132,17 +132,20 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 1. Sign in with a local user.
 2. Open the template plan list and inspect a seeded template.
-3. Use the template to add it to the signed-in user's plans.
-4. Edit and save the resulting User Plan.
-5. Reopen the original template.
+3. Confirm the Template Plan does not offer a personal-training start action.
+4. Use the template to add it to the signed-in user's plans.
+5. Edit and save the resulting User Plan.
+6. Reopen both the copied User Plan and the original Template Plan after relaunch.
 
 **Expected**:
 
 - Seeded templates are visible and browsable.
+- Template Plans remain excluded from the personal-training flow.
 - The resulting User Plan belongs only to the signed-in user.
-- Editing the User Plan does not alter the template.
+- Editing the User Plan does not alter the Template Plan.
+- The copied User Plan and source Template Plan retain their independent values after relaunch.
 
-**Result**: Pass, verified by user on 2026-07-22
+**Result**: Phase 8.4 re-verification required
 
 ### 5. Create Training Plan
 
@@ -160,7 +163,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Plan appears in the user plan list.
 - Reopening the plan shows the saved values.
 
-**Result**: Pass, verified by user on 2026-07-22
+**Result**: Phase 8.4 re-verification required
 
 ### 6. Edit Training Plan
 
@@ -176,26 +179,46 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 - Changes persist.
 - No duplicate or missing actions are introduced.
 
-**Result**: Pass, verified by user on 2026-07-22
+**Result**: Phase 8.4 re-verification required
 
-### 7. Start Training
+### 7. Delete Training Plan
 
 **Steps**:
 
-1. Open an existing User Plan.
-2. Start a training session.
-3. Edit actual reps or weights for at least one set.
-4. Trigger rest timer behavior if available.
+1. Create or copy a disposable User Plan with at least one action and set.
+2. Delete the User Plan from the personal plan list.
+3. Navigate away and return to the plan list.
+4. Relaunch the app and inspect the personal plan list again.
+5. If the plan came from a Template Plan, reopen that source template.
 
 **Expected**:
 
-- Training screen opens.
+- The deleted User Plan disappears from later list and detail reads.
+- The deleted User Plan does not return after relaunch.
+- Its source Template Plan remains available and unchanged.
+
+**Result**: Phase 8.4 verification required
+
+### 8. Start Training
+
+**Steps**:
+
+1. Open a Template Plan and confirm no personal-training start action is available.
+2. Reopen an existing User Plan with at least one action.
+3. Start a training session.
+4. Edit actual reps or weights for at least one set.
+5. Trigger rest timer behavior if available.
+
+**Expected**:
+
+- The Template Plan cannot enter the personal-training flow.
+- The eligible reopened User Plan opens the training screen.
 - Set changes are reflected in the active session.
 - Timer behavior does not block core recording.
 
-**Result**: Pass, verified by user on 2026-07-22
+**Result**: Phase 8.4 re-verification required
 
-### 8. Complete Training And Save History
+### 9. Complete Training And Save History
 
 **Steps**:
 
@@ -211,7 +234,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pass, verified by user on 2026-07-22
 
-### 9. View Training History
+### 10. View Training History
 
 **Steps**:
 
@@ -227,7 +250,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pass, verified by user on 2026-07-22
 
-### 10. Add Body Measurement
+### 11. Add Body Measurement
 
 **Steps**:
 
@@ -242,7 +265,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pass, verified by user on 2026-07-22
 
-### 11. Shared Body Measurement State and Profile
+### 12. Shared Body Measurement State and Profile
 
 **Steps**:
 
@@ -261,7 +284,7 @@ The missing runtime issue was resolved outside Codex. The user reported that the
 
 **Result**: Pending manual verification
 
-### 12. App Relaunch Data Persistence
+### 13. App Relaunch Data Persistence
 
 **Steps**:
 
@@ -450,7 +473,7 @@ Validate `AuthTextField`, `SemanticActionButton`, and `AuthActionButton` where t
 | Plan list | Signed out, initial loading, error/retry, empty, and populated | Each state is understandable in Chinese and assistive technology; retry/login/create actions remain reachable. |
 | Template and personal plan tabs | Populated tabs, per-tab empty states, accessibility Dynamic Type | Grid/layout adapts without hiding key actions; tabs, cards, and menus expose useful labels and state. |
 | Template use and User Plan editing | Use a template, edit the resulting User Plan, reopen both | Template use creates a user-owned plan; edits persist on that User Plan and never mutate the source Template Plan. |
-| Plan persistence | Reopen the list and plan after save/relaunch | Created, copied, and edited User Plan values remain intact. |
+| Plan persistence | Reopen the list and plan after save/relaunch; delete a disposable User Plan and relaunch | Created, copied, and edited User Plan values remain intact; the deleted User Plan stays absent while any source Template Plan remains unchanged. |
 
 Validate `ContentStateView` where the existing plan-list state seam uses it; this does not require every state screen to use that component.
 

@@ -77,11 +77,14 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     
     /// 开始训练
     func startTraining(with plan: TrainingPlan) {
-        guard !isTrainingActive else { return }
-        
+        guard !isTrainingActive,
+              !plan.isTemplate,
+              let actions = plan.actions,
+              !actions.isEmpty else { return }
+
         currentPlan = plan
         planName = plan.name
-        editingActions = plan.actions?.map { MutableTrainingAction(from: $0) } ?? []
+        editingActions = actions.map { MutableTrainingAction(from: $0) }
         completedSets.removeAll()
         setNotes.removeAll()
         
