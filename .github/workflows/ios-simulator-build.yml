@@ -6,6 +6,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Base branch or ref for changed-code formatting
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -147,6 +153,71 @@ jobs:
       - name: Verify package resolution is unchanged
         shell: bash
         run: git diff --exit-code -- "${PACKAGE_RESOLVED}"
+
+  swift-changed-code-formatting:
+    name: Swift changed-code formatting
+    runs-on: macos-26
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install pinned SwiftFormat
+        shell: bash
+        env:
+          SWIFTFORMAT_VERSION: 0.58.5
+          SWIFTFORMAT_SHA256: e3d59ebbbab3567f9f460e2d24983ed44de351bd80b9eb5b3cb14d06317df05c
+        run: |
+          set -euo pipefail
+
+          archive="${RUNNER_TEMP}/swiftformat-${SWIFTFORMAT_VERSION}.zip"
+          install_dir="${RUNNER_TEMP}/swiftformat-${SWIFTFORMAT_VERSION}"
+          curl --fail --location --silent --show-error \
+            --output "${archive}" \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+          echo "${SWIFTFORMAT_SHA256}  ${archive}" | shasum -a 256 --check
+          rm -rf "${install_dir}"
+          mkdir -p "${install_dir}"
+          unzip -q "${archive}" -d "${install_dir}"
+          test "$("${install_dir}/swiftformat" --version)" = "${SWIFTFORMAT_VERSION}"
+
+      - name: Lint changed owned Swift files
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          DISPATCH_BASE_REF: ${{ inputs.base_ref }}
+          SWIFTFORMAT: ${{ runner.temp }}/swiftformat-0.58.5/swiftformat
+        run: |
+          set -euo pipefail
+
+          case "${EVENT_NAME}" in
+            pull_request)
+              format_base="${PR_BASE_SHA}"
+              ;;
+            push)
+              if [[ "${PUSH_BEFORE}" = "0000000000000000000000000000000000000000" ]]; then
+                echo "Cannot determine a formatting base for an initial push." >&2
+                exit 1
+              fi
+              format_base="${PUSH_BEFORE}"
+              ;;
+            workflow_dispatch)
+              git rev-parse --verify "origin/${DISPATCH_BASE_REF}^{commit}" >/dev/null
+              format_base="origin/${DISPATCH_BASE_REF}"
+              ;;
+            *)
+              echo "Unsupported event for changed-code formatting: ${EVENT_NAME}" >&2
+              exit 1
+              ;;
+          esac
+
+          python3 tools/lint_changed_swift_format.py \
+            --base "${format_base}" \
+            --formatter "${SWIFTFORMAT}"
 
   repository-integrity:
     name: Repository integrity checks

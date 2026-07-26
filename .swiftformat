@@ -1,0 +1,4 @@
+--swiftversion 5.0
+--indent 4
+--linebreaks lf
+--rules indent,linebreaks,trailingSpace,consecutiveBlankLines,blankLinesAtStartOfScope,blankLinesAtEndOfScope,spaceAroundOperators,spaceAroundParens,spaceInsideBraces
