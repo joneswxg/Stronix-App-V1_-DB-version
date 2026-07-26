@@ -49,6 +49,7 @@
 		9D70A7EA2DDDC3BF0085BAAF /* Exceptions for "Sources" folder in "Stronix" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				App/AppStartupCoordinator.swift,
 				App/Stronix_App_V1App.swift,
 				App/UserSession.swift,
 				Models/Local/LocalActionModels.swift,

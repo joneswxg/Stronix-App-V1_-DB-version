@@ -107,6 +107,11 @@ final class UserSession: ObservableObject, CurrentUserProviding {
         }
     }
 
+    func discardStaleState() {
+        _ = beginOperation()
+        transition(to: .unauthenticated)
+    }
+
     func login(email: String, password: String) async throws {
         let generation = beginOperation()
         let user = try await operations.login(email: email, password: password)

@@ -3,6 +3,7 @@ import SwiftUI
 enum ContentStateKind {
     case loading
     case empty
+    case warning
     case error
 }
 
@@ -42,7 +43,7 @@ struct ContentStateView: View {
                 } else {
                     Image(systemName: symbol)
                         .font(.system(size: 48, weight: .medium))
-                        .foregroundStyle(kind == .error ? tokens.error : tokens.contentSecondary)
+                        .foregroundStyle(symbolColor)
                         .accessibilityHidden(true)
                 }
 
@@ -74,5 +75,16 @@ struct ContentStateView: View {
         }
         .padding(DesignTokens.Spacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var symbolColor: Color {
+        switch kind {
+        case .warning:
+            tokens.warning
+        case .error:
+            tokens.error
+        case .loading, .empty:
+            tokens.contentSecondary
+        }
     }
 }
