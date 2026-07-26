@@ -72,6 +72,8 @@ final class UserSession: ObservableObject, CurrentUserProviding {
     private let operations: any AuthenticationOperating
     private var resetters: [WeakUserScopedResetter]
     private var operationGeneration = 0
+    private var currentOperationID: UUID?
+    private var cancelCurrentOperation: (() -> Void)?
 
     init(
         operations: any AuthenticationOperating,
@@ -90,7 +92,10 @@ final class UserSession: ObservableObject, CurrentUserProviding {
     var isAuthenticated: Bool { currentUser != nil }
 
     func registerResetter(_ resetter: any UserScopedStateResetting) {
-        resetters.removeAll { $0.value == nil }
+        resetters.removeAll { existing in
+            guard let value = existing.value else { return true }
+            return value === resetter
+        }
         resetters.append(WeakUserScopedResetter(resetter))
     }
 
@@ -98,9 +103,11 @@ final class UserSession: ObservableObject, CurrentUserProviding {
         let generation = beginOperation()
         state = .restoring
         do {
-            let user = try await operations.restoreSession()
+            let user = try await runOperation { try await self.operations.restoreSession() }
             guard generation == operationGeneration else { return }
             transition(to: user.map(UserSessionState.authenticated) ?? .unauthenticated)
+        } catch is CancellationError {
+            return
         } catch {
             guard generation == operationGeneration else { return }
             transition(to: .unauthenticated)
@@ -114,28 +121,58 @@ final class UserSession: ObservableObject, CurrentUserProviding {
 
     func login(email: String, password: String) async throws {
         let generation = beginOperation()
-        let user = try await operations.login(email: email, password: password)
-        guard generation == operationGeneration else { return }
-        transition(to: .authenticated(user))
+        do {
+            let user = try await runOperation { try await self.operations.login(email: email, password: password) }
+            guard generation == operationGeneration else { return }
+            transition(to: .authenticated(user))
+        } catch is CancellationError {
+            return
+        }
     }
 
     func register(_ registration: AuthRegistration) async throws {
         let generation = beginOperation()
-        let user = try await operations.register(registration)
-        guard generation == operationGeneration else { return }
-        transition(to: .authenticated(user))
+        do {
+            let user = try await runOperation { try await self.operations.register(registration) }
+            guard generation == operationGeneration else { return }
+            transition(to: .authenticated(user))
+        } catch is CancellationError {
+            return
+        }
     }
 
     func logout() async throws {
         let generation = beginOperation()
-        try await operations.logout()
-        guard generation == operationGeneration else { return }
-        transition(to: .unauthenticated)
+        do {
+            try await runOperation { try await self.operations.logout() }
+            guard generation == operationGeneration else { return }
+            transition(to: .unauthenticated)
+        } catch is CancellationError {
+            return
+        }
     }
 
     private func beginOperation() -> Int {
+        cancelCurrentOperation?()
+        currentOperationID = nil
         operationGeneration += 1
         return operationGeneration
+    }
+
+    private func runOperation<T>(
+        _ operation: @escaping @MainActor () async throws -> T
+    ) async throws -> T {
+        let operationID = UUID()
+        let task = Task { @MainActor in try await operation() }
+        currentOperationID = operationID
+        cancelCurrentOperation = { task.cancel() }
+        defer {
+            if currentOperationID == operationID {
+                currentOperationID = nil
+                cancelCurrentOperation = nil
+            }
+        }
+        return try await task.value
     }
 
     private func transition(to newState: UserSessionState) {

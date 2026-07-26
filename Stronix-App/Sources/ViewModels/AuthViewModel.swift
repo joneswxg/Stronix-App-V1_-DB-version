@@ -4,6 +4,7 @@ import Foundation
 protocol AuthSessionIntending: AnyObject {
     func login(email: String, password: String) async throws
     func register(_ registration: AuthRegistration) async throws
+    func logout() async throws
 }
 
 extension UserSession: AuthSessionIntending {}
@@ -22,7 +23,10 @@ final class AuthViewModel: ObservableObject {
     @Published var agreesToTerms = false
     @Published private(set) var isLoggingIn = false
     @Published private(set) var isRegistering = false
+    @Published private(set) var isLoggingOut = false
     @Published var errorMessage: String?
+
+    var canLogout: Bool { !isLoggingOut }
 
     var canLogin: Bool {
         !loginEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -87,6 +91,18 @@ final class AuthViewModel: ObservableObject {
                     weight: weight
                 )
             )
+        } catch {
+            errorMessage = userMessage(for: error)
+        }
+    }
+
+    func logout(using session: any AuthSessionIntending) async {
+        guard canLogout else { return }
+        isLoggingOut = true
+        errorMessage = nil
+        defer { isLoggingOut = false }
+        do {
+            try await session.logout()
         } catch {
             errorMessage = userMessage(for: error)
         }

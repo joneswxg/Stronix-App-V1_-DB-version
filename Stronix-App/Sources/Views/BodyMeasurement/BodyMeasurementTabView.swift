@@ -4,6 +4,7 @@ struct BodyMeasurementTabView: View {
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var userSession: UserSession
     @ObservedObject var viewModel: BodyMeasurementViewModel
+    @StateObject private var authViewModel = AuthViewModel()
     @State private var selectedTab = 0
 
     var body: some View {
@@ -48,6 +49,7 @@ struct BodyMeasurementTabView: View {
                     BodyMeasurementOverview(
                         viewModel: viewModel,
                         isAuthenticated: userSession.isAuthenticated,
+                        isLoggingOut: authViewModel.isLoggingOut,
                         logout: logout
                     )
                 } else if selectedTab == 1 {
@@ -60,6 +62,7 @@ struct BodyMeasurementTabView: View {
                     BodyMeasurementOverview(
                         viewModel: viewModel,
                         isAuthenticated: userSession.isAuthenticated,
+                        isLoggingOut: authViewModel.isLoggingOut,
                         logout: logout
                     )
                 }
@@ -77,8 +80,9 @@ struct BodyMeasurementTabView: View {
         }
     }
 
-    private func logout() async {
-        try? await userSession.logout()
+    private func logout() async -> String? {
+        await authViewModel.logout(using: userSession)
+        return authViewModel.errorMessage
     }
 
     private func loadMeasurements(for userID: Int?) async {

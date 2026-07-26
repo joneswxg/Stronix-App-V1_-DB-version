@@ -6,8 +6,10 @@ struct BodyMeasurementOverview: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: BodyMeasurementViewModel
     let isAuthenticated: Bool
-    let logout: () async -> Void
+    let isLoggingOut: Bool
+    let logout: () async -> String?
     @State private var showLogin = false
+    @State private var logoutErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -39,6 +41,18 @@ struct BodyMeasurementOverview: View {
         .sheet(isPresented: $showLogin) {
             LoginView()
         }
+        .alert("auth.feedback.logoutFailed", isPresented: logoutErrorBinding) {
+            Button("auth.action.confirm", role: .cancel) { logoutErrorMessage = nil }
+        } message: {
+            Text(logoutErrorMessage ?? AppStrings.text("auth.error.generic"))
+        }
+    }
+
+    private var logoutErrorBinding: Binding<Bool> {
+        Binding(
+            get: { logoutErrorMessage != nil },
+            set: { if !$0 { logoutErrorMessage = nil } }
+        )
     }
 
     @ViewBuilder
@@ -160,7 +174,7 @@ struct BodyMeasurementOverview: View {
             Spacer()
             Button {
                 if isAuthenticated {
-                    Task { await logout() }
+                    Task { logoutErrorMessage = await logout() }
                 } else {
                     showLogin = true
                 }
@@ -171,6 +185,7 @@ struct BodyMeasurementOverview: View {
                     .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
             }
             .accessibilityLabel(isAuthenticated ? "bodyMeasurement.accessibility.logout" : "bodyMeasurement.accessibility.login")
+            .disabled(isLoggingOut)
         }
         .padding(.top, DesignTokens.Spacing.small)
     }
@@ -437,7 +452,8 @@ struct MetricCard: View {
     BodyMeasurementOverview(
         viewModel: BodyMeasurementViewModel(),
         isAuthenticated: false,
-        logout: {}
+        isLoggingOut: false,
+        logout: { nil }
     )
     .withAppTheme()
 }

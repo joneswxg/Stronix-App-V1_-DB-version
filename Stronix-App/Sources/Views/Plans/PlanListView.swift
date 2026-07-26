@@ -6,6 +6,7 @@ struct PlanListView: View {
     @ObservedObject var viewModel: PlanViewModel
     @ObservedObject var createPlanViewModel: CreatePlanViewModel
     @State private var showLogin = false
+    @StateObject private var authViewModel = AuthViewModel()
     @State private var selectedTab = 1
     @State private var navigateToCreatePlan = false
 
@@ -38,6 +39,11 @@ struct PlanListView: View {
         } message: {
             Text(viewModel.errorMessage ?? AppStrings.text("planList.error.unknown"))
         }
+        .alert("auth.feedback.logoutFailed", isPresented: authErrorBinding) {
+            Button("auth.action.confirm", role: .cancel) { authViewModel.errorMessage = nil }
+        } message: {
+            Text(authViewModel.errorMessage ?? AppStrings.text("auth.error.generic"))
+        }
         .refreshable {
             if userSession.isAuthenticated {
                 await viewModel.refresh()
@@ -67,6 +73,13 @@ struct PlanListView: View {
         }
     }
 
+    private var authErrorBinding: Binding<Bool> {
+        Binding(
+            get: { authViewModel.errorMessage != nil },
+            set: { if !$0 { authViewModel.errorMessage = nil } }
+        )
+    }
+
     private var header: some View {
         HStack(spacing: DesignTokens.Spacing.medium) {
             Image("StronixLogo")
@@ -81,7 +94,7 @@ struct PlanListView: View {
             Spacer()
             Button {
                 if userSession.isAuthenticated {
-                    Task { try? await userSession.logout() }
+                    Task { await authViewModel.logout(using: userSession) }
                 } else {
                     showLogin = true
                 }
@@ -93,6 +106,7 @@ struct PlanListView: View {
             }
             .accessibilityLabel(userSession.isAuthenticated ? Text("planList.accessibility.logout") : Text("planList.accessibility.login"))
             .accessibilityHint(userSession.isAuthenticated ? Text("planList.accessibility.logoutHint") : Text("planList.accessibility.loginHint"))
+            .disabled(authViewModel.isLoggingOut)
         }
         .padding(.horizontal, DesignTokens.Spacing.large)
         .padding(.vertical, DesignTokens.Spacing.small)
