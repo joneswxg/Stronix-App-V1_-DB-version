@@ -183,8 +183,8 @@ final class SQLiteAuthRepository: AuthRepository {
     }
 
     private let userSelectSQL = """
-        SELECT id, username, email, role, gender, height, weight, created_at, is_admin,
-               password_hash, account_type, external_id, wechat_open_id, wechat_union_id, apple_id
-        FROM user
-        """
+    SELECT id, username, email, role, gender, height, weight, created_at, is_admin,
+           password_hash, account_type, external_id, wechat_open_id, wechat_union_id, apple_id
+    FROM user
+    """
 }

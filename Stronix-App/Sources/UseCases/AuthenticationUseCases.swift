@@ -105,8 +105,8 @@ struct AuthenticationUseCases {
         guard !username.isEmpty else { throw AuthError.invalidUsername }
         guard isValidEmail(email) else { throw AuthError.invalidEmail }
         guard registration.password.count >= 6 else { throw AuthError.invalidPassword }
-        if let height = registration.height, !(50...300).contains(height) { throw AuthError.invalidHeight }
-        if let weight = registration.weight, !(10...500).contains(weight) { throw AuthError.invalidWeight }
+        if let height = registration.height, !(50 ... 300).contains(height) { throw AuthError.invalidHeight }
+        if let weight = registration.weight, !(10 ... 500).contains(weight) { throw AuthError.invalidWeight }
         return AuthRegistration(
             username: username,
             email: email,
