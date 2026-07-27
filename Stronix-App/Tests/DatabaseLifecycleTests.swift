@@ -43,15 +43,19 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertNotEqual(readyDatabase.databaseURL, sourceDatabaseURL)
         XCTAssertEqual(readyDatabase.preparation, .initialized)
         XCTAssertEqual(readyDatabase.diagnostic.databaseLocation, readyDatabase.databaseURL.path)
-        XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260722_0003_split_template_and_user_plans")
-        XCTAssertEqual(readyDatabase.diagnostic.supportedSchemaVersion, "20260722_0003_split_template_and_user_plans")
+        XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260727_0004_allow_duplicate_usernames")
+        XCTAssertEqual(readyDatabase.diagnostic.supportedSchemaVersion, "20260727_0004_allow_duplicate_usernames")
         XCTAssertEqual(readyDatabase.diagnostic.foreignKeysEnabled, true)
         XCTAssertEqual(readyDatabase.diagnostic.busyTimeoutMilliseconds, 5000)
         XCTAssertEqual(readyDatabase.diagnostic.journalMode, "wal")
         XCTAssertEqual(readyDatabase.diagnostic.recoveryStatus, .notNeeded)
         XCTAssertEqual(
             readyDatabase.appliedMigrationIDs,
-            ["20260721_0002_protect_schema_ledger", "20260722_0003_split_template_and_user_plans"]
+            [
+                "20260721_0002_protect_schema_ledger",
+                "20260722_0003_split_template_and_user_plans",
+                "20260727_0004_allow_duplicate_usernames"
+            ]
         )
         XCTAssertEqual(
             try readyDatabase.connection.scalar("PRAGMA integrity_check") as? String,
@@ -73,7 +77,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         XCTAssertEqual(
             try readyDatabase.connection.scalar(
-                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260722_0003_split_template_and_user_plans'"
+                "SELECT COUNT(*) FROM schema_migrations WHERE migration_id = '20260727_0004_allow_duplicate_usernames'"
             ) as? Int64,
             1
         )
@@ -474,6 +478,32 @@ final class DatabaseLifecycleTests: XCTestCase {
         )
     }
 
+    func testUsernameMigrationAllowsDuplicatesAndPreservesUserReferences() throws {
+        let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+        let databaseURL = documentsURL.appendingPathComponent("fixture.db")
+        try makeLegacyMixedPlanDatabase(at: databaseURL)
+
+        let legacyConnection = try Connection(databaseURL.path)
+        try legacyConnection.run(
+            "INSERT INTO user (id, username, email, password_hash) VALUES (9002, 'legacy-user', 'other@example.com', 'other-hash')"
+        )
+
+        let lifecycle = try makeLifecycle(documentsURL: documentsURL, catalog: .production)
+        guard case .ready(let readyDatabase) = lifecycle.prepare() else {
+            return XCTFail("Expected username migration to succeed")
+        }
+
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar("SELECT COUNT(*) FROM user WHERE username = 'legacy-user'") as? Int64,
+            2
+        )
+        XCTAssertEqual(
+            try readyDatabase.connection.scalar("SELECT COUNT(*) FROM training_plans WHERE user_id = 9001") as? Int64,
+            1
+        )
+        XCTAssertEqual(try rowCount("PRAGMA foreign_key_check", in: readyDatabase.connection), 0)
+    }
     func testPrepareMigratesLegacyMixedPlansAndPreservesUserReferences() throws {
         let documentsURL = fixture.rootURL.appendingPathComponent("Documents", isDirectory: true)
         try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
@@ -493,7 +523,8 @@ final class DatabaseLifecycleTests: XCTestCase {
             readyDatabase.appliedMigrationIDs,
             [
                 "20260721_0002_protect_schema_ledger",
-                "20260722_0003_split_template_and_user_plans"
+                "20260722_0003_split_template_and_user_plans",
+                "20260727_0004_allow_duplicate_usernames"
             ]
         )
         XCTAssertEqual(
@@ -929,7 +960,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         XCTAssertEqual(
             incompatibility.supportedMigrationID,
-            "20260722_0003_split_template_and_user_plans"
+            "20260727_0004_allow_duplicate_usernames"
         )
         XCTAssertNil(lifecycle.readyConnection())
         XCTAssertEqual(

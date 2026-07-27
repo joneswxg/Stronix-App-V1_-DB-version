@@ -14,7 +14,6 @@ enum AuthError: Error, Equatable {
     case databaseUnavailable
     case invalidCredentials
     case emailAlreadyExists
-    case usernameTaken
     case invalidUsername
     case invalidEmail
     case invalidPassword
@@ -49,10 +48,6 @@ final class SQLiteAuthRepository: AuthRepository {
             if try exists(database, query: "SELECT 1 FROM user WHERE email = ?", value: registration.email) {
                 throw AuthError.emailAlreadyExists
             }
-            if try exists(database, query: "SELECT 1 FROM user WHERE username = ?", value: registration.username) {
-                throw AuthError.usernameTaken
-            }
-
             let credential = try credentialing.makeCredential(password: registration.password)
             try database.run(
                 """
@@ -81,9 +76,6 @@ final class SQLiteAuthRepository: AuthRepository {
                 guard code == 19 || (code & 0xFF) == 19 else { throw AuthError.requestFailed }
                 if (try? exists(database, query: "SELECT 1 FROM user WHERE email = ?", value: registration.email)) == true {
                     throw AuthError.emailAlreadyExists
-                }
-                if (try? exists(database, query: "SELECT 1 FROM user WHERE username = ?", value: registration.username)) == true {
-                    throw AuthError.usernameTaken
                 }
                 throw AuthError.requestFailed
             }
