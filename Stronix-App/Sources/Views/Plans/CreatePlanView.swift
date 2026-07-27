@@ -63,55 +63,53 @@ struct CreatePlanView: View {
 
     var body: some View {
         NavigationView {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        PlanFormNameEditor(
-                            name: $viewModel.planName,
-                            description: $viewModel.planNote,
-                            isDescriptionVisible: $viewModel.showPlanNote,
-                            style: .optionalMenu,
+            ScrollView {
+                VStack(spacing: 16) {
+                    PlanFormNameEditor(
+                        name: $viewModel.planName,
+                        description: $viewModel.planNote,
+                        isDescriptionVisible: $viewModel.showPlanNote,
+                        style: .optionalMenu,
+                        isDisabled: viewModel.isSaving,
+                        dismissNumericKeyboard: keyboardManager.cancelKeyboard
+                    )
+
+                    if !viewModel.selectedActions.isEmpty {
+                        PlanFormActionList(
+                            actions: $viewModel.selectedActions,
+                            weightUnit: weightUnit.rawValue,
+                            allowsUnitToggle: true,
+                            notesConfiguration: PlanFormSetNotesConfiguration(
+                                hasNotes: { $0.hasNotes },
+                                toggleNotes: { set in
+                                    set.hasNotes.toggle()
+                                    if !set.hasNotes { set.notes = "" }
+                                },
+                                note: { $0.notes },
+                                updateNote: { set, note in set.notes = note }
+                            ),
+                            usesCircularImage: true,
                             isDisabled: viewModel.isSaving,
-                            dismissNumericKeyboard: keyboardManager.cancelKeyboard
+                            keyboardManager: keyboardManager,
+                            makeSet: PlanSet.init,
+                            onDelete: deleteAction,
+                            onToggleUnit: toggleWeightUnit,
+                            actionDetail: actionDetail
                         )
-
-                        if !viewModel.selectedActions.isEmpty {
-                            PlanFormActionList(
-                                actions: $viewModel.selectedActions,
-                                weightUnit: weightUnit.rawValue,
-                                allowsUnitToggle: true,
-                                notesConfiguration: PlanFormSetNotesConfiguration(
-                                    hasNotes: { $0.hasNotes },
-                                    toggleNotes: { set in
-                                        set.hasNotes.toggle()
-                                        if !set.hasNotes { set.notes = "" }
-                                    },
-                                    note: { $0.notes },
-                                    updateNote: { set, note in set.notes = note }
-                                ),
-                                usesCircularImage: true,
-                                isDisabled: viewModel.isSaving,
-                                keyboardManager: keyboardManager,
-                                makeSet: PlanSet.init,
-                                onDelete: deleteAction,
-                                onToggleUnit: toggleWeightUnit,
-                                actionDetail: actionDetail
-                            )
-                        }
-
-                        addActionButton
-                        Spacer(minLength: 50)
-                        if keyboardManager.isShowing { Spacer().frame(height: 280) }
                     }
-                    .padding(.top, 20)
-                }
-                .background(theme.background)
-                .contentShape(Rectangle())
-                .onTapGesture { dismissKeyboard() }
-                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                    if keyboardManager.isShowing { keyboardManager.cancelKeyboard() }
-                }
 
+                    addActionButton
+                    Spacer(minLength: 50)
+                }
+                .padding(.top, 20)
+            }
+            .background(theme.background)
+            .contentShape(Rectangle())
+            .onTapGesture { dismissKeyboard() }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                if keyboardManager.isShowing { keyboardManager.cancelKeyboard() }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 if keyboardManager.isShowing { keyboard }
             }
             .navigationTitle("创建计划")
@@ -213,7 +211,7 @@ struct CreatePlanView: View {
 
     private func addSelectedActionInfo(_ action: ActionInfo) {
         viewModel.selectedActions.append(PlanAction(
-            id: Int.random(in: 100000...999999),
+            id: Int.random(in: 100000 ... 999999),
             actionId: action.id,
             name: action.name,
             imageUrl: action.imageUrl,

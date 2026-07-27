@@ -30,17 +30,17 @@ final class AuthViewModel: ObservableObject {
 
     var canLogin: Bool {
         !loginEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !loginPassword.isEmpty &&
-        !isLoggingIn
+            !loginPassword.isEmpty &&
+            !isLoggingIn
     }
 
     var canRegister: Bool {
         !registrationUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !registrationEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        registrationPassword.count >= 6 &&
-        registrationPassword == registrationConfirmation &&
-        agreesToTerms &&
-        !isRegistering
+            !registrationEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            registrationPassword.count >= 6 &&
+            registrationPassword == registrationConfirmation &&
+            agreesToTerms &&
+            !isRegistering
     }
 
     func login(using session: any AuthSessionIntending) async {
@@ -122,7 +122,6 @@ final class AuthViewModel: ObservableObject {
         return switch authError {
         case .invalidCredentials: AppStrings.text("auth.error.invalidCredentials")
         case .emailAlreadyExists: AppStrings.text("auth.error.emailAlreadyExists")
-        case .usernameTaken: AppStrings.text("auth.error.usernameTaken")
         case .invalidUsername: AppStrings.text("auth.error.invalidUsername")
         case .invalidEmail: AppStrings.text("auth.error.invalidEmail")
         case .invalidPassword: AppStrings.text("auth.error.invalidPassword")

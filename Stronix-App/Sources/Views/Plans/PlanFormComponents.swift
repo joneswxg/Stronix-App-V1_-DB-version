@@ -52,7 +52,12 @@ struct PlanFormNameEditor: View {
 
             HStack(spacing: 12) {
                 TextField("输入计划名称", text: $name)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textFieldStyle(.plain)
+                    .foregroundColor(theme.onSurface)
+                    .padding(12)
+                    .background(theme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.secondary.opacity(0.3)))
+                    .cornerRadius(8)
                     .disabled(isDisabled)
                     .onTapGesture(perform: dismissNumericKeyboard)
 
@@ -82,7 +87,12 @@ struct PlanFormNameEditor: View {
                 }
 
                 TextField(style == .optionalMenu ? "添加计划描述" : "输入计划描述", text: $description, axis: .vertical)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textFieldStyle(.plain)
+                    .foregroundColor(theme.onSurface)
+                    .padding(12)
+                    .background(theme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.secondary.opacity(0.3)))
+                    .cornerRadius(8)
                     .lineLimit(3...6)
                     .padding(.horizontal, 16)
                     .disabled(isDisabled)
@@ -395,7 +405,7 @@ private struct PlanFormSetEditor<SetValue: PlanFormSet>: View {
                 Text("\(index + 1)")
                     .font(.system(size: 16, weight: .medium))
                     .frame(width: 30, height: 36)
-                    .background(Color(UIColor.systemGroupedBackground))
+                    .background(theme.background)
                     .cornerRadius(6)
 
                 if recordsBilateral {
@@ -463,7 +473,7 @@ private struct PlanFormSetEditor<SetValue: PlanFormSet>: View {
                 .font(.system(size: 16))
                 .foregroundColor(selected ? .white : .black)
                 .frame(width: 60, height: 36)
-                .background(selected ? theme.primary : Color(UIColor.systemGroupedBackground))
+                .background(selected ? theme.primary : theme.background)
                 .cornerRadius(6)
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(active && !selected ? theme.primary : .clear, lineWidth: 2))
         }

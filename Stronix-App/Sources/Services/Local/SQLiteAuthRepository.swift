@@ -14,7 +14,6 @@ enum AuthError: Error, Equatable {
     case databaseUnavailable
     case invalidCredentials
     case emailAlreadyExists
-    case usernameTaken
     case invalidUsername
     case invalidEmail
     case invalidPassword
@@ -26,6 +25,7 @@ enum AuthError: Error, Equatable {
 
 protocol AuthRepository {
     func register(_ registration: AuthRegistration) async throws -> User
+    func deleteUser(id: Int) async throws
     func authenticate(email: String, password: String) async throws -> User
     func user(id: Int) async throws -> User?
 }
@@ -48,10 +48,6 @@ final class SQLiteAuthRepository: AuthRepository {
             if try exists(database, query: "SELECT 1 FROM user WHERE email = ?", value: registration.email) {
                 throw AuthError.emailAlreadyExists
             }
-            if try exists(database, query: "SELECT 1 FROM user WHERE username = ?", value: registration.username) {
-                throw AuthError.usernameTaken
-            }
-
             let credential = try credentialing.makeCredential(password: registration.password)
             try database.run(
                 """
@@ -81,11 +77,17 @@ final class SQLiteAuthRepository: AuthRepository {
                 if (try? exists(database, query: "SELECT 1 FROM user WHERE email = ?", value: registration.email)) == true {
                     throw AuthError.emailAlreadyExists
                 }
-                if (try? exists(database, query: "SELECT 1 FROM user WHERE username = ?", value: registration.username)) == true {
-                    throw AuthError.usernameTaken
-                }
                 throw AuthError.requestFailed
             }
+        } catch {
+            throw AuthError.requestFailed
+        }
+    }
+
+    func deleteUser(id: Int) async throws {
+        guard let database = connectionProvider() else { throw AuthError.databaseUnavailable }
+        do {
+            try database.run("DELETE FROM user WHERE id = ?", [id])
         } catch {
             throw AuthError.requestFailed
         }
@@ -173,8 +175,8 @@ final class SQLiteAuthRepository: AuthRepository {
     }
 
     private let userSelectSQL = """
-        SELECT id, username, email, role, gender, height, weight, created_at, is_admin,
-               password_hash, account_type, external_id, wechat_open_id, wechat_union_id, apple_id
-        FROM user
-        """
+    SELECT id, username, email, role, gender, height, weight, created_at, is_admin,
+           password_hash, account_type, external_id, wechat_open_id, wechat_union_id, apple_id
+    FROM user
+    """
 }

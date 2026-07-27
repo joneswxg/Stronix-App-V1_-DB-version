@@ -17,7 +17,7 @@ python3 tools/database/generate_baseline_db.py \
 
 ## Build CI
 
-Pull requests and pushes to `main` receive independent Debug and Release simulator build results, a strict **Repository integrity checks** job that runs on Linux without Xcode or a simulator, and advisory **Swift changed-code formatting** feedback. See [Phase 8.7 Deterministic Simulator Build CI](docs/remediation/phase-8.7-deterministic-build-ci.md) for simulator inputs, [Phase 8.9 Repository Integrity CI](docs/remediation/phase-8.9-repository-integrity-ci.md) for the fast quality gate, and [Phase 8.10 Advisory Changed-Code Formatting](docs/remediation/phase-8.10-advisory-changed-code-formatting.md) for the pinned formatter and rollout policy.
+Pull requests and pushes to `main` receive independent Debug and Release simulator build results, a strict **Repository integrity checks** job that runs on Linux without Xcode or a simulator, and advisory **Swift changed-code formatting** feedback. See [Phase 8.7 Deterministic Simulator Build CI](docs/remediation/phase-8.7-deterministic-build-ci.md) for simulator inputs, [Phase 8.9 Repository Integrity CI](docs/remediation/phase-8.9-repository-integrity-ci.md) for the fast quality gate, and [Phase 8.10 Advisory Changed-Code Formatting](docs/remediation/phase-8.10-advisory-changed-code-formatting.md) for the pinned formatter and rollout policy. The release decision also requires the separately recorded serial XCTest and focused P0/P1 manual evidence in [Phase 8.11 Release Quality Gate](docs/remediation/phase-8.11-release-quality-gate.md).
 
 Run its checks locally from the repository root:
 

@@ -77,15 +77,18 @@ private struct DatabaseConnectionConfiguration: Equatable {
 
 struct DatabaseMigration {
     let id: String
+    let disablesForeignKeys: Bool
     let apply: (Connection) throws -> Void
     let validate: (Connection) throws -> Void
 
     init(
         id: String,
+        disablesForeignKeys: Bool = false,
         apply: @escaping (Connection) throws -> Void,
         validate: @escaping (Connection) throws -> Void = { _ in }
     ) {
         self.id = id
+        self.disablesForeignKeys = disablesForeignKeys
         self.apply = apply
         self.validate = validate
     }
@@ -121,6 +124,12 @@ struct DatabaseMigrationCatalog {
             id: "20260722_0003_split_template_and_user_plans",
             apply: TemplatePlanMigration.apply,
             validate: TemplatePlanMigration.validate
+        ),
+        DatabaseMigration(
+            id: "20260727_0004_allow_duplicate_usernames",
+            disablesForeignKeys: true,
+            apply: UsernameUniquenessMigration.apply,
+            validate: UsernameUniquenessMigration.validate
         )
     ])
 }
@@ -719,14 +728,30 @@ final class DatabaseLifecycle {
         on connection: Connection
     ) throws -> [String] {
         for migration in pendingMigrations {
-            try connection.transaction(.immediate) {
-                try migration.apply(connection)
-                try migration.validate(connection)
-                try validateMigrationState(connection)
-                try connection.run(
-                    "INSERT INTO schema_migrations (migration_id, applied_at) VALUES (?, datetime('now'))",
-                    migration.id
-                )
+            if migration.disablesForeignKeys {
+                try connection.execute("PRAGMA foreign_keys = OFF")
+            }
+            do {
+                try connection.transaction(.immediate) {
+                    try migration.apply(connection)
+                    try migration.validate(connection)
+                    try validateMigrationState(connection)
+                    try connection.run(
+                        "INSERT INTO schema_migrations (migration_id, applied_at) VALUES (?, datetime('now'))",
+                        migration.id
+                    )
+                }
+            } catch {
+                if migration.disablesForeignKeys {
+                    try? connection.execute("PRAGMA foreign_keys = ON")
+                }
+                throw error
+            }
+            if migration.disablesForeignKeys {
+                try connection.execute("PRAGMA foreign_keys = ON")
+                guard try connection.prepare("PRAGMA foreign_key_check").makeIterator().next() == nil else {
+                    throw DatabasePreparationFailure(message: "迁移后外键校验失败")
+                }
             }
         }
         return pendingMigrations.map(\.id)

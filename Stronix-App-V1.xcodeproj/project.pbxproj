@@ -63,6 +63,7 @@
 				Services/Database/DatabaseLifecycle.swift,
 				Services/Database/DatabaseManager.swift,
 				Services/Database/TemplatePlanMigration.swift,
+				Services/Database/UsernameUniquenessMigration.swift,
 				Services/Local/ActionHistoryRepository.swift,
 				Services/Local/TrainingHistoryRepository.swift,
 				Services/Local/LocalActionService.swift,

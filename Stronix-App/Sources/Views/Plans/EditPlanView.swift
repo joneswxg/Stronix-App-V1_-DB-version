@@ -30,59 +30,57 @@ struct EditPlanView: View {
 
     var body: some View {
         NavigationView {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("容量: \(Int(totalVolume)) kg")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(theme.primary)
-                            Spacer()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                        PlanFormNameEditor(
-                            name: $viewModel.name,
-                            description: $viewModel.description,
-                            isDescriptionVisible: $descriptionVisible,
-                            style: .labeled,
-                            isDisabled: viewModel.isSaving,
-                            dismissNumericKeyboard: keyboardManager.cancelKeyboard
-                        )
-
-                        HStack {
-                            Text("训练动作").font(.system(size: 16, weight: .medium))
-                            Spacer()
-                        }
-                        .padding(.horizontal, 16)
-
-                        if !viewModel.actions.isEmpty {
-                            PlanFormActionList(
-                                actions: $viewModel.actions,
-                                weightUnit: "kg",
-                                allowsUnitToggle: false,
-                                notesConfiguration: nil,
-                                usesCircularImage: false,
-                                isDisabled: viewModel.isSaving,
-                                keyboardManager: keyboardManager,
-                                makeSet: makeSet,
-                                onDelete: deleteAction,
-                                onToggleUnit: {},
-                                actionDetail: nil
-                            )
-                        }
-
-                        addActionButton
-                        Spacer(minLength: 50)
-                        if keyboardManager.isShowing { Spacer().frame(height: 280) }
+            ScrollView {
+                VStack(spacing: 16) {
+                    HStack {
+                        Text("容量: \(Int(totalVolume)) kg")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(theme.primary)
+                        Spacer()
                     }
-                    .padding(.top, 20)
-                }
-                .background(theme.background)
-                .contentShape(Rectangle())
-                .onTapGesture { dismissKeyboard() }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
+                    PlanFormNameEditor(
+                        name: $viewModel.name,
+                        description: $viewModel.description,
+                        isDescriptionVisible: $descriptionVisible,
+                        style: .labeled,
+                        isDisabled: viewModel.isSaving,
+                        dismissNumericKeyboard: keyboardManager.cancelKeyboard
+                    )
+
+                    HStack {
+                        Text("训练动作").font(.system(size: 16, weight: .medium))
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+
+                    if !viewModel.actions.isEmpty {
+                        PlanFormActionList(
+                            actions: $viewModel.actions,
+                            weightUnit: "kg",
+                            allowsUnitToggle: false,
+                            notesConfiguration: nil,
+                            usesCircularImage: false,
+                            isDisabled: viewModel.isSaving,
+                            keyboardManager: keyboardManager,
+                            makeSet: makeSet,
+                            onDelete: deleteAction,
+                            onToggleUnit: {},
+                            actionDetail: nil
+                        )
+                    }
+
+                    addActionButton
+                    Spacer(minLength: 50)
+                }
+                .padding(.top, 20)
+            }
+            .background(theme.background)
+            .contentShape(Rectangle())
+            .onTapGesture { dismissKeyboard() }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 if keyboardManager.isShowing { keyboard }
             }
             .navigationTitle("编辑训练计划")
@@ -165,7 +163,7 @@ struct EditPlanView: View {
 
     private func makeSet() -> EditPlanSet {
         EditPlanSet(
-            id: Int.random(in: 100000...999999),
+            id: Int.random(in: 100000 ... 999999),
             order: viewModel.actions.count + 1,
             weight: 10,
             reps: 12,
@@ -180,7 +178,7 @@ struct EditPlanView: View {
 
     private func addAction(_ action: ActionInfo) {
         viewModel.actions.append(EditPlanAction(
-            id: Int.random(in: 100000...999999),
+            id: Int.random(in: 100000 ... 999999),
             actionId: action.id,
             name: action.name,
             imageUrl: action.imageUrl,

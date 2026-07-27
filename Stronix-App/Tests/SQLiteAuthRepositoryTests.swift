@@ -84,7 +84,25 @@ final class SQLiteAuthRepositoryTests: XCTestCase {
         XCTAssertEqual(stored, "upgraded-credential")
     }
 
-    func testDuplicateEmailAndUsernameReturnTypedErrors() async throws {
+    func testDeleteUserRemovesOnlyTheRegisteredUser() async throws {
+        let repository = SQLiteAuthRepository(connectionProvider: { self.connection })
+        let first = try await repository.register(
+            AuthRegistration(username: "first", email: "first@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+        )
+        let second = try await repository.register(
+            AuthRegistration(username: "second", email: "second@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+        )
+
+        try await repository.deleteUser(id: first.id)
+
+        let deletedUser = try await repository.user(id: first.id)
+        let retainedUser = try await repository.user(id: second.id)
+
+        XCTAssertNil(deletedUser)
+        XCTAssertEqual(retainedUser?.email, second.email)
+    }
+
+    func testDuplicateEmailReturnsTypedErrorWhileUsernameCanRepeat() async throws {
         let repository = SQLiteAuthRepository(connectionProvider: { self.connection })
         let first = AuthRegistration(
             username: "member",
@@ -96,6 +114,11 @@ final class SQLiteAuthRepositoryTests: XCTestCase {
         )
         _ = try await repository.register(first)
 
+        let sameUsername = try await repository.register(
+            AuthRegistration(username: first.username, email: "other@example.com", password: first.password, gender: nil, height: nil, weight: nil)
+        )
+        XCTAssertEqual(sameUsername.username, first.username)
+
         do {
             _ = try await repository.register(
                 AuthRegistration(username: "other", email: first.email, password: first.password, gender: nil, height: nil, weight: nil)
@@ -103,15 +126,6 @@ final class SQLiteAuthRepositoryTests: XCTestCase {
             XCTFail("Expected duplicate email")
         } catch {
             XCTAssertEqual(error as? AuthError, .emailAlreadyExists)
-        }
-
-        do {
-            _ = try await repository.register(
-                AuthRegistration(username: first.username, email: "other@example.com", password: first.password, gender: nil, height: nil, weight: nil)
-            )
-            XCTFail("Expected duplicate username")
-        } catch {
-            XCTAssertEqual(error as? AuthError, .usernameTaken)
         }
     }
 }

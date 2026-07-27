@@ -192,6 +192,7 @@ struct PlanActionSelectView: View {
                         .clipped()
                     }
                     .frame(maxHeight: .infinity)
+                    .background(theme.background)
                 }
             }
             .navigationTitle("选择训练动作")
@@ -219,6 +220,7 @@ struct PlanActionSelectView: View {
                 }
             })
         }
+        .preferredColorScheme(.light)
         .onAppear {
             Task {
                 viewModel.loadInitialData()

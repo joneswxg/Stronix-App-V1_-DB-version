@@ -42,6 +42,7 @@ struct MainTabView: View {
                         }
                     }
                 }
+                .environment(\.designTokens, DesignTokens(theme: theme, colorScheme: .light))
                 .tabItem {
                     Image(systemName: "dumbbell.fill")
                     Text("训练")

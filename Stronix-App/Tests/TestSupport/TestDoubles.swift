@@ -5,6 +5,8 @@ final class ResultAuthRepository: AuthRepository {
     var authenticateResult: Result<User, Error>
     var userResult: Result<User?, Error>
     private(set) var registrations: [AuthRegistration] = []
+    private(set) var deletedUserIDs: [Int] = []
+    var deleteUserResult: Result<Void, Error> = .success(())
     private(set) var authenticationAttempts: [(email: String, password: String)] = []
     private(set) var requestedUserIDs: [Int] = []
 
@@ -30,6 +32,11 @@ final class ResultAuthRepository: AuthRepository {
     func register(_ registration: AuthRegistration) async throws -> User {
         registrations.append(registration)
         return try registerResult.get()
+    }
+
+    func deleteUser(id: Int) async throws {
+        deletedUserIDs.append(id)
+        try deleteUserResult.get()
     }
 
     func authenticate(email: String, password: String) async throws -> User {

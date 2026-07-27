@@ -82,7 +82,6 @@ final class AuthViewModelTests: XCTestCase {
     func testRegistrationMapsDuplicateAndPersistenceFailuresToSafeMessages() async {
         let scenarios: [(AuthError, String)] = [
             (.emailAlreadyExists, AppStrings.text("auth.error.emailAlreadyExists")),
-            (.usernameTaken, AppStrings.text("auth.error.usernameTaken")),
             (.sessionUnavailable, AppStrings.text("auth.error.sessionUnavailable"))
         ]
 

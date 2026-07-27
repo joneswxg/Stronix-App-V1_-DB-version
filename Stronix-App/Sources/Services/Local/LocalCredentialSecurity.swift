@@ -168,6 +168,7 @@ final class KeychainLocalSessionStore: LocalSessionStore {
               let rawID = String(data: data, encoding: .utf8), let userID = Int(rawID), userID > 0 else {
             if status == errSecSuccess { try clear() }
             if status == errSecSuccess { throw LocalSessionStoreError.malformedReference }
+            logFailure(operation: "load", status: status)
             throw LocalSessionStoreError.unexpectedStatus(status)
         }
         return LocalSessionReference(userID: userID)
@@ -187,12 +188,14 @@ final class KeychainLocalSessionStore: LocalSessionStore {
         let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
         if updateStatus == errSecSuccess { return }
         guard updateStatus == errSecItemNotFound else {
+            logFailure(operation: "save-update", status: updateStatus)
             throw LocalSessionStoreError.unexpectedStatus(updateStatus)
         }
         var add = query
         add.merge(attributes) { _, new in new }
         let addStatus = SecItemAdd(add as CFDictionary, nil)
         guard addStatus == errSecSuccess else {
+            logFailure(operation: "save-add", status: addStatus)
             throw LocalSessionStoreError.unexpectedStatus(addStatus)
         }
     }
@@ -205,8 +208,13 @@ final class KeychainLocalSessionStore: LocalSessionStore {
         ]
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
+            logFailure(operation: "clear", status: status)
             throw LocalSessionStoreError.unexpectedStatus(status)
         }
+    }
+
+    private func logFailure(operation: String, status: OSStatus) {
+        print("KeychainLocalSessionStore operation=\(operation) status=\(status)")
     }
 }
 

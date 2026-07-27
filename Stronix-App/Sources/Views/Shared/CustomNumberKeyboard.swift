@@ -33,6 +33,7 @@ struct CustomNumberKeyboard: View {
         }
         .padding(DesignTokens.Spacing.medium)
         .frame(maxWidth: .infinity)
+        .frame(height: 280, alignment: .top)
         .background(tokens.controlSurface)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("training.accessibility.numberKeyboard")
@@ -56,7 +57,9 @@ struct CustomNumberKeyboard: View {
     @ViewBuilder
     private func keyButton(_ key: String) -> some View {
         if key == "empty" {
-            Color.clear.frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: DesignTokens.Metric.minimumTapSize)
         } else {
             Button(action: { perform(key) }) {
                 Group {
@@ -182,7 +185,13 @@ struct CustomNumberKeyboard: View {
         keyboardManager?.updateValue(value)
     }
 
-    private func hideKeyboard() { isShowing = false }
+    private func hideKeyboard() {
+        if let keyboardManager {
+            keyboardManager.hideKeyboard()
+        } else {
+            isShowing = false
+        }
+    }
 }
 
 class CustomKeyboardManager: ObservableObject {

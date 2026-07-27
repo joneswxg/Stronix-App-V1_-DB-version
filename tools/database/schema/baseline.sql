@@ -61,7 +61,7 @@ CREATE TABLE action_target_muscle_link (
 
 CREATE TABLE user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT,
     is_admin INTEGER NOT NULL DEFAULT 0 CHECK (is_admin IN (0, 1)),

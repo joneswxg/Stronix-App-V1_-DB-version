@@ -59,6 +59,22 @@ final class CreatePlanViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.errorMessage)
     }
 
+    func testCustomKeyboardHideCommitsValueAndClearsActiveState() {
+        let manager = CustomKeyboardManager()
+        var receivedValues: [Double] = []
+        manager.showKeyboard(inputId: "reps_1", initialValue: 8, isInteger: true) {
+            receivedValues.append($0)
+        }
+        manager.updateValue(12)
+
+        manager.hideKeyboard()
+
+        XCTAssertEqual(receivedValues, [12, 12])
+        XCTAssertEqual(manager.activeInputId, "")
+        XCTAssertFalse(manager.isValueSelected)
+        XCTAssertFalse(manager.isShowing)
+    }
+
     private func populateValidForm(on viewModel: CreatePlanViewModel) {
         viewModel.planName = "力量计划"
         viewModel.planNote = "每周三次"
