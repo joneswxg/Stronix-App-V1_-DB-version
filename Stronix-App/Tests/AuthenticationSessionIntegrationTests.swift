@@ -75,21 +75,20 @@ final class AuthenticationSessionIntegrationTests: XCTestCase {
         }
     }
 
-    func testSessionSaveFailureLeavesNoAuthenticatedTransition() async throws {
+    func testSessionSaveFailureRemovesRegisteredUserAndAllowsRetry() async throws {
         sessionStore.saveError = FixtureError.expected
         let session = makeSession()
+        let registration = AuthRegistration(
+            username: "member",
+            email: "member@example.com",
+            password: "secure-password",
+            gender: nil,
+            height: nil,
+            weight: nil
+        )
 
         do {
-            try await session.register(
-                AuthRegistration(
-                    username: "member",
-                    email: "member@example.com",
-                    password: "secure-password",
-                    gender: nil,
-                    height: nil,
-                    weight: nil
-                )
-            )
+            try await session.register(registration)
             XCTFail("Expected session persistence failure")
         } catch {
             XCTAssertEqual(error as? AuthError, .sessionUnavailable)
@@ -98,6 +97,10 @@ final class AuthenticationSessionIntegrationTests: XCTestCase {
         XCTAssertEqual(session.state, .restoring)
         XCTAssertNil(session.currentUserID)
         XCTAssertNil(try sessionStore.load())
+        XCTAssertEqual(try scalarCount("user"), 0)
+
+        sessionStore.saveError = nil
+        try await session.register(registration)
         XCTAssertEqual(try scalarCount("user"), 1)
     }
 

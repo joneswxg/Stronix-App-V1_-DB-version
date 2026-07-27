@@ -21,10 +21,19 @@ struct AuthenticationUseCases {
         let validated = try validate(registration)
         try Task.checkCancellation()
         let user = try await repository.register(validated)
-        try Task.checkCancellation()
-        try saveSession(for: user)
-        try Task.checkCancellation()
-        return user
+        var sessionPersisted = false
+        do {
+            try Task.checkCancellation()
+            try saveSession(for: user)
+            sessionPersisted = true
+            try Task.checkCancellation()
+            return user
+        } catch {
+            if !sessionPersisted {
+                try await repository.deleteUser(id: user.id)
+            }
+            throw error
+        }
     }
 
     func login(email: String, password: String) async throws -> User {

@@ -84,6 +84,24 @@ final class SQLiteAuthRepositoryTests: XCTestCase {
         XCTAssertEqual(stored, "upgraded-credential")
     }
 
+    func testDeleteUserRemovesOnlyTheRegisteredUser() async throws {
+        let repository = SQLiteAuthRepository(connectionProvider: { self.connection })
+        let first = try await repository.register(
+            AuthRegistration(username: "first", email: "first@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+        )
+        let second = try await repository.register(
+            AuthRegistration(username: "second", email: "second@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+        )
+
+        try await repository.deleteUser(id: first.id)
+
+        let deletedUser = try await repository.user(id: first.id)
+        let retainedUser = try await repository.user(id: second.id)
+
+        XCTAssertNil(deletedUser)
+        XCTAssertEqual(retainedUser?.email, second.email)
+    }
+
     func testDuplicateEmailAndUsernameReturnTypedErrors() async throws {
         let repository = SQLiteAuthRepository(connectionProvider: { self.connection })
         let first = AuthRegistration(

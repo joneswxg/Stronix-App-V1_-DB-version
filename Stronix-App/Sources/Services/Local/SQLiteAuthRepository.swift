@@ -26,6 +26,7 @@ enum AuthError: Error, Equatable {
 
 protocol AuthRepository {
     func register(_ registration: AuthRegistration) async throws -> User
+    func deleteUser(id: Int) async throws
     func authenticate(email: String, password: String) async throws -> User
     func user(id: Int) async throws -> User?
 }
@@ -86,6 +87,15 @@ final class SQLiteAuthRepository: AuthRepository {
                 }
                 throw AuthError.requestFailed
             }
+        } catch {
+            throw AuthError.requestFailed
+        }
+    }
+
+    func deleteUser(id: Int) async throws {
+        guard let database = connectionProvider() else { throw AuthError.databaseUnavailable }
+        do {
+            try database.run("DELETE FROM user WHERE id = ?", [id])
         } catch {
             throw AuthError.requestFailed
         }

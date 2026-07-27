@@ -85,6 +85,76 @@ final class AuthenticationUseCasesTests: XCTestCase {
             XCTAssertEqual(error as? AuthError, .invalidUsername)
         }
         XCTAssertTrue(repository.registrations.isEmpty)
+        XCTAssertTrue(repository.deletedUserIDs.isEmpty)
+    }
+
+    func testRegistrationSessionSaveFailureDeletesNewUser() async throws {
+        let user = makeUser(id: 42)
+        let repository = ResultAuthRepository(authenticatedUser: user)
+        let sessionStore = RecordingSessionStore()
+        sessionStore.saveError = TestError.expected
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
+        let useCases = AuthenticationUseCases(
+            repository: repository,
+            sessionStore: sessionStore,
+            legacyDefaults: defaults.defaults
+        )
+
+        do {
+            _ = try await useCases.register(
+                AuthRegistration(username: "member", email: "member@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+            )
+            XCTFail("Expected session persistence failure")
+        } catch {
+            XCTAssertEqual(error as? AuthError, .sessionUnavailable)
+        }
+
+        XCTAssertEqual(repository.deletedUserIDs, [user.id])
+    }
+
+    func testSuccessfulRegistrationDoesNotDeleteUser() async throws {
+        let user = makeUser(id: 42)
+        let repository = ResultAuthRepository(authenticatedUser: user)
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
+        let useCases = AuthenticationUseCases(
+            repository: repository,
+            sessionStore: InMemoryLocalSessionStore(),
+            legacyDefaults: defaults.defaults
+        )
+
+        _ = try await useCases.register(
+            AuthRegistration(username: "member", email: "member@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+        )
+
+        XCTAssertTrue(repository.deletedUserIDs.isEmpty)
+    }
+
+    func testRegistrationCleanupFailureIsExposed() async throws {
+        let user = makeUser(id: 42)
+        let repository = ResultAuthRepository(authenticatedUser: user)
+        repository.deleteUserResult = .failure(TestError.expected)
+        let sessionStore = RecordingSessionStore()
+        sessionStore.saveError = TestError.expected
+        let defaults = TestUserDefaultsFixture()
+        defer { defaults.tearDown() }
+        let useCases = AuthenticationUseCases(
+            repository: repository,
+            sessionStore: sessionStore,
+            legacyDefaults: defaults.defaults
+        )
+
+        do {
+            _ = try await useCases.register(
+                AuthRegistration(username: "member", email: "member@example.com", password: "secure-password", gender: nil, height: nil, weight: nil)
+            )
+            XCTFail("Expected cleanup failure")
+        } catch {
+            XCTAssertTrue(error is TestError)
+        }
+
+        XCTAssertEqual(repository.deletedUserIDs, [user.id])
     }
 }
 
