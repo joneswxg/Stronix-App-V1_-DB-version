@@ -3,6 +3,7 @@ import UIKit
 
 @MainActor
 struct TrainingView: View {
+    @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     let plan: TrainingPlan
     @StateObject private var viewModel: TrainingViewModel
@@ -14,6 +15,10 @@ struct TrainingView: View {
     @State private var selectedActionForHistory: (id: Int, name: String)?
     @State private var showCompletionError = false
     @StateObject private var keyboardManager = CustomKeyboardManager()
+
+    private var lightTokens: DesignTokens {
+        DesignTokens(theme: theme, colorScheme: .light)
+    }
 
     init(plan: TrainingPlan, viewModel: TrainingViewModel? = nil) {
         self.plan = plan
@@ -52,7 +57,9 @@ struct TrainingView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .background(Color.clear)
+        .background(lightTokens.canvas)
+        .environment(\.designTokens, lightTokens)
+        .environment(\.colorScheme, .light)
         .navigationTitle("training.navigation.active")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -90,7 +97,7 @@ struct TrainingView: View {
 
     private func addAction(_ action: ActionInfo) {
         var actions = viewModel.editingActions
-        actions.append(MutableTrainingAction(id: action.id, name: action.name, imageUrl: action.imageUrl, sets: [MutableTrainingSet(id: Int.random(in: 100000...999999), weight: 10, reps: 12)], restTime: 60, recordBilateral: false))
+        actions.append(MutableTrainingAction(id: action.id, name: action.name, imageUrl: action.imageUrl, sets: [MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)], restTime: 60, recordBilateral: false))
         viewModel.updateActions(actions)
     }
 
@@ -243,7 +250,7 @@ private struct TrainingActionCard: View {
                     SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, restTimeRemaining: setRestTimers["\(action.id)_\(set.id)"], onSetCompleted: onSetCompleted, onRestTimerTapped: onRestTimerTapped, keyboardManager: keyboardManager)
                 }
                 HStack {
-                    Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000...999999), weight: 10, reps: 12)) }
+                    Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)) }
                     Spacer()
                     Button("training.action.history") { onShowActionHistory(action.id, action.name) }
                 }
@@ -262,8 +269,8 @@ private struct TrainingActionCard: View {
             NavigationStack {
                 Form {
                     Section("training.rest.configure") {
-                        Stepper(trainingFormat("training.rest.minutes", restMinutes), value: $restMinutes, in: 0...10)
-                        Stepper(trainingFormat("training.rest.secondsOnly", restSeconds), value: $restSeconds, in: 0...59)
+                        Stepper(trainingFormat("training.rest.minutes", restMinutes), value: $restMinutes, in: 0 ... 10)
+                        Stepper(trainingFormat("training.rest.secondsOnly", restSeconds), value: $restSeconds, in: 0 ... 59)
                     }
                 }
                 .navigationTitle("training.rest.configure")

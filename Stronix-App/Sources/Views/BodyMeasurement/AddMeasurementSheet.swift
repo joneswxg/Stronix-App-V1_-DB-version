@@ -255,6 +255,7 @@ struct AddMeasurementSheet: View {
 // 日期选择器组件
 struct DatePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     @Binding var selectedDate: Date
     @State private var tempDate: Date
     
@@ -278,6 +279,8 @@ struct DatePickerSheet: View {
                 Spacer()
             }
             .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(theme.surface)
             .navigationTitle("选择测试日期")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -294,6 +297,7 @@ struct DatePickerSheet: View {
                     .fontWeight(.semibold)
                 }
             }
+            .preferredColorScheme(.light)
         }
     }
 }

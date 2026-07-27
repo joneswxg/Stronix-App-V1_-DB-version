@@ -1,11 +1,16 @@
 import SwiftUI
 
 struct BodyMeasurementTabView: View {
+    @Environment(\.designTokens) private var tokens
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var userSession: UserSession
     @ObservedObject var viewModel: BodyMeasurementViewModel
     @StateObject private var authViewModel = AuthViewModel()
     @State private var selectedTab = 0
+
+    private var lightTokens: DesignTokens {
+        DesignTokens(theme: theme, colorScheme: .light)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,9 +27,9 @@ struct BodyMeasurementTabView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(theme.surface)
-            .shadow(color: theme.shadow, radius: 1, y: 1)
-            
+            .background(lightTokens.surface)
+            .shadow(color: lightTokens.shadow, radius: 1, y: 1)
+
             // 顶部Tab导航
             HStack(spacing: 0) {
                 TabButton(title: "概览", isSelected: selectedTab == 0) {
@@ -40,9 +45,9 @@ struct BodyMeasurementTabView: View {
                     selectedTab = 3
                 }
             }
-            .background(theme.surface)
-            .shadow(color: theme.shadow, radius: 1, y: 1)
-            
+            .background(lightTokens.surface)
+            .shadow(color: lightTokens.shadow, radius: 1, y: 1)
+
             // 内容区域
             VStack {
                 if selectedTab == 0 {
@@ -69,6 +74,10 @@ struct BodyMeasurementTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(lightTokens.canvas)
+        .environment(\.designTokens, lightTokens)
+        .environment(\.colorScheme, .light)
         .task {
             userSession.registerResetter(viewModel)
             await loadMeasurements(for: userSession.currentUserID)
@@ -100,14 +109,14 @@ struct TabButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
                     .foregroundColor(isSelected ? theme.primary : theme.secondary)
-                
+
                 Rectangle()
                     .fill(isSelected ? theme.primary : Color.clear)
                     .frame(height: 2)
