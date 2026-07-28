@@ -1,5 +1,10 @@
 import SwiftUI
 
+struct BilateralRecordingAccessory {
+    var isEnabled: Bool
+    let onChange: (Bool) -> Void
+}
+
 struct CustomNumberKeyboard: View {
     @Environment(\.designTokens) private var tokens
     @Binding var value: Double
@@ -23,6 +28,13 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: DesignTokens.Spacing.small) {
+            if let accessory = keyboardManager?.bilateralRecordingAccessory {
+                Toggle("training.action.recordBilateral", isOn: Binding(
+                    get: { accessory.isEnabled },
+                    set: { accessory.onChange($0) }
+                ))
+                .tint(tokens.primary)
+            }
             ForEach(rows, id: \.self) { row in
                 HStack(spacing: DesignTokens.Spacing.small) {
                     ForEach(row, id: \.self) { key in
@@ -33,7 +45,6 @@ struct CustomNumberKeyboard: View {
         }
         .padding(DesignTokens.Spacing.medium)
         .frame(maxWidth: .infinity)
-        .frame(height: 280, alignment: .top)
         .background(tokens.controlSurface)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("training.accessibility.numberKeyboard")
@@ -202,15 +213,17 @@ class CustomKeyboardManager: ObservableObject {
     @Published var maxValue: Double = 999.0
     @Published var activeInputId = ""
     @Published var isValueSelected = false
+    @Published var bilateralRecordingAccessory: BilateralRecordingAccessory?
 
     private var onValueChanged: ((Double) -> Void)?
 
-    func showKeyboard(inputId: String, initialValue: Double, isInteger: Bool = false, step: Double = 1.0, maxValue: Double = 999.0, onValueChanged: @escaping (Double) -> Void) {
+    func showKeyboard(inputId: String, initialValue: Double, isInteger: Bool = false, step: Double = 1.0, maxValue: Double = 999.0, bilateralRecordingAccessory: BilateralRecordingAccessory? = nil, onValueChanged: @escaping (Double) -> Void) {
         activeInputId = inputId
         currentValue = initialValue
         self.isInteger = isInteger
         self.step = step
         self.maxValue = maxValue
+        self.bilateralRecordingAccessory = bilateralRecordingAccessory
         self.onValueChanged = onValueChanged
         isValueSelected = true
         isShowing = true
@@ -221,12 +234,14 @@ class CustomKeyboardManager: ObservableObject {
         onValueChanged?(validValue)
         activeInputId = ""
         isValueSelected = false
+        bilateralRecordingAccessory = nil
         isShowing = false
     }
 
     func cancelKeyboard() {
         activeInputId = ""
         isValueSelected = false
+        bilateralRecordingAccessory = nil
         isShowing = false
     }
 

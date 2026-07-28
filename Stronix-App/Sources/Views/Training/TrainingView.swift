@@ -31,14 +31,12 @@ struct TrainingView: View {
                 editingActions: Binding(get: { viewModel.editingActions }, set: viewModel.updateActions),
                 completedSets: Binding(get: { viewModel.completedSets }, set: viewModel.updateCompletedSets),
                 setNotes: Binding(get: { viewModel.setNotes }, set: viewModel.updateSetNotes),
-                setRestTimers: viewModel.setRestTimers,
                 volumeText: viewModel.volumeText,
                 elapsedTimeText: viewModel.elapsedTimeText,
                 planName: viewModel.planName,
                 onAdd: { showActionSelect = true },
                 onDelete: viewModel.deleteAction,
                 onSetCompleted: viewModel.toggleSetCompletion,
-                onRestTimerTapped: viewModel.showRestTimer,
                 onShowActionHistory: { id, name in
                     selectedActionForHistory = (id, name)
                     showActionHistory = true
@@ -151,14 +149,12 @@ private struct TrainingSessionContent: View {
     @Binding var editingActions: [MutableTrainingAction]
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
-    let setRestTimers: [String: Int]
     let volumeText: String
     let elapsedTimeText: String
     let planName: String
     let onAdd: () -> Void
     let onDelete: (MutableTrainingAction) -> Void
     let onSetCompleted: (String, Int) -> Void
-    let onRestTimerTapped: (String, Int) -> Void
     let onShowActionHistory: (Int, String) -> Void
     let keyboardManager: CustomKeyboardManager
 
@@ -181,7 +177,7 @@ private struct TrainingSessionContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
 
                 ForEach(editingActions, id: \.id) { action in
-                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, setRestTimers: setRestTimers, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onRestTimerTapped: onRestTimerTapped, onShowActionHistory: onShowActionHistory, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
+                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
             }
@@ -203,10 +199,8 @@ private struct TrainingActionCard: View {
     @Binding var action: MutableTrainingAction
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
-    let setRestTimers: [String: Int]
     let onDelete: () -> Void
     let onSetCompleted: (String, Int) -> Void
-    let onRestTimerTapped: (String, Int) -> Void
     let onShowActionHistory: (Int, String) -> Void
     let canDelete: Bool
     let keyboardManager: CustomKeyboardManager
@@ -238,16 +232,9 @@ private struct TrainingActionCard: View {
                 }
                 .accessibilityLabel("training.accessibility.actionMenu")
             }
-            Toggle("training.action.recordBilateral", isOn: $action.recordBilateral)
-                .tint(tokens.primary)
-                .onChange(of: action.recordBilateral) { _, bilateral in
-                    for index in action.sets.indices {
-                        if bilateral { action.sets[index].weight = 0 } else { action.sets[index].leftWeight = 0; action.sets[index].rightWeight = 0 }
-                    }
-                }
             if expanded {
                 ForEach(Array(action.sets.enumerated()), id: \.element.id) { index, set in
-                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, restTimeRemaining: setRestTimers["\(action.id)_\(set.id)"], onSetCompleted: onSetCompleted, onRestTimerTapped: onRestTimerTapped, keyboardManager: keyboardManager)
+                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, keyboardManager: keyboardManager)
                 }
                 HStack {
                     Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)) }
@@ -290,15 +277,12 @@ private struct TrainingActionCard: View {
 
 private struct SetEditor: View {
     @Environment(\.designTokens) private var tokens
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let index: Int
     let set: MutableTrainingSet
     @Binding var action: MutableTrainingAction
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
-    let restTimeRemaining: Int?
     let onSetCompleted: (String, Int) -> Void
-    let onRestTimerTapped: (String, Int) -> Void
     let keyboardManager: CustomKeyboardManager
 
     @State private var showNoteInput = false
@@ -308,40 +292,17 @@ private struct SetEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-            HStack {
-                Text(trainingFormat("training.set.number", index + 1)).font(DesignTokens.Typography.action).foregroundStyle(tokens.contentPrimary)
-                Spacer()
-                Button(action: { onSetCompleted(setID, action.restTime) }) {
-                    Label(isCompleted ? "training.state.completed" : "training.action.markComplete", systemImage: isCompleted ? "checkmark.circle.fill" : "circle")
+            HStack(spacing: DesignTokens.Spacing.xSmall) {
+                setNumber
+                if action.recordBilateral {
+                    compactNumericButton("左 kg", value: set.leftWeight, inputID: "left_\(setID)", supportsBilateralRecording: true) { action.sets[index].leftWeight = $0 }
+                    compactNumericButton("右 kg", value: set.rightWeight, inputID: "right_\(setID)", supportsBilateralRecording: true) { action.sets[index].rightWeight = $0 }
+                } else {
+                    compactNumericButton("kg", value: set.weight, inputID: "weight_\(setID)", supportsBilateralRecording: true) { action.sets[index].weight = $0 }
                 }
-                .foregroundStyle(isCompleted ? tokens.primary : tokens.contentSecondary)
-                .accessibilityValue(isCompleted ? Text("training.state.completed") : Text("training.state.incomplete"))
-                Menu {
-                    Button(showNoteInput ? "training.action.hideNote" : "training.action.addNote") { showNoteInput.toggle() }
-                    if action.sets.count > 1 {
-                        Button("training.action.deleteSet", role: .destructive) {
-                            action.sets.removeAll { $0.id == set.id }
-                            completedSets.remove(setID)
-                            setNotes.removeValue(forKey: setID)
-                        }
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
-                }
-                .accessibilityLabel("training.accessibility.setMenu")
-            }
-            if action.recordBilateral {
-                HStack { numericButton("training.field.leftWeight", value: set.leftWeight, inputID: "left_\(setID)", update: { action.sets[index].leftWeight = $0 }); numericButton("training.field.rightWeight", value: set.rightWeight, inputID: "right_\(setID)", update: { action.sets[index].rightWeight = $0 }) }
-            } else {
-                numericButton("training.field.weight", value: set.weight, inputID: "weight_\(setID)", update: { action.sets[index].weight = $0 })
-            }
-            HStack {
-                numericButton("training.field.repetitions", value: Double(set.reps), inputID: "reps_\(setID)", isInteger: true, update: { action.sets[index].reps = Int($0) })
-                Button(action: { onRestTimerTapped(setID, action.restTime) }) {
-                    Label(restTimeRemaining.map(formatRestTime) ?? trainingFormat("training.rest.seconds", action.restTime), systemImage: "timer")
-                }
-                .accessibilityLabel("training.accessibility.restTimer")
-                .accessibilityValue(restTimeRemaining.map(formatRestTime) ?? trainingFormat("training.rest.seconds", action.restTime))
+                compactNumericButton("次", value: Double(set.reps), inputID: "reps_\(setID)", isInteger: true) { action.sets[index].reps = Int($0) }
+                completionButton
+                setMenu
             }
             if showNoteInput {
                 TextField("training.field.note", text: Binding(get: { setNotes[setID] ?? "" }, set: { setNotes[setID] = $0 }))
@@ -349,27 +310,130 @@ private struct SetEditor: View {
                     .accessibilityLabel("training.field.note")
             }
         }
-        .padding(DesignTokens.Spacing.medium)
+        .padding(DesignTokens.Spacing.small)
         .background(tokens.controlSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
     }
 
-    private func numericButton(_ label: LocalizedStringKey, value: Double, inputID: String, isInteger: Bool = false, update: @escaping (Double) -> Void) -> some View {
-        Button {
-            keyboardManager.showKeyboard(inputId: inputID, initialValue: value, isInteger: isInteger, onValueChanged: update)
-        } label: {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
-                Text(label).font(DesignTokens.Typography.feedback).foregroundStyle(tokens.contentSecondary)
-                Text(isInteger ? String(Int(value)) : String(format: "%.1f", value)).font(DesignTokens.Typography.action).foregroundStyle(tokens.contentPrimary)
-            }
-            .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize, alignment: .leading)
-            .padding(.horizontal, DesignTokens.Spacing.small)
-            .background(tokens.surface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+    private var setNumber: some View {
+        Text("\(index + 1)")
+            .font(DesignTokens.Typography.action)
+            .foregroundStyle(tokens.contentPrimary)
+            .frame(width: 32, height: DesignTokens.Metric.minimumTapSize)
+            .accessibilityLabel(trainingFormat("training.set.number", index + 1))
+    }
+
+    private var completionButton: some View {
+        Button(action: { onSetCompleted(setID, action.restTime) }) {
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .frame(width: 36, height: DesignTokens.Metric.minimumTapSize)
         }
-        .accessibilityLabel(label)
+        .foregroundStyle(isCompleted ? tokens.primary : tokens.contentSecondary)
+        .accessibilityLabel(isCompleted ? "training.state.completed" : "training.action.markComplete")
+        .accessibilityValue(isCompleted ? Text("training.state.completed") : Text("training.state.incomplete"))
+    }
+
+    private var setMenu: some View {
+        Menu {
+            Button(showNoteInput ? "training.action.hideNote" : "training.action.addNote") { showNoteInput.toggle() }
+            if action.sets.count > 1 {
+                Button("training.action.deleteSet", role: .destructive) {
+                    action.sets.removeAll { $0.id == set.id }
+                    completedSets.remove(setID)
+                    setNotes.removeValue(forKey: setID)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .frame(width: 36, height: DesignTokens.Metric.minimumTapSize)
+        }
+        .accessibilityLabel("training.accessibility.setMenu")
+    }
+
+    private func compactNumericButton(_ label: String, value: Double, inputID: String, isInteger: Bool = false, supportsBilateralRecording: Bool = false, update: @escaping (Double) -> Void) -> some View {
+        let displayedValue = isInteger ? String(Int(value)) : String(format: "%.1f", value)
+        let controlWidth: CGFloat = action.recordBilateral && supportsBilateralRecording ? 58 : 76
+        return Button {
+            showNumericKeyboard(
+                inputID: inputID,
+                initialValue: value,
+                isInteger: isInteger,
+                supportsBilateralRecording: supportsBilateralRecording,
+                update: update
+            )
+        } label: {
+            CompactSetValueCell(
+                label: label,
+                value: displayedValue,
+                width: controlWidth
+            )
+        }
+        .accessibilityLabel(LocalizedStringKey(label))
         .accessibilityValue(isInteger ? String(Int(value)) : String(format: "%.1f", value))
         .accessibilityHint("training.accessibility.editValueHint")
+    }
+
+    private func showNumericKeyboard(inputID: String, initialValue: Double, isInteger: Bool, supportsBilateralRecording: Bool, update: @escaping (Double) -> Void) {
+        guard supportsBilateralRecording else {
+            keyboardManager.showKeyboard(inputId: inputID, initialValue: initialValue, isInteger: isInteger, onValueChanged: update)
+            return
+        }
+        keyboardManager.showKeyboard(
+            inputId: inputID,
+            initialValue: initialValue,
+            bilateralRecordingAccessory: BilateralRecordingAccessory(isEnabled: action.recordBilateral, onChange: changeBilateralRecording),
+            onValueChanged: update
+        )
+    }
+
+    private func changeBilateralRecording(_ enabled: Bool) {
+        action.setRecordBilateral(enabled)
+        let inputID = enabled ? "left_\(setID)" : "weight_\(setID)"
+        let value = enabled ? action.sets[index].leftWeight : action.sets[index].weight
+        keyboardManager.showKeyboard(
+            inputId: inputID,
+            initialValue: value,
+            bilateralRecordingAccessory: BilateralRecordingAccessory(isEnabled: enabled, onChange: changeBilateralRecording),
+            onValueChanged: { newValue in
+                if enabled {
+                    action.sets[index].leftWeight = newValue
+                } else {
+                    action.sets[index].weight = newValue
+                }
+            }
+        )
+    }
+}
+
+private struct CompactSetValueCell: View {
+    @Environment(\.designTokens) private var tokens
+    let label: String
+    let value: String
+    let width: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(tokens.contentSecondary)
+                .lineLimit(1)
+            Text(value)
+                .font(DesignTokens.Typography.action)
+                .foregroundStyle(tokens.contentPrimary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(width: width, alignment: .leading)
+        .frame(minHeight: DesignTokens.Metric.minimumTapSize, alignment: .leading)
+        .padding(.horizontal, 6)
+        .background(tokens.canvas)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+        }
     }
 }
 

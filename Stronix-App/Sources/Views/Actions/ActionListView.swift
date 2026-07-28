@@ -9,6 +9,7 @@ struct ActionListView: View {
     @State private var searchText = ""
     @State private var selectedEquipmentId: Int = 0 // 0表示"全部"
     @State private var selectedTargetMuscleId: Int = 0 // 修改：0表示"所有动作"
+    @FocusState private var isSearchFocused: Bool
     @State private var hasInitialized = false // 添加初始化标志
     @StateObject private var viewModel = ActionListViewModel()
 
@@ -208,6 +209,9 @@ struct ActionListView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(themeManager.currentTheme.secondary)
                         TextField("搜索训练动作", text: $searchText)
+                            .focused($isSearchFocused)
+                            .submitLabel(.search)
+                            .onSubmit { isSearchFocused = false }
                     }
                     .padding()
                     .background(lightTokens.controlSurface)
@@ -289,6 +293,7 @@ struct ActionListView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 12)
                             }
+                            .scrollDismissesKeyboard(.interactively)
                             .frame(width: mainGeometry.size.width * 0.25)
                             .background(lightTokens.controlSurface)
                         }
@@ -386,12 +391,21 @@ struct ActionListView: View {
                                 .padding(.vertical)
                             }
                         }
+                        .scrollDismissesKeyboard(.interactively)
+                        .simultaneousGesture(TapGesture().onEnded { isSearchFocused = false })
                         .frame(width: mainGeometry.size.width * 0.75)
                         .clipped()
                     }
                     .frame(maxHeight: .infinity)
                 }
                 .background(lightTokens.canvas)
+                .simultaneousGesture(TapGesture().onEnded { isSearchFocused = false })
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") { isSearchFocused = false }
+                }
             }
             .onAppear {
                 Task {

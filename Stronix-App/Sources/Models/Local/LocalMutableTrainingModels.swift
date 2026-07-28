@@ -118,6 +118,19 @@ struct MutableTrainingAction: Identifiable {
         self.restTime = restTime
         self.recordBilateral = recordBilateral
     }
+
+    mutating func setRecordBilateral(_ enabled: Bool) {
+        guard recordBilateral != enabled else { return }
+        recordBilateral = enabled
+        for index in sets.indices {
+            if enabled {
+                sets[index].weight = 0
+            } else {
+                sets[index].leftWeight = 0
+                sets[index].rightWeight = 0
+            }
+        }
+    }
 }
 
 /// 可变的训练组模型（前端兼容层）
