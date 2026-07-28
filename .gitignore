@@ -8,3 +8,4 @@ DerivedData/
 build/
 Logs/
 *.log
+.claude/worktrees/

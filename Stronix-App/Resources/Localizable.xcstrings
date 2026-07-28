@@ -1,2246 +1,3170 @@
 {
-  "sourceLanguage": "zh-Hans",
-  "strings": {
-    "auth.accessibility.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在处理"
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "" : {
+
+    },
+    "  保持现有体重和体组成，允许小幅波动。" : {
+
+    },
+    "  创造适度热量缺口，帮助减少脂肪，同时避免过快减重导致肌肉流失。" : {
+
+    },
+    "  提供足够的热量盈余，支持肌肉生长，同时避免过量导致过多脂肪堆积。" : {
+
+    },
+    "* 此结果仅供参考，实际训练请量力而行" : {
+
+    },
+    "%" : {
+
+    },
+    "%.1f" : {
+
+    },
+    "%.1f kg" : {
+
+    },
+    "%.1f%@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$.1f%2$@"
+          }
+        }
+      }
+    },
+    "%@" : {
+
+    },
+    "%@ %@ × %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ × %3$lld"
+          }
+        }
+      }
+    },
+    "%@ × %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ × %2$lld"
+          }
+        }
+      }
+    },
+    "%@, %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld - %lld 卡路里" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld - %2$lld 卡路里"
+          }
+        }
+      }
+    },
+    "%lld 卡路里" : {
+
+    },
+    "%lldk" : {
+
+    },
+    "%lldkg" : {
+
+    },
+    "%lldm" : {
+
+    },
+    "%lld个动作" : {
+
+    },
+    "%lld容量" : {
+
+    },
+    "%lld年" : {
+
+    },
+    "%lld年1-12月" : {
+
+    },
+    "%lld组" : {
+
+    },
+    "• %@" : {
+
+    },
+    "• 减脂：TDEE - 300~500 卡路里" : {
+
+    },
+    "• 增肌：TDEE + 300~500 卡路里" : {
+
+    },
+    "• 维持：TDEE ± 100 卡路里" : {
+
+    },
+    "+%.1f" : {
+
+    },
+    "0" : {
+
+    },
+    "1RM计算器" : {
+
+    },
+    "auth.accessibility.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在处理"
           }
         }
       }
     },
-    "auth.accessibility.registrationReady": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "同意后即可提交注册"
+    "auth.accessibility.registrationReady" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同意后即可提交注册"
           }
         }
       }
     },
-    "auth.accessibility.selected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已选择"
+    "auth.accessibility.selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择"
           }
         }
       }
     },
-    "auth.accessibility.unselected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未选择"
+    "auth.accessibility.unselected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择"
           }
         }
       }
     },
-    "auth.action.backToLogin": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "返回登录"
+    "auth.action.backToLogin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回登录"
           }
         }
       }
     },
-    "auth.action.cancel": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
+    "auth.action.cancel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         }
       }
     },
-    "auth.action.confirm": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定"
+    "auth.action.confirm" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定"
           }
         }
       }
     },
-    "auth.action.login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录"
+    "auth.action.login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
           }
         }
       }
     },
-    "auth.action.loginNow": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "立即登录"
+    "auth.action.loginNow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即登录"
           }
         }
       }
     },
-    "auth.action.register": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "注册"
+    "auth.action.register" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册"
           }
         }
       }
     },
-    "auth.action.registerNow": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "立即注册"
+    "auth.action.registerNow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即注册"
           }
         }
       }
     },
-    "auth.error.emailAlreadyExists": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "邮箱已被注册"
+    "auth.error.emailAlreadyExists" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱已被注册"
           }
         }
       }
     },
-    "auth.error.generic": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂时无法完成请求，请稍后重试"
+    "auth.error.generic" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法完成请求，请稍后重试"
           }
         }
       }
     },
-    "auth.error.invalidCredentials": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "邮箱或密码错误"
+    "auth.error.invalidCredentials" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱或密码错误"
           }
         }
       }
     },
-    "auth.error.invalidEmail": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入有效的邮箱"
+    "auth.error.invalidEmail" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的邮箱"
           }
         }
       }
     },
-    "auth.error.invalidHeight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入有效的身高"
+    "auth.error.invalidHeight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的身高"
           }
         }
       }
     },
-    "auth.error.invalidPassword": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "密码至少需要 6 位"
+    "auth.error.invalidPassword" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码至少需要 6 位"
           }
         }
       }
     },
-    "auth.error.invalidUsername": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入有效的用户名"
+    "auth.error.invalidUsername" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的用户名"
           }
         }
       }
     },
-    "auth.error.invalidWeight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入有效的体重"
+    "auth.error.invalidWeight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的体重"
           }
         }
       }
     },
-    "auth.error.sessionUnavailable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法安全保存登录状态，请重试"
+    "auth.error.sessionUnavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法安全保存登录状态，请重试"
           }
         }
       }
     },
-    "auth.error.usernameTaken": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用户名已被使用"
+    "auth.error.usernameTaken" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户名已被使用"
           }
         }
       }
     },
-    "auth.feedback.loginFailed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录失败"
+    "auth.feedback.loginFailed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录失败"
           }
         }
       }
     },
-    "auth.feedback.passwordMismatch": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "密码不匹配"
+    "auth.feedback.logoutFailed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录失败"
           }
         }
       }
     },
-    "auth.feedback.registerFailed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "注册失败"
+    "auth.feedback.passwordMismatch" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码不匹配"
           }
         }
       }
     },
-    "auth.field.email.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "邮箱"
+    "auth.feedback.registerFailed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册失败"
           }
         }
       }
     },
-    "auth.field.email.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入邮箱"
+    "auth.field.email.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱"
           }
         }
       }
     },
-    "auth.field.gender": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "性别"
+    "auth.field.email.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入邮箱"
           }
         }
       }
     },
-    "auth.field.height.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "身高 (cm)"
+    "auth.field.gender" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "性别"
           }
         }
       }
     },
-    "auth.field.height.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "170"
+    "auth.field.height.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身高 (cm)"
           }
         }
       }
     },
-    "auth.field.password.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "密码"
+    "auth.field.height.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "170"
           }
         }
       }
     },
-    "auth.field.password.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入密码"
+    "auth.field.password.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码"
           }
         }
       }
     },
-    "auth.field.passwordConfirmation.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认密码"
+    "auth.field.password.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入密码"
           }
         }
       }
     },
-    "auth.field.passwordConfirmation.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请再次输入密码"
+    "auth.field.passwordConfirmation.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认密码"
           }
         }
       }
     },
-    "auth.field.passwordRegistration.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入密码（至少6位）"
+    "auth.field.passwordConfirmation.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请再次输入密码"
           }
         }
       }
     },
-    "auth.field.username.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用户名"
+    "auth.field.passwordRegistration.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入密码（至少6位）"
           }
         }
       }
     },
-    "auth.field.username.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入用户名"
+    "auth.field.username.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户名"
           }
         }
       }
     },
-    "auth.field.weight.label": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体重 (kg)"
+    "auth.field.username.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入用户名"
           }
         }
       }
     },
-    "auth.field.weight.placeholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "70"
+    "auth.field.weight.label" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体重 (kg)"
           }
         }
       }
     },
-    "auth.forgotPassword.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此设备上的本地账户暂不支持密码重置。请使用原密码登录或联系支持人员。"
+    "auth.field.weight.placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "70"
           }
         }
       }
     },
-    "auth.forgotPassword.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "忘记密码"
+    "auth.forgotPassword.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此设备上的本地账户暂不支持密码重置。请使用原密码登录或联系支持人员。"
           }
         }
       }
     },
-    "auth.forgotPassword.unavailable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂不支持密码重置"
+    "auth.forgotPassword.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘记密码"
           }
         }
       }
     },
-    "auth.gender.female": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "女"
+    "auth.forgotPassword.unavailable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不支持密码重置"
           }
         }
       }
     },
-    "auth.gender.male": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "男"
+    "auth.gender.female" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "女"
           }
         }
       }
     },
-    "auth.gender.other": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "其他"
+    "auth.gender.male" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "男"
           }
         }
       }
     },
-    "auth.login.forgotPassword": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "忘记密码？"
+    "auth.gender.other" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
           }
         }
       }
     },
-    "auth.login.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在登录"
+    "auth.login.forgotPassword" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘记密码？"
           }
         }
       }
     },
-    "auth.login.noAccount": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没有账号？"
+    "auth.login.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在登录"
           }
         }
       }
     },
-    "auth.login.subtitle": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "欢迎回来"
+    "auth.login.noAccount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有账号？"
           }
         }
       }
     },
-    "auth.register.agreement": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我已阅读并同意"
+    "auth.login.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎回来"
           }
         }
       }
     },
-    "auth.register.alreadyHaveAccount": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已有账号？"
+    "auth.register.agreement" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我已阅读并同意"
           }
         }
       }
     },
-    "auth.register.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在注册"
+    "auth.register.alreadyHaveAccount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已有账号？"
           }
         }
       }
     },
-    "auth.register.privacyPolicy": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "《隐私政策》"
+    "auth.register.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在注册"
           }
         }
       }
     },
-    "auth.register.subtitle": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加入 STRONIX，开始您的健身之旅"
+    "auth.register.privacyPolicy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "《隐私政策》"
           }
         }
       }
     },
-    "auth.register.terms": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "《用户协议》"
+    "auth.register.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入 STRONIX，开始您的健身之旅"
           }
         }
       }
     },
-    "auth.register.termsConnector": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "和"
+    "auth.register.terms" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "《用户协议》"
           }
         }
       }
     },
-    "auth.register.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建账号"
+    "auth.register.termsConnector" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和"
           }
         }
       }
     },
-    "auth.validation.checkRegistration": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请检查注册信息后重试"
+    "auth.register.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建账号"
           }
         }
       }
     },
-    "auth.validation.passwordMismatch": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "两次输入的密码不一致"
+    "auth.validation.checkRegistration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请检查注册信息后重试"
           }
         }
       }
     },
-    "auth.validation.termsRequired": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请先阅读并同意用户协议和隐私政策"
+    "auth.validation.passwordMismatch" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "两次输入的密码不一致"
           }
         }
       }
+    },
+    "auth.validation.termsRequired" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先阅读并同意用户协议和隐私政策"
+          }
+        }
+      }
+    },
+    "BMI指数" : {
+
     },
-    "training.accessibility.actionMenu": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "动作菜单"
+    "BMI计算器" : {
+
+    },
+    "BMR = 370 + (21.6 × 去脂体重kg)" : {
+
+    },
+    "bodyMeasurement.accessibility.chartHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上下轻扫可浏览不同日期的数据点"
           }
         }
       }
     },
-    "training.accessibility.cancelWorkoutHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消后将丢失本次训练进度"
+    "bodyMeasurement.accessibility.chartSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体测趋势图"
           }
         }
       }
     },
-    "training.accessibility.editValueHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "双击后使用数字键盘修改"
+    "bodyMeasurement.accessibility.chartValue" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@，%2$@"
           }
         }
       }
     },
-    "training.accessibility.elapsed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已用时间"
+    "bodyMeasurement.accessibility.login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
           }
         }
       }
     },
-    "training.accessibility.floatingHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "双击返回正在进行的训练"
+    "bodyMeasurement.accessibility.logout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
           }
         }
       }
     },
-    "training.accessibility.floatingLabel": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练进行中"
+    "bodyMeasurement.accessibility.metricHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按查看此指标趋势"
           }
         }
       }
     },
-    "training.accessibility.numberKeyboard": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "数字输入键盘"
+    "bodyMeasurement.accessibility.metricValue" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@%2$@，%3$@"
           }
         }
       }
     },
-    "training.accessibility.restTimer": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "休息计时器"
+    "bodyMeasurement.accessibility.selected" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择"
           }
         }
       }
     },
-    "training.accessibility.setMenu": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "组菜单"
+    "bodyMeasurement.accessibility.unselected" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择"
           }
         }
       }
     },
-    "training.accessibility.startHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始执行此训练计划"
+    "bodyMeasurement.action.add" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加结果"
           }
         }
       }
     },
-    "training.accessibility.startUnavailableHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计划加载完成且至少包含一个动作后可开始训练"
+    "bodyMeasurement.action.login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即登录"
           }
         }
       }
     },
-    "training.accessibility.volume": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练容量"
+    "bodyMeasurement.action.retry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
           }
         }
       }
     },
-    "training.action.addAction": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加动作"
+    "bodyMeasurement.action.viewRecords" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看记录"
           }
         }
       }
     },
-    "training.action.addNote": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加备注"
+    "bodyMeasurement.error.generic" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作失败，请稍后重试"
           }
         }
       }
     },
-    "training.action.addSet": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新增一组"
+    "bodyMeasurement.error.invalidDate" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录日期无效"
           }
         }
       }
     },
-    "training.action.addTenSeconds": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "增加 10 秒"
+    "bodyMeasurement.error.invalidMeasurement" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体测数据无效"
           }
         }
       }
     },
-    "training.action.back": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "返回"
+    "bodyMeasurement.error.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载体测数据"
           }
         }
       }
     },
-    "training.action.cancel": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
+    "bodyMeasurement.error.unauthenticated" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户未登录"
           }
         }
       }
     },
-    "training.action.cancelWorkout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消锻炼"
+    "bodyMeasurement.error.unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录已不可用"
           }
         }
       }
     },
-    "training.action.closeRest": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关闭休息计时器"
+    "bodyMeasurement.metric.bodyFat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体脂百分比"
           }
         }
       }
     },
-    "training.action.complete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "完成"
+    "bodyMeasurement.metric.muscleMass" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "骨骼肌量"
           }
         }
       }
     },
-    "training.action.confirm": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定"
+    "bodyMeasurement.metric.weight" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体重"
           }
         }
       }
     },
-    "training.action.configureRest": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置休息时间"
+    "bodyMeasurement.state.empty.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击下方按钮添加您的第一条体测记录"
           }
         }
       }
     },
-    "training.action.delete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除"
+    "bodyMeasurement.state.empty.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无体测数据"
           }
         }
       }
     },
-    "training.action.deleteAction": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除动作"
+    "bodyMeasurement.state.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载体测数据"
           }
         }
       }
     },
-    "training.action.deleteSet": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除本组"
+    "bodyMeasurement.state.signedOut.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录后可以查看和管理您的体测数据"
           }
         }
       }
     },
-    "training.action.doNotUpdate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不更新"
+    "bodyMeasurement.state.signedOut.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录"
           }
         }
       }
     },
-    "training.action.edit": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编辑"
+    "bodyMeasurement.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体测概要"
           }
         }
       }
+    },
+    "cm" : {
+
+    },
+    "Color Scheme" : {
+
+    },
+    "Date" : {
+
+    },
+    "Katch-McArdle 方程" : {
+
+    },
+    "Katch-McArdle 方程是一种针对已知体脂率人群的基础代谢率（BMR）计算公式。" : {
+
+    },
+    "kg" : {
+
+    },
+    "Mifflin-St Jeor 方程" : {
+
     },
-    "training.action.finishRest": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "结束休息"
+    "Mifflin-St Jeor 方程是目前普遍认为最准确的基础代谢率（BMR）计算公式之一。" : {
+
+    },
+    "planList.accessibility.create" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建训练计划"
           }
         }
       }
     },
-    "training.action.history": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "动作历史"
+    "planList.accessibility.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在处理"
           }
         }
       }
     },
-    "training.action.hideNote": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收起备注"
+    "planList.accessibility.login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
           }
         }
       }
     },
-    "training.action.markComplete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "标记完成"
+    "planList.accessibility.loginHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开登录页面"
           }
         }
       }
     },
-    "training.action.pause": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂停"
+    "planList.accessibility.logout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
           }
         }
       }
     },
-    "training.action.recordBilateral": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "记录左右重量"
+    "planList.accessibility.logoutHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出当前账号"
           }
         }
       }
     },
-    "training.action.reset": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重置"
+    "planList.accessibility.openPlanHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开计划详情并开始训练"
           }
         }
       }
     },
-    "training.action.resume": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "继续"
+    "planList.accessibility.personalPlan" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人训练计划"
           }
         }
       }
     },
-    "training.action.retryUpdate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重试更新计划"
+    "planList.accessibility.planMenu" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划操作"
           }
         }
       }
     },
-    "training.action.start": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始训练"
+    "planList.accessibility.selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择"
           }
         }
       }
     },
-    "training.action.stopCurrent": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停止当前训练"
+    "planList.accessibility.templatePlan" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练模板"
           }
         }
       }
     },
-    "training.action.subtractTenSeconds": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "减少 10 秒"
+    "planList.accessibility.unselected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择"
           }
         }
       }
     },
-    "training.action.update": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更新"
+    "planList.accessibility.useTemplate" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用模板"
           }
         }
       }
     },
-    "training.alert.cancel.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定要取消本次锻炼吗？所有进度都将丢失。"
+    "planList.action.cancel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         }
       }
     },
-    "training.alert.cancel.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认取消锻炼"
+    "planList.action.confirm" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定"
           }
         }
       }
     },
-    "training.alert.complete.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认完成本次训练？"
+    "planList.action.copy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制计划"
           }
         }
       }
     },
-    "training.alert.complete.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "完成训练"
+    "planList.action.create" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建计划"
           }
         }
       }
     },
-    "training.alert.conflict.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前正在进行「%@」训练，是否停止当前训练并开始新的训练？"
+    "planList.action.delete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
           }
         }
       }
     },
-    "training.alert.conflict.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练冲突"
+    "planList.action.edit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
           }
         }
       }
     },
-    "training.alert.deleteAction.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定要删除这个训练动作吗？"
+    "planList.action.login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
           }
         }
       }
     },
-    "training.alert.deleteAction.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认删除"
+    "planList.action.loginNow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即登录"
           }
         }
       }
     },
-    "training.alert.error.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "完成训练失败"
+    "planList.action.retry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
           }
         }
       }
     },
-    "training.alert.updatePlan.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "检测到训练计划有变动，是否更新训练计划？"
+    "planList.action.use" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用"
           }
         }
       }
     },
-    "training.alert.updatePlan.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更新训练计划"
+    "planList.action.using" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用"
           }
         }
       }
     },
-    "training.detail.actions": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练动作"
+    "planList.actionSummary.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无动作"
           }
         }
       }
     },
-    "training.detail.bilateralSet": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %d 组：左 %.1f kg，右 %.1f kg，%d 次"
+    "planList.actionSummary.more" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另有 %d 个动作"
           }
         }
       }
     },
-    "training.detail.created": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建：%@"
+    "planList.copy.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入新计划的名称"
           }
         }
       }
     },
-    "training.detail.description": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计划描述"
+    "planList.copy.namePlaceholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划名称"
           }
         }
       }
     },
-    "training.detail.emptyActions": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无训练动作"
+    "planList.copy.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制计划"
           }
         }
       }
     },
-    "training.detail.rest": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "休息时间：%d 秒"
+    "planList.delete.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定要删除计划“%@”吗？此操作无法撤销。"
           }
         }
       }
     },
-    "training.detail.set": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %d 组：%.1f kg，%d 次"
+    "planList.delete.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除计划"
           }
         }
       }
     },
-    "training.detail.setCount": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%d 组"
+    "planList.empty.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建计划后，即可安排并开始训练。"
           }
         }
       }
     },
-    "training.detail.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练计划详情"
+    "planList.empty.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您还没有训练计划"
           }
         }
       }
     },
-    "training.detail.volume": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%.1f kg"
+    "planList.error.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法读取计划，请稍后重试。"
           }
         }
       }
     },
-    "training.error.unknown": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未知错误"
+    "planList.error.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载计划失败"
           }
         }
       }
     },
-    "training.field.leftWeight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "左重量"
+    "planList.error.unknown" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法完成请求，请稍后重试"
           }
         }
       }
     },
-    "training.field.note": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备注"
+    "planList.loading.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在同步您的训练计划。"
           }
         }
       }
     },
-    "training.field.repetitions": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次数"
+    "planList.loading.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载计划"
           }
         }
       }
     },
-    "training.field.rightWeight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "右重量"
+    "planList.personal.empty.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击创建计划，开始安排您的训练。"
           }
         }
       }
     },
-    "training.field.weight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重量"
+    "planList.personal.empty.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无个人计划"
           }
         }
       }
     },
-    "training.floating.active": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练进行中"
+    "planList.signedOut.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录后可以查看和管理您的训练计划。"
           }
         }
       }
     },
-    "training.keyboard.clear": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清空"
+    "planList.signedOut.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录"
           }
         }
       }
     },
-    "training.keyboard.decimal": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小数点"
+    "planList.tab.personal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人计划"
           }
         }
       }
     },
-    "training.keyboard.decrease": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "减少数值"
+    "planList.tab.templates" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划模板"
           }
         }
       }
     },
-    "training.keyboard.delete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除最后一位"
+    "planList.templateCopy.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否将模板复制到个人计划？"
           }
         }
       }
     },
-    "training.keyboard.hide": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隐藏键盘"
+    "planList.templateCopy.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制模板计划"
           }
         }
       }
     },
-    "training.keyboard.increase": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "增加数值"
+    "planList.templates.empty.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统模板计划正在准备中。"
           }
         }
       }
     },
-    "training.navigation.active": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练中"
+    "planList.templates.empty.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无模板计划"
           }
         }
       }
+    },
+    "Selected" : {
+
+    },
+    "STRONIX" : {
+
+    },
+    "TDEE = BMR（基础代谢率）× 活动系数" : {
+
+    },
+    "TDEE（Total Daily Energy Expenditure）是您每日总能量消耗，包括基础代谢、日常活动、运动等所有消耗的热量。" : {
+
     },
-    "training.rest.configure": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置休息时间"
+    "TDEE计算公式：" : {
+
+    },
+    "training.accessibility.actionMenu" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动作菜单"
           }
         }
       }
     },
-    "training.rest.minutes": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分钟：%d"
+    "training.accessibility.cancelWorkoutHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消后将丢失本次训练进度"
           }
         }
       }
     },
-    "training.rest.seconds": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%d 秒休息"
+    "training.accessibility.editValueHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双击后使用数字键盘修改"
           }
         }
       }
     },
-    "training.rest.secondsOnly": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "秒数：%d"
+    "training.accessibility.elapsed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已用时间"
           }
         }
       }
     },
-    "training.set.number": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %d 组"
+    "training.accessibility.floatingHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双击返回正在进行的训练"
           }
         }
       }
     },
-    "training.state.completed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已完成"
+    "training.accessibility.floatingLabel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练进行中"
           }
         }
       }
     },
-    "training.state.incomplete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未完成"
+    "training.accessibility.numberKeyboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数字输入键盘"
           }
         }
       }
     },
-    "training.state.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在加载"
+    "training.accessibility.restTimer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "休息计时器"
           }
         }
       }
     },
-    "training.state.paused": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已暂停"
+    "training.accessibility.setMenu" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组菜单"
           }
         }
       }
     },
-    "training.state.processing": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在处理"
+    "training.accessibility.startHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始执行此训练计划"
           }
         }
       }
     },
-    "training.state.running": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "运行中"
+    "training.accessibility.startUnavailableHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划加载完成且至少包含一个动作后可开始训练"
           }
         }
       }
     },
-    "training.state.unavailable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂不可用"
+    "training.accessibility.volume" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练容量"
           }
         }
       }
     },
-    "planList.accessibility.create": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建训练计划"
+    "training.action.addAction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加动作"
           }
         }
       }
     },
-    "planList.accessibility.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在处理"
+    "training.action.addNote" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加备注"
           }
         }
       }
     },
-    "planList.accessibility.login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录"
+    "training.action.addSet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增一组"
           }
         }
       }
     },
-    "planList.accessibility.loginHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开登录页面"
+    "training.action.addTenSeconds" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "增加 10 秒"
           }
         }
       }
     },
-    "planList.accessibility.logout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出登录"
+    "training.action.back" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         }
       }
     },
-    "planList.accessibility.logoutHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出当前账号"
+    "training.action.cancel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         }
       }
     },
-    "planList.accessibility.openPlanHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开计划详情并开始训练"
+    "training.action.cancelWorkout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消锻炼"
           }
         }
       }
     },
-    "planList.accessibility.personalPlan": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "个人训练计划"
+    "training.action.closeRest" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭休息计时器"
           }
         }
       }
     },
-    "planList.accessibility.planMenu": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计划操作"
+    "training.action.complete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
           }
         }
       }
     },
-    "planList.accessibility.selected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已选择"
+    "training.action.configureRest" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置休息时间"
           }
         }
       }
     },
-    "planList.accessibility.templatePlan": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "训练模板"
+    "training.action.confirm" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定"
           }
         }
       }
     },
-    "planList.accessibility.unselected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未选择"
+    "training.action.delete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
           }
         }
       }
     },
-    "planList.accessibility.useTemplate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用模板"
+    "training.action.deleteAction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除动作"
           }
         }
       }
     },
-    "planList.action.cancel": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
+    "training.action.deleteSet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除本组"
           }
         }
       }
     },
-    "planList.action.confirm": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定"
+    "training.action.doNotUpdate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不更新"
           }
         }
       }
     },
-    "planList.action.copy": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "复制计划"
+    "training.action.edit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
           }
         }
       }
     },
-    "planList.action.create": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建计划"
+    "training.action.finishRest" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束休息"
           }
         }
       }
     },
-    "planList.action.delete": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除"
+    "training.action.hideNote" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起备注"
           }
         }
       }
     },
-    "planList.action.edit": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编辑"
+    "training.action.history" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动作历史"
           }
         }
       }
     },
-    "planList.action.login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录"
+    "training.action.markComplete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标记完成"
           }
         }
       }
     },
-    "planList.action.loginNow": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "立即登录"
+    "training.action.pause" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停"
           }
         }
       }
     },
-    "planList.action.retry": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重试"
+    "training.action.recordBilateral" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录左右重量"
           }
         }
       }
     },
-    "planList.action.use": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用"
+    "training.action.reset" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置"
           }
         }
       }
     },
-    "planList.action.using": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在使用"
+    "training.action.resume" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
           }
         }
       }
     },
-    "planList.actionSummary.empty": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无动作"
+    "training.action.retryUpdate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试更新计划"
           }
         }
       }
     },
-    "planList.actionSummary.more": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "另有 %d 个动作"
+    "training.action.start" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始训练"
           }
         }
       }
     },
-    "planList.copy.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请输入新计划的名称"
+    "training.action.stopCurrent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止当前训练"
           }
         }
       }
     },
-    "planList.copy.namePlaceholder": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计划名称"
+    "training.action.subtractTenSeconds" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "减少 10 秒"
           }
         }
       }
     },
-    "planList.copy.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "复制计划"
+    "training.action.update" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
           }
         }
       }
     },
-    "planList.delete.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定要删除计划“%@”吗？此操作无法撤销。"
+    "training.alert.cancel.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定要取消本次锻炼吗？所有进度都将丢失。"
           }
         }
       }
     },
-    "planList.delete.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除计划"
+    "training.alert.cancel.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认取消锻炼"
           }
         }
       }
     },
-    "planList.empty.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "创建计划后，即可安排并开始训练。"
+    "training.alert.complete.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认完成本次训练？"
           }
         }
       }
     },
-    "planList.empty.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "您还没有训练计划"
+    "training.alert.complete.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成训练"
           }
         }
       }
     },
-    "planList.error.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂时无法读取计划，请稍后重试。"
+    "training.alert.conflict.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前正在进行「%@」训练，是否停止当前训练并开始新的训练？"
           }
         }
       }
     },
-    "planList.error.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加载计划失败"
+    "training.alert.conflict.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练冲突"
           }
         }
       }
     },
-    "planList.error.unknown": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂时无法完成请求，请稍后重试"
+    "training.alert.deleteAction.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定要删除这个训练动作吗？"
           }
         }
       }
     },
-    "planList.loading.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在同步您的训练计划。"
+    "training.alert.deleteAction.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认删除"
           }
         }
       }
     },
-    "planList.loading.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在加载计划"
+    "training.alert.error.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成训练失败"
           }
         }
       }
     },
-    "planList.personal.empty.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点击创建计划，开始安排您的训练。"
+    "training.alert.updatePlan.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到训练计划有变动，是否更新训练计划？"
           }
         }
       }
     },
-    "planList.personal.empty.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无个人计划"
+    "training.alert.updatePlan.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新训练计划"
           }
         }
       }
     },
-    "planList.signedOut.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录后可以查看和管理您的训练计划。"
+    "training.detail.actions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练动作"
           }
         }
       }
     },
-    "planList.signedOut.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请先登录"
+    "training.detail.bilateralSet" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %d 组：左 %.1f kg，右 %.1f kg，%d 次"
           }
         }
       }
     },
-    "planList.tab.personal": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "个人计划"
+    "training.detail.created" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建：%@"
           }
         }
       }
     },
-    "planList.tab.templates": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计划模板"
+    "training.detail.description" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划描述"
           }
         }
       }
     },
-    "planList.templateCopy.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "是否将模板复制到个人计划？"
+    "training.detail.emptyActions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无训练动作"
           }
         }
       }
     },
-    "planList.templateCopy.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "复制模板计划"
+    "training.detail.rest" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "休息时间：%d 秒"
           }
         }
       }
     },
-    "planList.templates.empty.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "系统模板计划正在准备中。"
+    "training.detail.set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %d 组：%.1f kg，%d 次"
           }
         }
       }
     },
-    "planList.templates.empty.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无模板计划"
+    "training.detail.setCount" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 组"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.chartHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上下轻扫可浏览不同日期的数据点"
+    "training.detail.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练计划详情"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.chartValue": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@，%2$@"
+    "training.detail.volume" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%.1f kg"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.metricValue": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@%2$@，%3$@"
+    "training.error.unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知错误"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.chartSummary": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体测趋势图"
+    "training.field.leftWeight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左重量"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录"
+    "training.field.note" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.logout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出登录"
+    "training.field.repetitions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次数"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.metricHint": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点按查看此指标趋势"
+    "training.field.rightWeight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右重量"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.selected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已选择"
+    "training.field.weight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重量"
           }
         }
       }
     },
-    "bodyMeasurement.accessibility.unselected": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未选择"
+    "training.floating.active" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练进行中"
           }
         }
       }
     },
-    "bodyMeasurement.action.add": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加结果"
+    "training.keyboard.clear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清空"
           }
         }
       }
     },
-    "bodyMeasurement.action.login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "立即登录"
+    "training.keyboard.decimal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小数点"
           }
         }
       }
     },
-    "bodyMeasurement.action.retry": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重试"
+    "training.keyboard.decrease" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "减少数值"
           }
         }
       }
     },
-    "bodyMeasurement.action.viewRecords": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "查看记录"
+    "training.keyboard.delete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除最后一位"
           }
         }
       }
     },
-    "bodyMeasurement.error.generic": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "操作失败，请稍后重试"
+    "training.keyboard.hide" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏键盘"
           }
         }
       }
     },
-    "bodyMeasurement.error.invalidDate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "记录日期无效"
+    "training.keyboard.increase" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "增加数值"
           }
         }
       }
     },
-    "bodyMeasurement.error.invalidMeasurement": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体测数据无效"
+    "training.navigation.active" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练中"
           }
         }
       }
     },
-    "bodyMeasurement.error.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法加载体测数据"
+    "training.rest.configure" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置休息时间"
           }
         }
       }
     },
-    "bodyMeasurement.error.unauthenticated": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用户未登录"
+    "training.rest.minutes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分钟：%d"
           }
         }
       }
     },
-    "bodyMeasurement.error.unavailable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "记录已不可用"
+    "training.rest.seconds" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 秒休息"
           }
         }
       }
     },
-    "bodyMeasurement.metric.bodyFat": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体脂百分比"
+    "training.rest.secondsOnly" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "秒数：%d"
           }
         }
       }
     },
-    "bodyMeasurement.metric.muscleMass": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "骨骼肌量"
+    "training.set.number" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %d 组"
           }
         }
       }
     },
-    "bodyMeasurement.metric.weight": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体重"
+    "training.state.completed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成"
           }
         }
       }
     },
-    "bodyMeasurement.state.empty.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点击下方按钮添加您的第一条体测记录"
+    "training.state.incomplete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未完成"
           }
         }
       }
     },
-    "bodyMeasurement.state.empty.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无体测数据"
+    "training.state.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载"
           }
         }
       }
     },
-    "bodyMeasurement.state.loading": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在加载体测数据"
+    "training.state.paused" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已暂停"
           }
         }
       }
     },
-    "bodyMeasurement.state.signedOut.message": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录后可以查看和管理您的体测数据"
+    "training.state.processing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在处理"
           }
         }
       }
     },
-    "bodyMeasurement.state.signedOut.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请先登录"
+    "training.state.running" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行中"
           }
         }
       }
     },
-    "bodyMeasurement.title": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "体测概要"
+    "training.state.unavailable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不可用"
           }
         }
       }
+    },
+    "Value" : {
+
+    },
+    "为了保护本地数据，App 已停止启动。请联系支持。" : {
+
+    },
+    "仅计算已完成的组，实时更新" : {
+
+    },
+    "休息计时器" : {
+
     },
-    "auth.feedback.logoutFailed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出登录失败"
+    "体测" : {
+
+    },
+    "体测记录" : {
+
+    },
+    "体脂率" : {
+
+    },
+    "体脂率:" : {
+
+    },
+    "体脂率基础代谢计算" : {
+
+    },
+    "体重" : {
+
+    },
+    "体重 (kg)" : {
+
+    },
+    "体重:" : {
+
+    },
+    "使用 Katch-McArdle 公式计算：\n\n1. 首先计算瘦体重（LBM）\n   LBM = 体重 × (1 - 体脂百分比 ÷ 100)\n\n2. 然后计算基础代谢率\n   BMR = 370 + (21.6 × LBM)" : {
+
+    },
+    "保存" : {
+
+    },
+    "保存中..." : {
+
+    },
+    "保存修改" : {
+
+    },
+    "修改" : {
+
+    },
+    "健身目标" : {
+
+    },
+    "全部" : {
+
+    },
+    "全部器材" : {
+
+    },
+    "全部部位" : {
+
+    },
+    "关于" : {
+
+    },
+    "关闭" : {
+
+    },
+    "其他" : {
+
+    },
+    "最大限制:" : {
+
+    },
+    "减脂" : {
+
+    },
+    "分钟" : {
+
+    },
+    "分钟: %lld" : {
+
+    },
+    "切换单位 (%@)" : {
+
+    },
+    "创建计划" : {
+
+    },
+    "删除" : {
+
+    },
+    "删除动作" : {
+
+    },
+    "删除备注" : {
+
+    },
+    "删除失败" : {
+
+    },
+    "删除描述" : {
+
+    },
+    "删除确认" : {
+
+    },
+    "功能开发中..." : {
+
+    },
+    "加载中..." : {
+
+    },
+    "加载失败" : {
+
+    },
+    "加载当月训练数据..." : {
+
+    },
+    "加载统计数据..." : {
+
+    },
+    "加载训练记录..." : {
+
+    },
+    "加载训练详情..." : {
+
+    },
+    "加载部位统计数据..." : {
+
+    },
+    "动作" : {
+
+    },
+    "动作信息" : {
+
+    },
+    "动作历史" : {
+
+    },
+    "动作描述" : {
+
+    },
+    "动作详情" : {
+
+    },
+    "占总热量范围: %@" : {
+
+    },
+    "历史" : {
+
+    },
+    "历史记录" : {
+
+    },
+    "历史选项" : {
+
+    },
+    "去脂体重 = 体重kg × (1 - 体脂率% ÷ 100)" : {
+
+    },
+    "取消" : {
+
+    },
+    "右kg" : {
+
+    },
+    "基本信息" : {
+
+    },
+    "基础代谢率计算公式" : {
+
+    },
+    "基础代谢计算" : {
+
+    },
+    "基础信息" : {
+
+    },
+    "增肌" : {
+
+    },
+    "女性" : {
+
+    },
+    "女性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) - 161" : {
+
+    },
+    "完成" : {
+
+    },
+    "完成更多训练后查看统计信息" : {
+
+    },
+    "实际完成容量：%lld kg" : {
+
+    },
+    "容量" : {
+
+    },
+    "容量: %lld kg" : {
+
+    },
+    "小工具" : {
+
+    },
+    "岁" : {
+
+    },
+    "左%@%@ 右%@%@ × %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "左%1$@%2$@ 右%3$@%4$@ × %5$lld"
           }
         }
       }
+    },
+    "左kg" : {
+
+    },
+    "已添加" : {
+
+    },
+    "年龄" : {
+
+    },
+    "年龄:" : {
+
+    },
+    "建议: %@" : {
+
+    },
+    "建议值: %lld 卡路里" : {
+
+    },
+    "建议值是该范围的中间值，用于后续蛋白质、碳水化合物和脂肪的比例计算。实际摄入可根据身体反应和目标进展在范围内调整。" : {
+
+    },
+    "建议范围:" : {
+
+    },
+    "开发中" : {
+
+    },
+    "开始日期" : {
+
+    },
+    "当前热量分配:" : {
+
+    },
+    "当前版本暂不支持修改个人资料" : {
+
+    },
+    "微信公众号" : {
+
+    },
+    "快速训练" : {
+
+    },
+    "快速训练功能正在开发中，敬请期待" : {
+
+    },
+    "快速选择" : {
+
+    },
+    "性别" : {
+
+    },
+    "性别:" : {
+
+    },
+    "成功" : {
+
+    },
+    "所以手动输入时可能会产生微小的误差" : {
+
+    },
+    "所有动作" : {
+
+    },
+    "手动输入体测仪测试结果" : {
+
+    },
+    "搜索训练动作" : {
+
+    },
+    "操作指南" : {
+
+    },
+    "数据设置" : {
+
+    },
+    "新增一组" : {
+
+    },
+    "无法恢复本地数据库" : {
+
+    },
+    "日期" : {
+
+    },
+    "时长" : {
+
+    },
+    "时长: %@" : {
+
+    },
+    "时间范围" : {
+
+    },
+    "显示设置" : {
+
+    },
+    "暂无体测数据" : {
+
+    },
+    "暂无体测记录" : {
+
+    },
+    "暂无动作" : {
+
+    },
+    "暂无历史记录" : {
+
+    },
+    "暂无数据" : {
+
+    },
+    "暂无统计数据" : {
+
+    },
+    "本地数据库准备失败" : {
+
+    },
+    "本地数据库准备失败，请重试或联系支持。" : {
+
+    },
+    "本地数据库由较新版本的 App 创建，请更新 App 后再继续使用。" : {
+
+    },
+    "本地数据库需要更新" : {
+
+    },
+    "概况" : {
+
+    },
+    "次数" : {
+
+    },
+    "正在准备本地数据库…" : {
+
+    },
+    "正在分析您的训练数据" : {
+
+    },
+    "正在加载 %@ 的训练数据" : {
+
+    },
+    "正在恢复登录状态…" : {
+
+    },
+    "没有训练数据" : {
+
+    },
+    "活动水平" : {
+
+    },
+    "测试日期" : {
+
+    },
+    "添加动作" : {
+
+    },
+    "添加描述" : {
+
+    },
+    "添加结果" : {
+
+    },
+    "添加计划描述" : {
+
+    },
+    "点击其他有训练记录的日期查看详情" : {
+
+    },
+    "点击右上角 + 号添加您的第一条体测记录" : {
+
+    },
+    "点击登录" : {
+
+    },
+    "热量范围依据：" : {
+
+    },
+    "状态" : {
+
+    },
+    "用户信息" : {
+
+    },
+    "由于报告纸上只会显示小数点一位数，" : {
+
+    },
+    "男性" : {
+
+    },
+    "男性: (10 × 体重kg) + (6.25 × 身高cm) - (5 × 年龄) + 5" : {
+
+    },
+    "登录" : {
+
+    },
+    "登录后可以查看您的训练历史" : {
+
+    },
+    "目标" : {
+
+    },
+    "目标热量:" : {
+
+    },
+    "目标热量是根据您的基础代谢率（BMR）、活动水平和健身目标计算得出的每日所需卡路里摄入量。" : {
+
+    },
+    "目标热量说明" : {
+
+    },
+    "知道了" : {
+
+    },
+    "确定" : {
+
+    },
+    "确定(%lld)" : {
+
+    },
+    "确定要删除训练记录「%@」吗？此操作无法撤销。" : {
+
+    },
+    "确定要删除这个训练动作吗？" : {
+
+    },
+    "确定要删除这条体测记录吗？此操作无法撤销。" : {
+
+    },
+    "确定要删除这组吗？" : {
+
+    },
+    "确认" : {
+
+    },
+    "确认删除" : {
+
+    },
+    "科普文章" : {
+
+    },
+    "秒数: %lld" : {
+
+    },
+    "第%lld组" : {
+
+    },
+    "管理历史记录" : {
+
+    },
+    "管理历史记录功能开发中..." : {
+
+    },
+    "组" : {
+
+    },
+    "结束日期" : {
+
+    },
+    "维持" : {
+
+    },
+    "编辑" : {
+
+    },
+    "编辑体测记录" : {
+
+    },
+    "编辑数据" : {
+
+    },
+    "编辑训练计划" : {
+
+    },
+    "编辑训练记录" : {
+
+    },
+    "自定义日期范围" : {
+
+    },
+    "营养热量计算器" : {
+
+    },
+    "营养计算结果" : {
+
+    },
+    "计划保存成功！" : {
+
+    },
+    "计划名称" : {
+
+    },
+    "计划描述" : {
+
+    },
+    "计算1RM" : {
+
+    },
+    "计算BMI" : {
+
+    },
+    "计算公式：" : {
+
+    },
+    "计算器工具" : {
+
+    },
+    "计算方法" : {
+
+    },
+    "训练" : {
+
+    },
+    "训练动作" : {
+
+    },
+    "训练容量" : {
+
+    },
+    "训练容量趋势 %@" : {
+
+    },
+    "训练日期" : {
+
+    },
+    "训练时长" : {
+
+    },
+    "训练时长趋势 %@" : {
+
+    },
+    "训练计划" : {
+
+    },
+    "训练记录" : {
+
+    },
+    "训练详情" : {
+
+    },
+    "记录左右" : {
+
+    },
+    "设置" : {
+
+    },
+    "设置休息时间" : {
+
+    },
+    "设置休息计时器" : {
+
+    },
+    "该公式根据性别、年龄、体重和身高来估算身体在休息状态下每天消耗的卡路里。适用于大多数成年人，不考虑体脂率。" : {
+
+    },
+    "该动作还没有训练记录" : {
+
+    },
+    "该日期没有训练记录" : {
+
+    },
+    "该日期的训练记录：" : {
+
+    },
+    "语言" : {
+
+    },
+    "请先添加体测记录" : {
+
+    },
+    "请先登录" : {
+
+    },
+    "请尝试切换其他肌肉群或调整筛选条件" : {
+
+    },
+    "请输入体重" : {
+
+    },
+    "请输入次数" : {
+
+    },
+    "请输入身高" : {
+
+    },
+    "请输入重量" : {
+
+    },
+    "身高" : {
+
+    },
+    "身高 (cm)" : {
+
+    },
+    "身高:" : {
+
+    },
+    "输入备注" : {
+
+    },
+    "输入您能完成的重量和次数，计算预测的最大单次重复重量" : {
+
+    },
+    "输入计划名称" : {
+
+    },
+    "输入计划描述" : {
+
+    },
+    "输入训练时长" : {
+
+    },
+    "过去5次训练记录" : {
+
+    },
+    "过去10周" : {
+
+    },
+    "返回" : {
+
+    },
+    "这个公式被认为比Mifflin-St Jeor方程更准确，因为它考虑了瘦体重（Lean Body Mass），而瘦体重是影响基础代谢率的关键因素。适用于健身人群或对体脂率有准确了解的人。" : {
+
+    },
+    "退出登录" : {
+
+    },
+    "选择年份" : {
+
+    },
+    "选择日期" : {
+
+    },
+    "选择日期范围" : {
+
+    },
+    "选择测试日期" : {
+
+    },
+    "选择训练动作" : {
+
+    },
+    "选择训练日期" : {
+
+    },
+    "选择部位" : {
+
+    },
+    "通知设置" : {
+
+    },
+    "部位统计" : {
+
+    },
+    "重试" : {
+
+    },
+    "重量" : {
+
+    },
+    "重量 (kg)" : {
+
+    },
+    "重量: %lldkg" : {
+
+    },
+    "错误" : {
+
+    },
+    "预测1RM" : {
+
+    },
+    "颜色方案" : {
+
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
