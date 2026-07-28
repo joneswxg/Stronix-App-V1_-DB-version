@@ -289,12 +289,32 @@ private struct PlanGrid<Card: View, EmptyState: View>: View {
     }
 }
 
+struct PlanCardPresentation {
+    static let height: CGFloat = 176
+    static let maximumVisibleActionSummaries = 3
+
+    let actions: [TrainingAction]
+
+    init(actions: [TrainingAction]?) {
+        self.actions = actions ?? []
+    }
+
+    func visibleActions(maximum: Int = Self.maximumVisibleActionSummaries) -> [TrainingAction] {
+        Array(actions.prefix(maximum))
+    }
+
+    func remainingActionCount(afterShowing maximum: Int = Self.maximumVisibleActionSummaries) -> Int {
+        max(0, actions.count - maximum)
+    }
+
+    var showsEmptyState: Bool {
+        actions.isEmpty
+    }
+}
+
 struct TemplatePlanCard: View {
-    @Environment(\.designTokens) private var tokens
     let plan: TrainingPlan
     @ObservedObject var viewModel: PlanViewModel
-    @State private var showCopyConfirmation = false
-    @State private var isUsing = false
 
     var body: some View {
         PlanCardContainer {
@@ -304,40 +324,6 @@ struct TemplatePlanCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("\(plan.name), \(AppStrings.text("planList.accessibility.templatePlan"))"))
             .accessibilityHint(Text("planList.accessibility.openPlanHint"))
-
-            Button {
-                showCopyConfirmation = true
-            } label: {
-                HStack(spacing: DesignTokens.Spacing.small) {
-                    if isUsing {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(tokens.onPrimary)
-                            .accessibilityHidden(true)
-                    }
-                    Text(isUsing ? "planList.action.using" : "planList.action.use")
-                        .font(DesignTokens.Typography.label)
-                }
-                .foregroundStyle(tokens.onPrimary)
-                .frame(maxWidth: .infinity, minHeight: DesignTokens.Metric.minimumTapSize)
-                .background(tokens.primary)
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
-            }
-            .disabled(isUsing)
-            .accessibilityLabel(Text("\(AppStrings.text("planList.accessibility.useTemplate")): \(plan.name)"))
-            .accessibilityValue(isUsing ? Text("planList.accessibility.loading") : Text(""))
-        }
-        .alert("planList.templateCopy.title", isPresented: $showCopyConfirmation) {
-            Button("planList.action.cancel", role: .cancel) {}
-            Button("planList.action.copy") {
-                Task {
-                    isUsing = true
-                    await viewModel.copyTemplatePlan(plan)
-                    isUsing = false
-                }
-            }
-        } message: {
-            Text("planList.templateCopy.message")
         }
     }
 }
@@ -360,6 +346,7 @@ struct PersonalPlanCard: View {
                     PlanCardContent(plan: plan)
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityLabel(Text("\(plan.name), \(AppStrings.text("planList.accessibility.personalPlan"))"))
                 .accessibilityHint(Text("planList.accessibility.openPlanHint"))
 
@@ -452,6 +439,7 @@ private struct PlanCardContainer<Content: View>: View {
             content
         }
         .padding(DesignTokens.Spacing.medium)
+        .frame(maxWidth: .infinity, minHeight: PlanCardPresentation.height, maxHeight: PlanCardPresentation.height, alignment: .topLeading)
         .background(tokens.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
         .overlay {
@@ -463,33 +451,49 @@ private struct PlanCardContainer<Content: View>: View {
 
 private struct PlanCardContent: View {
     @Environment(\.designTokens) private var tokens
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let plan: TrainingPlan
 
+    private var maximumVisibleActionSummaries: Int {
+        dynamicTypeSize.isAccessibilitySize ? 1 : PlanCardPresentation.maximumVisibleActionSummaries
+    }
+
     var body: some View {
+        let presentation = PlanCardPresentation(actions: plan.actions)
+        let visibleActions = presentation.visibleActions(maximum: maximumVisibleActionSummaries)
+        let remainingActionCount = presentation.remainingActionCount(afterShowing: maximumVisibleActionSummaries)
+
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             Text(plan.name)
                 .font(DesignTokens.Typography.action)
                 .foregroundStyle(tokens.contentPrimary)
-                .multilineTextAlignment(.leading)
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if let actions = plan.actions, !actions.isEmpty {
-                ForEach(actions.prefix(5), id: \.id) { action in
-                    Text("\(action.name) × \(action.totalSets)")
-                        .font(DesignTokens.Typography.feedback)
-                        .foregroundStyle(tokens.contentSecondary)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                if actions.count > 5 {
-                    Text(String(format: AppStrings.text("planList.actionSummary.more"), actions.count - 5))
-                        .font(DesignTokens.Typography.feedback)
-                        .foregroundStyle(tokens.contentSecondary)
-                }
-            } else {
+            if presentation.showsEmptyState {
                 Text("planList.actionSummary.empty")
                     .font(DesignTokens.Typography.feedback)
                     .foregroundStyle(tokens.contentSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            } else {
+                ForEach(visibleActions, id: \.id) { action in
+                    Text("\(action.name) × \(action.totalSets)")
+                        .font(DesignTokens.Typography.feedback)
+                        .foregroundStyle(tokens.contentSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if remainingActionCount > 0 {
+                    Text(String(format: AppStrings.text("planList.actionSummary.more"), remainingActionCount))
+                        .font(DesignTokens.Typography.feedback)
+                        .foregroundStyle(tokens.contentSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
         }
     }
