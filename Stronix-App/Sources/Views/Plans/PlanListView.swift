@@ -298,7 +298,7 @@ struct TemplatePlanCard: View {
 
     var body: some View {
         PlanCardContainer {
-            NavigationLink(destination: TrainingPlanDetailView(plan: plan)) {
+            NavigationLink(destination: TrainingPlanDetailView(plan: plan, planViewModel: viewModel)) {
                 PlanCardContent(plan: plan)
             }
             .buttonStyle(.plain)

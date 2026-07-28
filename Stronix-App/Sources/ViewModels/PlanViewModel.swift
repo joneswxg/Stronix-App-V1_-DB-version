@@ -95,6 +95,8 @@ final class PlanViewModel: ObservableObject, UserScopedStateResetting {
     }
 
     func copyTemplatePlan(_ templatePlan: TrainingPlan) async {
+        lastCopiedUserPlanID = nil
+
         do {
             let response = try await copyTemplatePlanUseCase.execute(templatePlanID: templatePlan.id)
             lastCopiedUserPlanID = response.plan_id

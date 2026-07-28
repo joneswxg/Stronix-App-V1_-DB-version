@@ -240,6 +240,26 @@ final class PlanViewModelTests: XCTestCase {
             XCTAssertEqual(repository.userPlansCallCount, 0)
         }
     }
+    func testCopyTemplateFailureClearsPriorCopiedUserPlanID() async {
+        let template = makePlan(id: 1, name: "模板计划", isTemplate: true)
+        let copiedPlan = makePlan(id: 2, name: "模板计划 - 副本", isTemplate: false)
+        let repository = MockPlanRepository(
+            templatePlansResult: .success([template]),
+            userPlansResult: .success([copiedPlan]),
+            copyTemplatePlanResult: .success(CreatePlanResponse(plan_id: copiedPlan.id))
+        )
+        let viewModel = PlanViewModel(repository: repository)
+
+        await viewModel.copyTemplatePlan(template)
+        repository.copyTemplatePlanResult = .failure(LocalPlanError.templateNotFound("missing"))
+
+        await viewModel.copyTemplatePlan(template)
+
+        XCTAssertNil(viewModel.lastCopiedUserPlanID)
+        XCTAssertTrue(viewModel.showError)
+        XCTAssertEqual(viewModel.errorMessage, "复制模板计划失败: 请求的数据不存在")
+    }
+
     func testCopyPersonalPlanSubmitsTypedDraft() async {
         let source = TrainingPlan(
             id: 7,
