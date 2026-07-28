@@ -6,13 +6,21 @@ struct TrainingPlanDetailView: View {
     @Environment(\.designTokens) private var tokens
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject private var trainingManager = TrainingSessionManager.shared
+    private let planViewModel: PlanViewModel?
     @State private var showEditPlan = false
+    @State private var showTemplateCopyConfirmation = false
+    @State private var isUsingTemplate = false
+    @State private var copiedPlan: TrainingPlan?
+    @State private var showCopiedPlan = false
     @State private var showTrainingConflictAlert = false
     @State private var isLoadingPlan = false
     @State private var hasLoadedUserPlan = false
     private let planService = LocalPlanService.shared
 
-    init(plan: TrainingPlan) { _plan = State(initialValue: plan) }
+    init(plan: TrainingPlan, planViewModel: PlanViewModel? = nil) {
+        _plan = State(initialValue: plan)
+        self.planViewModel = planViewModel
+    }
 
     var body: some View {
         ScrollView {
@@ -47,7 +55,17 @@ struct TrainingPlanDetailView: View {
                     }
                 }
 
-                if !plan.isTemplate {
+                if plan.isTemplate {
+                    SemanticActionButton(
+                        title: "planList.action.use",
+                        loadingTitle: "planList.action.using",
+                        style: .primary,
+                        isEnabled: planViewModel != nil,
+                        isLoading: isUsingTemplate
+                    ) {
+                        showTemplateCopyConfirmation = true
+                    }
+                } else {
                     SemanticActionButton(title: "training.action.start", loadingTitle: "training.state.loading", style: .primary, isEnabled: canStartTraining, isLoading: isLoadingPlan, action: handleStartTraining)
                         .accessibilityValue(startAccessibilityValue)
                         .accessibilityHint(startAccessibilityHint)
@@ -73,6 +91,19 @@ struct TrainingPlanDetailView: View {
                 }
             })
         }
+        .alert("planList.templateCopy.title", isPresented: $showTemplateCopyConfirmation) {
+            Button("planList.action.cancel", role: .cancel) {}
+            Button("planList.action.copy") {
+                Task { await useTemplatePlan() }
+            }
+        } message: {
+            Text("planList.templateCopy.message")
+        }
+        .navigationDestination(isPresented: $showCopiedPlan) {
+            if let copiedPlan {
+                TrainingPlanDetailView(plan: copiedPlan, planViewModel: planViewModel)
+            }
+        }
         .alert("training.alert.conflict.title", isPresented: $showTrainingConflictAlert) {
             Button("training.action.cancel", role: .cancel) {}
             Button("training.action.stopCurrent") { trainingManager.stopTraining(); trainingManager.startTraining(with: plan); dismiss() }
@@ -83,6 +114,31 @@ struct TrainingPlanDetailView: View {
     private var canStartTraining: Bool { !plan.isTemplate && hasLoadedUserPlan && !isLoadingPlan && plan.actions?.isEmpty == false }
     private var startAccessibilityValue: Text { isLoadingPlan ? Text("training.state.loading") : (canStartTraining ? Text("") : Text("training.state.unavailable")) }
     private var startAccessibilityHint: Text { canStartTraining ? Text("training.accessibility.startHint") : Text("training.accessibility.startUnavailableHint") }
+
+    private func useTemplatePlan() async {
+        guard plan.isTemplate, let planViewModel else { return }
+
+        isUsingTemplate = true
+        await planViewModel.copyTemplatePlan(plan)
+        isUsingTemplate = false
+
+        guard let copiedPlanID = planViewModel.lastCopiedUserPlanID else { return }
+        copiedPlan = TrainingPlan(
+            id: copiedPlanID,
+            name: plan.name,
+            creator: plan.creator,
+            createdDate: plan.createdDate,
+            lastTraining: plan.lastTraining,
+            volume: plan.volume,
+            description: plan.description,
+            isTemplate: false,
+            templateId: plan.id,
+            difficulty: plan.difficulty,
+            duration: plan.duration,
+            actions: plan.actions
+        )
+        showCopiedPlan = true
+    }
 
     private func handleStartTraining() {
         guard canStartTraining else { return }
