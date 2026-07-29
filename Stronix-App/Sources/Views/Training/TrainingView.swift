@@ -34,6 +34,8 @@ struct TrainingView: View {
                 volumeText: viewModel.volumeText,
                 elapsedTimeText: viewModel.elapsedTimeText,
                 planName: viewModel.planName,
+                currentActionID: Binding(get: { viewModel.currentActionID }, set: { if let id = $0 { viewModel.selectAction(id: id) } }),
+                onSelectField: viewModel.selectField,
                 onAdd: { showActionSelect = true },
                 onDelete: viewModel.deleteAction,
                 onSetCompleted: viewModel.toggleSetCompletion,
@@ -152,6 +154,8 @@ private struct TrainingSessionContent: View {
     let volumeText: String
     let elapsedTimeText: String
     let planName: String
+    @Binding var currentActionID: Int?
+    let onSelectField: (String, Int) -> Void
     let onAdd: () -> Void
     let onDelete: (MutableTrainingAction) -> Void
     let onSetCompleted: (String, Int) -> Void
@@ -177,7 +181,7 @@ private struct TrainingSessionContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
 
                 ForEach(editingActions, id: \.id) { action in
-                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
+                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
             }
@@ -199,12 +203,14 @@ private struct TrainingActionCard: View {
     @Binding var action: MutableTrainingAction
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
+    let isExpanded: Bool
+    let onSelect: () -> Void
     let onDelete: () -> Void
     let onSetCompleted: (String, Int) -> Void
     let onShowActionHistory: (Int, String) -> Void
+    let onSelectField: (String, Int) -> Void
     let canDelete: Bool
     let keyboardManager: CustomKeyboardManager
-    @State private var expanded = true
     @State private var showDeleteAlert = false
     @State private var showRestTimerSettings = false
     @State private var restMinutes = 1
@@ -232,9 +238,11 @@ private struct TrainingActionCard: View {
                 }
                 .accessibilityLabel("training.accessibility.actionMenu")
             }
-            if expanded {
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelect)
+            if isExpanded {
                 ForEach(Array(action.sets.enumerated()), id: \.element.id) { index, set in
-                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, keyboardManager: keyboardManager)
+                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, onSelectField: onSelectField, keyboardManager: keyboardManager)
                 }
                 HStack {
                     Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)) }
@@ -283,6 +291,7 @@ private struct SetEditor: View {
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
     let onSetCompleted: (String, Int) -> Void
+    let onSelectField: (String, Int) -> Void
     let keyboardManager: CustomKeyboardManager
 
     @State private var showNoteInput = false
@@ -375,6 +384,7 @@ private struct SetEditor: View {
     }
 
     private func showNumericKeyboard(inputID: String, initialValue: Double, isInteger: Bool, supportsBilateralRecording: Bool, update: @escaping (Double) -> Void) {
+        onSelectField(inputID, action.id)
         guard supportsBilateralRecording else {
             keyboardManager.showKeyboard(inputId: inputID, initialValue: initialValue, isInteger: isInteger, onValueChanged: update)
             return
@@ -390,6 +400,7 @@ private struct SetEditor: View {
     private func changeBilateralRecording(_ enabled: Bool) {
         action.setRecordBilateral(enabled)
         let inputID = enabled ? "left_\(setID)" : "weight_\(setID)"
+        onSelectField(inputID, action.id)
         let value = enabled ? action.sets[index].leftWeight : action.sets[index].weight
         keyboardManager.showKeyboard(
             inputId: inputID,

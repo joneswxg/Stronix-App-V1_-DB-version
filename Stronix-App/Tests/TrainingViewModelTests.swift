@@ -113,6 +113,56 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertEqual(completionUseCase.calls[0].snapshot.id, completionUseCase.calls[1].snapshot.id)
     }
 
+    func testSelectingActionsAndFieldsMaintainsAnExclusiveEditingTarget() {
+        var first = makeAction(id: 1, sets: [makeSet(id: 10, weight: 50, reps: 8)])
+        var second = makeAction(id: 2, sets: [makeSet(id: 20, weight: 80, reps: 5)])
+        first.restTime = 45
+        second.restTime = 90
+        let session = TrainingSessionMock(actions: [first, second])
+        session.completedSets = ["1_10"]
+        session.setNotes = ["1_10": "控制节奏"]
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        XCTAssertEqual(viewModel.currentActionID, 1)
+        XCTAssertNil(viewModel.currentFieldID)
+
+        viewModel.selectField(id: "weight_2_20", inAction: 2)
+
+        XCTAssertEqual(viewModel.currentActionID, 2)
+        XCTAssertEqual(viewModel.currentFieldID, "weight_2_20")
+        XCTAssertEqual(viewModel.editingActions.map(\.id), [1, 2])
+        XCTAssertEqual(viewModel.editingActions.map(\.sets.first?.weight), [50, 80])
+        XCTAssertEqual(viewModel.editingActions.map(\.restTime), [45, 90])
+        XCTAssertEqual(viewModel.completedSets, ["1_10"])
+        XCTAssertEqual(viewModel.setNotes, ["1_10": "控制节奏"])
+
+        viewModel.selectAction(id: 1)
+
+        XCTAssertEqual(viewModel.currentActionID, 1)
+        XCTAssertNil(viewModel.currentFieldID)
+        XCTAssertEqual(viewModel.editingActions.map(\.id), [1, 2])
+        XCTAssertEqual(viewModel.editingActions.map(\.sets.first?.weight), [50, 80])
+        XCTAssertEqual(viewModel.editingActions.map(\.restTime), [45, 90])
+
+        viewModel.selectField(id: "weight_99_99", inAction: 99)
+
+        XCTAssertEqual(viewModel.currentActionID, 1)
+        XCTAssertNil(viewModel.currentFieldID)
+    }
+
+    func testDeletingCurrentActionSelectsFirstRemainingAction() {
+        let first = makeAction(id: 1, sets: [makeSet(id: 10)])
+        let second = makeAction(id: 2, sets: [makeSet(id: 20)])
+        let session = TrainingSessionMock(actions: [first, second])
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.selectField(id: "weight_2_20", inAction: 2)
+        viewModel.deleteAction(second)
+
+        XCTAssertEqual(viewModel.currentActionID, 1)
+        XCTAssertNil(viewModel.currentFieldID)
+    }
+
     private func makeAction(id: Int, sets: [MutableTrainingSet]) -> MutableTrainingAction {
         MutableTrainingAction(id: id, name: "深蹲", imageUrl: "", sets: sets, restTime: 60, recordBilateral: false)
     }
