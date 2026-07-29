@@ -55,6 +55,19 @@ final class ActionImageResolverTests: XCTestCase {
         XCTAssertNil(locator.bundledGIFURL(for: "missing_action.gif"))
     }
 
+    func testGIFThumbnailUsesDownsampledFirstFrame() throws {
+        let locator = ActionImageResourceLocator(bundle: Bundle(for: ActionListViewModel.self))
+        let url = try XCTUnwrap(locator.bundledGIFURL(for: "Images/triceps/exercise_1256.gif"))
+
+        let thumbnail = try XCTUnwrap(
+            GIFThumbnailImageView.createThumbnail(from: url, maximumPixelSize: 150, scale: 3)
+        )
+
+        XCTAssertLessThanOrEqual(thumbnail.cgImage?.width ?? .max, 150)
+        XCTAssertLessThanOrEqual(thumbnail.cgImage?.height ?? .max, 150)
+        XCTAssertNil(thumbnail.images)
+    }
+
     func testImageDecoderReturnsNilForEmptyData() {
         XCTAssertNil(ActionImageDecoder.image(from: Data()))
     }

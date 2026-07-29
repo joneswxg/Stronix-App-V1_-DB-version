@@ -170,7 +170,7 @@ private struct DetailActionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             HStack(spacing: DesignTokens.Spacing.medium) {
-                GIFImageView(imagePath: action.imageUrl)
+                GIFThumbnailImageView(imagePath: action.imageUrl)
                     .frame(width: 50, height: 50)
                     .background(tokens.primary.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))

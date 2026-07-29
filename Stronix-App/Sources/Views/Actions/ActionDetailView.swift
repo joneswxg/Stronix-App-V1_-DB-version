@@ -66,6 +66,70 @@ struct GIFImageView: UIViewRepresentable {
     }
 }
 
+struct GIFThumbnailImageView: UIViewRepresentable {
+    let imagePath: String
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIView(context: Context) -> UIImageView {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        return imageView
+    }
+
+    func updateUIView(_ imageView: UIImageView, context: Context) {
+        let displayScale = imageView.traitCollection.displayScale
+        guard context.coordinator.imagePath != imagePath || context.coordinator.displayScale != displayScale else { return }
+
+        context.coordinator.imagePath = imagePath
+        context.coordinator.displayScale = displayScale
+        context.coordinator.requestID += 1
+        let requestID = context.coordinator.requestID
+        imageView.image = UIImage(systemName: "figure.strengthtraining.traditional")
+        imageView.tintColor = .gray
+
+        guard let url = ActionImageResourceLocator().bundledGIFURL(for: imagePath) else { return }
+        let coordinator = context.coordinator
+        let maximumPixelSize = ceil(50 * displayScale)
+        DispatchQueue.global(qos: .userInitiated).async { [weak imageView] in
+            guard let image = Self.createThumbnail(from: url, maximumPixelSize: maximumPixelSize, scale: displayScale) else { return }
+            DispatchQueue.main.async {
+                guard coordinator.requestID == requestID, coordinator.imagePath == imagePath else { return }
+                imageView?.image = image
+            }
+        }
+    }
+
+    static func dismantleUIView(_ imageView: UIImageView, coordinator: Coordinator) {
+        coordinator.requestID += 1
+        imageView.stopAnimating()
+        imageView.image = nil
+    }
+
+    static func createThumbnail(from url: URL, maximumPixelSize: CGFloat, scale: CGFloat) -> UIImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maximumPixelSize,
+            kCGImageSourceShouldCache: false,
+            kCGImageSourceShouldCacheImmediately: false
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: image, scale: scale, orientation: .up)
+    }
+
+    final class Coordinator {
+        var imagePath: String?
+        var displayScale: CGFloat?
+        var requestID = 0
+    }
+}
+
 struct AnimatedImageView: View {
     let imagePath: String
 
