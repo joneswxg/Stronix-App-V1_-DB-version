@@ -95,10 +95,16 @@ struct GIFThumbnailImageView: UIViewRepresentable {
         let coordinator = context.coordinator
         let maximumPixelSize = ceil(50 * displayScale)
         DispatchQueue.global(qos: .userInitiated).async { [weak imageView] in
-            guard let image = Self.createThumbnail(from: url, maximumPixelSize: maximumPixelSize, scale: displayScale) else { return }
+            guard let image = Self.createAnimatedThumbnail(
+                from: url,
+                maximumPixelSize: maximumPixelSize,
+                scale: displayScale,
+                shouldCancel: { coordinator.requestID != requestID || coordinator.imagePath != imagePath }
+            ) else { return }
             DispatchQueue.main.async {
                 guard coordinator.requestID == requestID, coordinator.imagePath == imagePath else { return }
                 imageView?.image = image
+                imageView?.startAnimating()
             }
         }
     }
@@ -109,9 +115,16 @@ struct GIFThumbnailImageView: UIViewRepresentable {
         imageView.image = nil
     }
 
-    static func createThumbnail(from url: URL, maximumPixelSize: CGFloat, scale: CGFloat) -> UIImage? {
+    static func createAnimatedThumbnail(
+        from url: URL,
+        maximumPixelSize: CGFloat,
+        scale: CGFloat,
+        shouldCancel: () -> Bool = { false }
+    ) -> UIImage? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
 
+        let frameCount = CGImageSourceGetCount(source)
+        let indexes = thumbnailFrameIndexes(frameCount: frameCount)
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
@@ -119,8 +132,37 @@ struct GIFThumbnailImageView: UIViewRepresentable {
             kCGImageSourceShouldCache: false,
             kCGImageSourceShouldCacheImmediately: false
         ]
-        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-        return UIImage(cgImage: image, scale: scale, orientation: .up)
+
+        var images: [UIImage] = []
+        var duration: TimeInterval = 0
+        for (position, index) in indexes.enumerated() {
+            guard !shouldCancel(),
+                  let image = CGImageSourceCreateThumbnailAtIndex(source, index, options as CFDictionary) else { return nil }
+            images.append(UIImage(cgImage: image, scale: scale, orientation: .up))
+            let nextIndex = position + 1 < indexes.count ? indexes[position + 1] : frameCount
+            duration += (index..<nextIndex).reduce(0) { $0 + frameDelay(for: $1, source: source) }
+        }
+
+        guard !images.isEmpty else { return nil }
+        return images.count == 1 ? images[0] : UIImage.animatedImage(with: images, duration: duration)
+    }
+
+    static func thumbnailFrameIndexes(frameCount: Int) -> [Int] {
+        let maximumFrameCount = 24
+        guard frameCount > maximumFrameCount else { return Array(0..<frameCount) }
+
+        return (0..<maximumFrameCount).map {
+            Int((Double($0) * Double(frameCount - 1) / Double(maximumFrameCount - 1)).rounded())
+        }
+    }
+
+    private static func frameDelay(for index: Int, source: CGImageSource) -> TimeInterval {
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [String: Any]
+        let gifProperties = properties?[kCGImagePropertyGIFDictionary as String] as? [String: Any]
+        let delay = gifProperties?[kCGImagePropertyGIFUnclampedDelayTime as String] as? Double
+            ?? gifProperties?[kCGImagePropertyGIFDelayTime as String] as? Double
+            ?? 0.1
+        return max(delay, 0.02)
     }
 
     final class Coordinator {
