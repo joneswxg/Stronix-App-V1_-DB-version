@@ -220,8 +220,7 @@ private struct DetailActionCard: View {
 }
 
 private func loadDetailActionImage(resourcePath: String) -> UIImage? {
-    let path = resourcePath.replacingOccurrences(of: ".gif", with: "")
-    guard let url = Bundle.main.url(forResource: path, withExtension: "gif"),
+    guard let url = ActionImageResourceLocator().bundledGIFURL(for: resourcePath),
           let data = try? Data(contentsOf: url) else { return nil }
     return UIImage(data: data)
 }

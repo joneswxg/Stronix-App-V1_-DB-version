@@ -37,6 +37,24 @@ final class ActionImageResolverTests: XCTestCase {
         )
     }
 
+    func testResourceLocatorFindsExactBundledPath() {
+        let locator = ActionImageResourceLocator(bundle: Bundle(for: ActionListViewModel.self))
+
+        XCTAssertNotNil(locator.bundledGIFURL(for: "Images/triceps/exercise_1256.gif"))
+    }
+
+    func testResourceLocatorFindsBundledImageByFilename() {
+        let locator = ActionImageResourceLocator(bundle: Bundle(for: ActionListViewModel.self))
+
+        XCTAssertNotNil(locator.bundledGIFURL(for: "exercise_1256.gif"))
+    }
+
+    func testResourceLocatorReturnsNilForMissingImage() {
+        let locator = ActionImageResourceLocator(bundle: Bundle(for: ActionListViewModel.self))
+
+        XCTAssertNil(locator.bundledGIFURL(for: "missing_action.gif"))
+    }
+
     private func manifestData() -> Data {
         Data(
             """
