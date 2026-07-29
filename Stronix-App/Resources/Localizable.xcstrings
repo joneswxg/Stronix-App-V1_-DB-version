@@ -1907,6 +1907,7 @@
       }
     },
     "training.action.recordBilateral" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2277,36 +2278,6 @@
         }
       }
     },
-    "training.keyboard.bilateral" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "双侧记录"
-          }
-        }
-      }
-    },
-    "training.keyboard.fill" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "填充当前动作"
-          }
-        }
-      }
-    },
-    "training.keyboard.fill.feedback" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已填充"
-          }
-        }
-      }
-    },
     "training.keyboard.addSet" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2318,6 +2289,7 @@
       }
     },
     "training.keyboard.addSet.feedback" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2327,12 +2299,12 @@
         }
       }
     },
-    "training.keyboard.unit" : {
+    "training.keyboard.bilateral" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "切换重量单位"
+            "value" : "双侧记录"
           }
         }
       }
@@ -2377,6 +2349,27 @@
         }
       }
     },
+    "training.keyboard.fill" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "填充当前动作"
+          }
+        }
+      }
+    },
+    "training.keyboard.fill.feedback" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已填充"
+          }
+        }
+      }
+    },
     "training.keyboard.hide" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2393,6 +2386,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "增加数值"
+          }
+        }
+      }
+    },
+    "training.keyboard.unit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换重量单位"
           }
         }
       }

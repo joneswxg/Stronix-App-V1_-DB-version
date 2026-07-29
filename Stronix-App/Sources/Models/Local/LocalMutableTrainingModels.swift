@@ -84,6 +84,7 @@ struct TrainingKeyboardState: Equatable {
     let field: TrainingEditingField
     let value: Double
     let displayUnit: TrainingDisplayUnit
+    let isBilateralRecording: Bool
 
     var isInteger: Bool {
         if case .reps = field { return true }

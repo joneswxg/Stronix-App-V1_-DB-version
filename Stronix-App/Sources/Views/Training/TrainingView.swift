@@ -202,6 +202,12 @@ private struct TrainingSessionContent: View {
             }
             .padding(DesignTokens.Spacing.large)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if keyboardManager.isShowing {
+                keyboardManager.hideKeyboard()
+            }
+        }
         .background(tokens.canvas)
     }
 
@@ -405,7 +411,8 @@ private struct SetEditor: View {
             CompactSetValueCell(
                 label: label,
                 value: displayedValue,
-                width: controlWidth
+                width: controlWidth,
+                isSelected: keyboardManager.isShowing && keyboardManager.activeInputId == inputID
             )
         }
         .accessibilityLabel(LocalizedStringKey(label))
@@ -421,7 +428,7 @@ private struct SetEditor: View {
             isInteger: isInteger,
             bilateralRecordingAccessory: supportsBilateralRecording ? BilateralRecordingAccessory(isEnabled: action.recordBilateral, onChange: { _ in onToggleBilateral() }) : nil,
             trainingKeyboardRail: TrainingKeyboardRail(
-                isBilateralRecording: { action.recordBilateral },
+                isBilateralRecording: { keyboardState()?.isBilateralRecording ?? action.recordBilateral },
                 displayUnit: { keyboardState()?.displayUnit ?? trainingDisplayUnit },
                 onToggleBilateral: { onToggleBilateral(); refreshKeyboard() },
                 onFill: { onFill(); refreshKeyboard() },
@@ -453,6 +460,7 @@ private struct CompactSetValueCell: View {
     let label: String
     let value: String
     let width: CGFloat
+    let isSelected: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -462,10 +470,13 @@ private struct CompactSetValueCell: View {
                 .lineLimit(1)
             Text(value)
                 .font(DesignTokens.Typography.action)
-                .foregroundStyle(tokens.contentPrimary)
+                .foregroundStyle(isSelected ? tokens.onPrimary : tokens.contentPrimary)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
+                .padding(.horizontal, 4)
+                .background(isSelected ? tokens.primary : .clear)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control / 2, style: .continuous))
         }
         .frame(width: width, alignment: .leading)
         .frame(minHeight: DesignTokens.Metric.minimumTapSize, alignment: .leading)

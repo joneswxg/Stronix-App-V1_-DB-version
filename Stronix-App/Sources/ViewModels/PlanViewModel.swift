@@ -406,7 +406,7 @@ final class TrainingViewModel: ObservableObject {
         case .reps:
             value = Double(set.reps)
         }
-        return TrainingKeyboardState(field: target, value: value, displayUnit: trainingDisplayUnit)
+        return TrainingKeyboardState(field: target, value: value, displayUnit: trainingDisplayUnit, isBilateralRecording: action.recordBilateral)
     }
 
     func updateCurrentKeyboardValue(_ value: Double) {
