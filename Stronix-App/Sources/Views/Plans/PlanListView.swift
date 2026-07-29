@@ -290,7 +290,7 @@ private struct PlanGrid<Card: View, EmptyState: View>: View {
 }
 
 struct PlanCardPresentation {
-    static let height: CGFloat = 176
+    static let height: CGFloat = 144
     static let maximumVisibleActionSummaries = 3
 
     let actions: [TrainingAction]

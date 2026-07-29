@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum ActionImageResolution: Equatable {
     case mapped(resourcePath: String)
@@ -42,6 +43,49 @@ struct ActionImageResolver {
         }
 
         return .mapped(resourcePath: mapping.resourcePath)
+    }
+}
+
+struct ActionImageResourceLocator {
+    private let bundle: Bundle
+
+    init(bundle: Bundle = .main) {
+        self.bundle = bundle
+    }
+
+    func bundledGIFURL(for imagePath: String) -> URL? {
+        let normalizedPath = imagePath.replacingOccurrences(of: ".gif", with: "")
+        if let url = bundle.url(forResource: normalizedPath, withExtension: "gif") {
+            return url
+        }
+
+        let fileName = URL(fileURLWithPath: normalizedPath).lastPathComponent
+        for directory in Self.muscleDirectories {
+            if let url = bundle.url(forResource: "Images/\(directory)/\(fileName)", withExtension: "gif") {
+                return url
+            }
+        }
+
+        for path in ["Media/Actions/\(fileName)", "Images/\(fileName)", fileName] {
+            if let url = bundle.url(forResource: path, withExtension: "gif") {
+                return url
+            }
+        }
+
+        return nil
+    }
+
+    private static let muscleDirectories = [
+        "abs", "pectorals", "biceps", "triceps", "delts", "lats", "upper back",
+        "quads", "hamstrings", "glutes", "calves", "forearms", "traps",
+        "cardiovascular system", "spine", "adductors", "abductors",
+        "serratus anterior", "levator scapulae"
+    ]
+}
+
+struct ActionImageDecoder {
+    static func image(from data: Data) -> UIImage? {
+        UIImage(data: data)
     }
 }
 

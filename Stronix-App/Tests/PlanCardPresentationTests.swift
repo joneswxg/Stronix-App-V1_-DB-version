@@ -49,7 +49,7 @@ final class PlanCardPresentationTests: XCTestCase {
     }
 
     func testCardPresentationConstantsMatchCompactCardRequirements() {
-        XCTAssertEqual(PlanCardPresentation.height, 176)
+        XCTAssertEqual(PlanCardPresentation.height, 144)
         XCTAssertEqual(PlanCardPresentation.maximumVisibleActionSummaries, 3)
     }
 
