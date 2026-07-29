@@ -5,6 +5,15 @@ struct BilateralRecordingAccessory {
     let onChange: (Bool) -> Void
 }
 
+struct TrainingKeyboardRail {
+    let isBilateralRecording: () -> Bool
+    let displayUnit: () -> TrainingDisplayUnit
+    let onToggleBilateral: () -> Void
+    let onFill: () -> Void
+    let onToggleDisplayUnit: () -> Void
+    let onAddSet: () -> Void
+}
+
 struct CustomNumberKeyboard: View {
     @Environment(\.designTokens) private var tokens
     @Binding var value: Double
@@ -16,6 +25,7 @@ struct CustomNumberKeyboard: View {
 
     @State private var inputString = ""
     @State private var isInitialized = false
+    @State private var feedbackKey: String?
 
     init(value: Binding<Double>, isShowing: Binding<Bool>, step: Double = 1.0, maxValue: Double = 999.0, isInteger: Bool = false, keyboardManager: CustomKeyboardManager? = nil) {
         _value = value
@@ -35,11 +45,18 @@ struct CustomNumberKeyboard: View {
                 ))
                 .tint(tokens.primary)
             }
-            ForEach(rows, id: \.self) { row in
-                HStack(spacing: DesignTokens.Spacing.small) {
-                    ForEach(row, id: \.self) { key in
-                        keyButton(key)
+            HStack(alignment: .bottom, spacing: DesignTokens.Spacing.small) {
+                VStack(spacing: DesignTokens.Spacing.small) {
+                    ForEach(rows, id: \.self) { row in
+                        HStack(spacing: DesignTokens.Spacing.small) {
+                            ForEach(row, id: \.self) { key in
+                                keyButton(key)
+                            }
+                        }
                     }
+                }
+                if let rail = keyboardManager?.trainingKeyboardRail {
+                    actionRail(rail)
                 }
             }
         }
@@ -53,6 +70,56 @@ struct CustomNumberKeyboard: View {
             if !isInitialized {
                 initializeInputString()
             }
+        }
+    }
+
+    private func actionRail(_ rail: TrainingKeyboardRail) -> some View {
+        let isBilateralRecording = rail.isBilateralRecording()
+        let displayUnit = rail.displayUnit()
+        return VStack(spacing: DesignTokens.Spacing.small) {
+            railButton(symbol: "arrow.left.and.right", label: "training.keyboard.bilateral", isSelected: isBilateralRecording, action: rail.onToggleBilateral)
+            railButton(symbol: "square.fill.on.square.fill", label: "training.keyboard.fill", action: { rail.onFill(); showFeedback("training.keyboard.fill.feedback") })
+            railButton(title: displayUnit.keyboardLabel, label: "training.keyboard.unit", isSelected: true, action: rail.onToggleDisplayUnit)
+            railButton(symbol: "plus.rectangle.on.rectangle", label: "training.keyboard.addSet", action: { rail.onAddSet(); showFeedback("training.keyboard.addSet.feedback") })
+            if let feedbackKey {
+                Text(LocalizedStringKey(feedbackKey))
+                    .font(DesignTokens.Typography.supporting)
+                    .foregroundStyle(tokens.primary)
+                    .frame(maxWidth: 96)
+                    .multilineTextAlignment(.center)
+                    .transition(.opacity)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func railButton(symbol: String? = nil, title: String? = nil, label: LocalizedStringKey, isSelected: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Group {
+                if let symbol {
+                    Image(systemName: symbol)
+                } else if let title {
+                    Text(title)
+                }
+            }
+            .font(DesignTokens.Typography.action)
+            .foregroundStyle(isSelected ? tokens.onPrimary : tokens.primary)
+            .frame(width: DesignTokens.Metric.minimumTapSize, height: DesignTokens.Metric.minimumTapSize)
+            .background(isSelected ? tokens.primary : tokens.surface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                    .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+            }
+        }
+        .accessibilityLabel(label)
+        .accessibilityValue(feedbackKey.map { Text($0) } ?? Text(""))
+    }
+
+    private func showFeedback(_ key: String) {
+        feedbackKey = key
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            feedbackKey = nil
         }
     }
 
@@ -214,16 +281,18 @@ class CustomKeyboardManager: ObservableObject {
     @Published var activeInputId = ""
     @Published var isValueSelected = false
     @Published var bilateralRecordingAccessory: BilateralRecordingAccessory?
+    @Published var trainingKeyboardRail: TrainingKeyboardRail?
 
     private var onValueChanged: ((Double) -> Void)?
 
-    func showKeyboard(inputId: String, initialValue: Double, isInteger: Bool = false, step: Double = 1.0, maxValue: Double = 999.0, bilateralRecordingAccessory: BilateralRecordingAccessory? = nil, onValueChanged: @escaping (Double) -> Void) {
+    func showKeyboard(inputId: String, initialValue: Double, isInteger: Bool = false, step: Double = 1.0, maxValue: Double = 999.0, bilateralRecordingAccessory: BilateralRecordingAccessory? = nil, trainingKeyboardRail: TrainingKeyboardRail? = nil, onValueChanged: @escaping (Double) -> Void) {
         activeInputId = inputId
         currentValue = initialValue
         self.isInteger = isInteger
         self.step = step
         self.maxValue = maxValue
         self.bilateralRecordingAccessory = bilateralRecordingAccessory
+        self.trainingKeyboardRail = trainingKeyboardRail
         self.onValueChanged = onValueChanged
         isValueSelected = true
         isShowing = true
@@ -235,6 +304,7 @@ class CustomKeyboardManager: ObservableObject {
         activeInputId = ""
         isValueSelected = false
         bilateralRecordingAccessory = nil
+        trainingKeyboardRail = nil
         isShowing = false
     }
 
@@ -242,6 +312,7 @@ class CustomKeyboardManager: ObservableObject {
         activeInputId = ""
         isValueSelected = false
         bilateralRecordingAccessory = nil
+        trainingKeyboardRail = nil
         isShowing = false
     }
 

@@ -35,7 +35,14 @@ struct TrainingView: View {
                 elapsedTimeText: viewModel.elapsedTimeText,
                 planName: viewModel.planName,
                 currentActionID: Binding(get: { viewModel.currentActionID }, set: { if let id = $0 { viewModel.selectAction(id: id) } }),
+                trainingDisplayUnit: viewModel.trainingDisplayUnit,
                 onSelectField: viewModel.selectField,
+                onToggleBilateral: viewModel.toggleBilateralRecording,
+                onFill: viewModel.fillCurrentAction,
+                onToggleDisplayUnit: viewModel.toggleTrainingDisplayUnit,
+                onAddSet: viewModel.addSetToCurrentAction,
+                keyboardState: viewModel.keyboardState,
+                onKeyboardValueChanged: viewModel.updateCurrentKeyboardValue,
                 onAdd: { showActionSelect = true },
                 onDelete: viewModel.deleteAction,
                 onSetCompleted: viewModel.toggleSetCompletion,
@@ -54,6 +61,7 @@ struct TrainingView: View {
                     isInteger: keyboardManager.isInteger,
                     keyboardManager: keyboardManager
                 )
+                .id("\(keyboardManager.activeInputId)-\(keyboardManager.currentValue)-\(keyboardManager.isInteger)")
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -155,7 +163,14 @@ private struct TrainingSessionContent: View {
     let elapsedTimeText: String
     let planName: String
     @Binding var currentActionID: Int?
+    let trainingDisplayUnit: TrainingDisplayUnit
     let onSelectField: (String, Int) -> Void
+    let onToggleBilateral: () -> Void
+    let onFill: () -> Void
+    let onToggleDisplayUnit: () -> Void
+    let onAddSet: () -> Void
+    let keyboardState: () -> TrainingKeyboardState?
+    let onKeyboardValueChanged: (Double) -> Void
     let onAdd: () -> Void
     let onDelete: (MutableTrainingAction) -> Void
     let onSetCompleted: (String, Int) -> Void
@@ -181,7 +196,7 @@ private struct TrainingSessionContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
 
                 ForEach(editingActions, id: \.id) { action in
-                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
+                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
             }
@@ -209,6 +224,13 @@ private struct TrainingActionCard: View {
     let onSetCompleted: (String, Int) -> Void
     let onShowActionHistory: (Int, String) -> Void
     let onSelectField: (String, Int) -> Void
+    let onToggleBilateral: () -> Void
+    let onFill: () -> Void
+    let onToggleDisplayUnit: () -> Void
+    let onAddSet: () -> Void
+    let trainingDisplayUnit: TrainingDisplayUnit
+    let keyboardState: () -> TrainingKeyboardState?
+    let onKeyboardValueChanged: (Double) -> Void
     let canDelete: Bool
     let keyboardManager: CustomKeyboardManager
     @State private var showDeleteAlert = false
@@ -242,7 +264,7 @@ private struct TrainingActionCard: View {
             .onTapGesture(perform: onSelect)
             if isExpanded {
                 ForEach(Array(action.sets.enumerated()), id: \.element.id) { index, set in
-                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, onSelectField: onSelectField, keyboardManager: keyboardManager)
+                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, keyboardManager: keyboardManager)
                 }
                 HStack {
                     Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)) }
@@ -292,6 +314,13 @@ private struct SetEditor: View {
     @Binding var setNotes: [String: String]
     let onSetCompleted: (String, Int) -> Void
     let onSelectField: (String, Int) -> Void
+    let onToggleBilateral: () -> Void
+    let onFill: () -> Void
+    let onToggleDisplayUnit: () -> Void
+    let onAddSet: () -> Void
+    let trainingDisplayUnit: TrainingDisplayUnit
+    let keyboardState: () -> TrainingKeyboardState?
+    let onKeyboardValueChanged: (Double) -> Void
     let keyboardManager: CustomKeyboardManager
 
     @State private var showNoteInput = false
@@ -304,10 +333,10 @@ private struct SetEditor: View {
             HStack(spacing: DesignTokens.Spacing.xSmall) {
                 setNumber
                 if action.recordBilateral {
-                    compactNumericButton("左 kg", value: set.leftWeight, inputID: "left_\(setID)", supportsBilateralRecording: true) { action.sets[index].leftWeight = $0 }
-                    compactNumericButton("右 kg", value: set.rightWeight, inputID: "right_\(setID)", supportsBilateralRecording: true) { action.sets[index].rightWeight = $0 }
+                    compactNumericButton("左 \(trainingDisplayUnit.keyboardLabel)", value: set.leftWeight, inputID: "left_\(setID)", supportsBilateralRecording: true) { action.sets[index].leftWeight = $0 }
+                    compactNumericButton("右 \(trainingDisplayUnit.keyboardLabel)", value: set.rightWeight, inputID: "right_\(setID)", supportsBilateralRecording: true) { action.sets[index].rightWeight = $0 }
                 } else {
-                    compactNumericButton("kg", value: set.weight, inputID: "weight_\(setID)", supportsBilateralRecording: true) { action.sets[index].weight = $0 }
+                    compactNumericButton(trainingDisplayUnit.keyboardLabel, value: set.weight, inputID: "weight_\(setID)", supportsBilateralRecording: true) { action.sets[index].weight = $0 }
                 }
                 compactNumericButton("次", value: Double(set.reps), inputID: "reps_\(setID)", isInteger: true) { action.sets[index].reps = Int($0) }
                 completionButton
@@ -361,7 +390,8 @@ private struct SetEditor: View {
     }
 
     private func compactNumericButton(_ label: String, value: Double, inputID: String, isInteger: Bool = false, supportsBilateralRecording: Bool = false, update: @escaping (Double) -> Void) -> some View {
-        let displayedValue = isInteger ? String(Int(value)) : String(format: "%.1f", value)
+        let displayedNumber = isInteger ? value : trainingDisplayUnit.displayValue(forKilograms: value)
+        let displayedValue = isInteger ? String(Int(displayedNumber)) : String(format: "%.1f", displayedNumber)
         let controlWidth: CGFloat = action.recordBilateral && supportsBilateralRecording ? 58 : 76
         return Button {
             showNumericKeyboard(
@@ -385,35 +415,36 @@ private struct SetEditor: View {
 
     private func showNumericKeyboard(inputID: String, initialValue: Double, isInteger: Bool, supportsBilateralRecording: Bool, update: @escaping (Double) -> Void) {
         onSelectField(inputID, action.id)
-        guard supportsBilateralRecording else {
-            keyboardManager.showKeyboard(inputId: inputID, initialValue: initialValue, isInteger: isInteger, onValueChanged: update)
-            return
-        }
         keyboardManager.showKeyboard(
             inputId: inputID,
-            initialValue: initialValue,
-            bilateralRecordingAccessory: BilateralRecordingAccessory(isEnabled: action.recordBilateral, onChange: changeBilateralRecording),
-            onValueChanged: update
+            initialValue: isInteger ? initialValue : trainingDisplayUnit.displayValue(forKilograms: initialValue),
+            isInteger: isInteger,
+            bilateralRecordingAccessory: supportsBilateralRecording ? BilateralRecordingAccessory(isEnabled: action.recordBilateral, onChange: { _ in onToggleBilateral() }) : nil,
+            trainingKeyboardRail: TrainingKeyboardRail(
+                isBilateralRecording: { action.recordBilateral },
+                displayUnit: { keyboardState()?.displayUnit ?? trainingDisplayUnit },
+                onToggleBilateral: { onToggleBilateral(); refreshKeyboard() },
+                onFill: { onFill(); refreshKeyboard() },
+                onToggleDisplayUnit: { onToggleDisplayUnit(); refreshKeyboard() },
+                onAddSet: { onAddSet(); refreshKeyboard() }
+            ),
+            onValueChanged: { _ in
+                guard let state = keyboardState(), state.field.id == keyboardManager.activeInputId else { return }
+                onKeyboardValueChanged(keyboardManager.currentValue)
+            }
         )
     }
 
-    private func changeBilateralRecording(_ enabled: Bool) {
-        action.setRecordBilateral(enabled)
-        let inputID = enabled ? "left_\(setID)" : "weight_\(setID)"
-        onSelectField(inputID, action.id)
-        let value = enabled ? action.sets[index].leftWeight : action.sets[index].weight
-        keyboardManager.showKeyboard(
-            inputId: inputID,
-            initialValue: value,
-            bilateralRecordingAccessory: BilateralRecordingAccessory(isEnabled: enabled, onChange: changeBilateralRecording),
-            onValueChanged: { newValue in
-                if enabled {
-                    action.sets[index].leftWeight = newValue
-                } else {
-                    action.sets[index].weight = newValue
-                }
-            }
-        )
+    private func refreshKeyboard() {
+        guard let state = keyboardState() else {
+            keyboardManager.cancelKeyboard()
+            return
+        }
+        let displayValue = state.isInteger ? state.value : state.displayUnit.displayValue(forKilograms: state.value)
+        keyboardManager.activeInputId = state.field.id
+        keyboardManager.currentValue = displayValue
+        keyboardManager.isInteger = state.isInteger
+        keyboardManager.isValueSelected = true
     }
 }
 

@@ -2277,6 +2277,66 @@
         }
       }
     },
+    "training.keyboard.bilateral" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双侧记录"
+          }
+        }
+      }
+    },
+    "training.keyboard.fill" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "填充当前动作"
+          }
+        }
+      }
+    },
+    "training.keyboard.fill.feedback" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已填充"
+          }
+        }
+      }
+    },
+    "training.keyboard.addSet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增一组"
+          }
+        }
+      }
+    },
+    "training.keyboard.addSet.feedback" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已新增一组"
+          }
+        }
+      }
+    },
+    "training.keyboard.unit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换重量单位"
+          }
+        }
+      }
+    },
     "training.keyboard.clear" : {
       "localizations" : {
         "zh-Hans" : {
