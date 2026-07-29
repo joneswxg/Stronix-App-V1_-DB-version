@@ -169,14 +169,33 @@ private struct DetailActionCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-            Text(action.name).font(DesignTokens.Typography.action).foregroundStyle(tokens.contentPrimary)
-            if let notes = action.notes, !notes.isEmpty { Text(notes).font(DesignTokens.Typography.supporting).foregroundStyle(tokens.contentSecondary) }
-            HStack {
-                Text(trainingDetailFormat("training.detail.setCount", action.totalSets))
-                Spacer()
-                Text(trainingDetailFormat("training.detail.volume", action.totalVolume))
+            HStack(spacing: DesignTokens.Spacing.medium) {
+                Group {
+                    if let image = loadDetailActionImage(resourcePath: action.imageUrl) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Rectangle()
+                            .fill(tokens.primary.opacity(0.12))
+                            .overlay {
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .foregroundStyle(tokens.primary)
+                            }
+                    }
+                }
+                .frame(width: 50, height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+
+                Text(action.name)
+                    .font(DesignTokens.Typography.action)
+                    .foregroundStyle(tokens.contentPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(DesignTokens.Typography.supporting).foregroundStyle(tokens.contentSecondary)
+            if let notes = action.notes, !notes.isEmpty { Text(notes).font(DesignTokens.Typography.supporting).foregroundStyle(tokens.contentSecondary) }
+            Text(trainingDetailFormat("training.detail.setCount", action.totalSets))
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(tokens.contentSecondary)
             ForEach(Array(action.sets.enumerated()), id: \.offset) { index, set in
                 Text(setSummary(index: index, set: set))
                     .font(DesignTokens.Typography.feedback)
@@ -198,6 +217,13 @@ private struct DetailActionCard: View {
         }
         return trainingDetailFormat("training.detail.set", index + 1, set.weight, set.reps)
     }
+}
+
+private func loadDetailActionImage(resourcePath: String) -> UIImage? {
+    let path = resourcePath.replacingOccurrences(of: ".gif", with: "")
+    guard let url = Bundle.main.url(forResource: path, withExtension: "gif"),
+          let data = try? Data(contentsOf: url) else { return nil }
+    return UIImage(data: data)
 }
 
 private func trainingDetailFormat(_ key: String, _ value: CVarArg) -> String { String(format: NSLocalizedString(key, comment: ""), value) }
