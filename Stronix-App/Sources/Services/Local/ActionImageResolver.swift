@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum ActionImageResolution: Equatable {
     case mapped(resourcePath: String)
@@ -80,6 +81,12 @@ struct ActionImageResourceLocator {
         "cardiovascular system", "spine", "adductors", "abductors",
         "serratus anterior", "levator scapulae"
     ]
+}
+
+struct ActionImageDecoder {
+    static func image(from data: Data) -> UIImage? {
+        UIImage(data: data)
+    }
 }
 
 private struct Manifest: Decodable {

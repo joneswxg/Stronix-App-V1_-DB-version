@@ -55,6 +55,14 @@ final class ActionImageResolverTests: XCTestCase {
         XCTAssertNil(locator.bundledGIFURL(for: "missing_action.gif"))
     }
 
+    func testImageDecoderReturnsNilForEmptyData() {
+        XCTAssertNil(ActionImageDecoder.image(from: Data()))
+    }
+
+    func testImageDecoderReturnsNilForNonImageData() {
+        XCTAssertNil(ActionImageDecoder.image(from: Data("not an image".utf8)))
+    }
+
     private func manifestData() -> Data {
         Data(
             """
