@@ -2,131 +2,75 @@ import SwiftUI
 import UIKit
 import ImageIO
 
-// MARK: - GIF播放器组件
 struct GIFImageView: UIViewRepresentable {
-    let imageName: String
-    
+    let imagePath: String
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeUIView(context: Context) -> UIImageView {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         return imageView
     }
-    
-    func updateUIView(_ uiView: UIImageView, context: Context) {
-        loadGIFAnimation(into: uiView)
-    }
-    
-    private func loadGIFAnimation(into imageView: UIImageView) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let gifURL = findGIFFile(named: imageName),
-                  let gifData = try? Data(contentsOf: gifURL),
-                  let animatedImage = createAnimatedImage(from: gifData) else {
-                print("❌ 无法加载GIF动画: \(imageName)")
-                DispatchQueue.main.async {
-                    // 设置占位图
-                    imageView.image = UIImage(systemName: "figure.strengthtraining.traditional")
-                    imageView.tintColor = UIColor(.gray)
-                }
-                return
-            }
-            
+
+    func updateUIView(_ imageView: UIImageView, context: Context) {
+        guard context.coordinator.imagePath != imagePath else { return }
+
+        context.coordinator.imagePath = imagePath
+        context.coordinator.requestID += 1
+        let requestID = context.coordinator.requestID
+        imageView.image = UIImage(systemName: "figure.strengthtraining.traditional")
+        imageView.tintColor = .gray
+
+        guard let url = ActionImageResourceLocator().bundledGIFURL(for: imagePath) else { return }
+        let coordinator = context.coordinator
+        DispatchQueue.global(qos: .userInitiated).async { [weak imageView] in
+            guard let data = try? Data(contentsOf: url),
+                  let image = Self.createAnimatedImage(from: data) else { return }
             DispatchQueue.main.async {
-                imageView.image = animatedImage
-                print("✅ GIF动画加载成功: \(imageName)")
+                guard coordinator.requestID == requestID, coordinator.imagePath == imagePath else { return }
+                imageView?.image = image
             }
         }
     }
-    
-    private func findGIFFile(named imageName: String) -> URL? {
-        // 清理路径，移除可能的 .gif 扩展名
-        let cleanPath = imageName.replacingOccurrences(of: ".gif", with: "")
-        
-        // 首先尝试直接使用完整路径加载
-        if let url = Bundle.main.url(forResource: cleanPath, withExtension: "gif") {
-            return url
-        }
-        
-        // 备用方案：提取文件名并从所有可能的目录加载
-        let fileName = URL(string: cleanPath)?.lastPathComponent ?? cleanPath
-        
-        // 所有可能的目标肌肉目录
-        let muscleDirectories = [
-            "abs", "pectorals", "biceps", "triceps", "delts", "lats", "upper back",
-            "quads", "hamstrings", "glutes", "calves", "forearms", "traps",
-            "cardiovascular system", "spine", "adductors", "abductors",
-            "serratus anterior", "levator scapulae"
-        ]
-        
-        // 尝试从各个肌肉目录加载
-        for muscleDir in muscleDirectories {
-            let path = "Images/\(muscleDir)/\(fileName)"
-            if let url = Bundle.main.url(forResource: path, withExtension: "gif") {
-                return url
-            }
-        }
-        
-        // 最后尝试旧的路径格式（兼容性）
-        let legacyPaths = [
-            "Media/Actions/\(fileName)",
-            "Images/\(fileName)",
-            fileName
-        ]
-        
-        for path in legacyPaths {
-            if let url = Bundle.main.url(forResource: path, withExtension: "gif") {
-                return url
-            }
-        }
-        
-        return nil
+
+    static func dismantleUIView(_ imageView: UIImageView, coordinator: Coordinator) {
+        coordinator.requestID += 1
+        imageView.stopAnimating()
+        imageView.image = nil
     }
-    
-    private func createAnimatedImage(from data: Data) -> UIImage? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
-            return nil
-        }
-        
-        let frameCount = CGImageSourceGetCount(source)
+
+    static func createAnimatedImage(from data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+
         var images: [UIImage] = []
         var totalDuration: TimeInterval = 0
-        
-        for i in 0..<frameCount {
-            guard let cgImage = CGImageSourceCreateImageAtIndex(source, i, nil) else {
-                continue
-            }
-            
-            let image = UIImage(cgImage: cgImage)
-            images.append(image)
-            
-            // 获取每帧的持续时间
-            if let properties = CGImageSourceCopyPropertiesAtIndex(source, i, nil) as? [String: Any],
-               let gifDict = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any] {
-                let frameDuration = gifDict[kCGImagePropertyGIFDelayTime as String] as? Double ?? 0.1
-                totalDuration += frameDuration
-            } else {
-                totalDuration += 0.1 // 默认持续时间
-            }
+        for index in 0..<CGImageSourceGetCount(source) {
+            guard let cgImage = CGImageSourceCreateImageAtIndex(source, index, nil) else { continue }
+            images.append(UIImage(cgImage: cgImage))
+            let properties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [String: Any]
+            let gifProperties = properties?[kCGImagePropertyGIFDictionary as String] as? [String: Any]
+            totalDuration += gifProperties?[kCGImagePropertyGIFDelayTime as String] as? Double ?? 0.1
         }
-        
+
         guard !images.isEmpty else { return nil }
-        
-        // 如果只有一帧，返回静态图片
-        if images.count == 1 {
-            return images.first
-        }
-        
-        // 创建动画图片
-        return UIImage.animatedImage(with: images, duration: totalDuration)
+        return images.count == 1 ? images[0] : UIImage.animatedImage(with: images, duration: totalDuration)
+    }
+
+    final class Coordinator {
+        var imagePath: String?
+        var requestID = 0
     }
 }
 
-// MARK: - 兼容旧代码的AnimatedImageView（现在使用真正的GIF播放）
 struct AnimatedImageView: View {
-    let imageName: String
-    
+    let imagePath: String
+
     var body: some View {
-        GIFImageView(imageName: imageName)
+        GIFImageView(imagePath: imagePath)
     }
 }
 
@@ -143,7 +87,7 @@ struct ActionDetailView: View {
             VStack(spacing: 0) {
                 // 动作GIF区域
                 VStack {
-                    AnimatedImageView(imageName: action.localImageName)
+                    AnimatedImageView(imagePath: action.localImageName)
                         .frame(height: 300)
                         .clipped()
                 }

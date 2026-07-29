@@ -170,22 +170,10 @@ private struct DetailActionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             HStack(spacing: DesignTokens.Spacing.medium) {
-                Group {
-                    if let image = loadDetailActionImage(resourcePath: action.imageUrl) {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Rectangle()
-                            .fill(tokens.primary.opacity(0.12))
-                            .overlay {
-                                Image(systemName: "figure.strengthtraining.traditional")
-                                    .foregroundStyle(tokens.primary)
-                            }
-                    }
-                }
-                .frame(width: 50, height: 50)
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+                GIFImageView(imagePath: action.imageUrl)
+                    .frame(width: 50, height: 50)
+                    .background(tokens.primary.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
 
                 Text(action.name)
                     .font(DesignTokens.Typography.action)
@@ -217,12 +205,6 @@ private struct DetailActionCard: View {
         }
         return trainingDetailFormat("training.detail.set", index + 1, set.weight, set.reps)
     }
-}
-
-private func loadDetailActionImage(resourcePath: String) -> UIImage? {
-    guard let url = ActionImageResourceLocator().bundledGIFURL(for: resourcePath),
-          let data = try? Data(contentsOf: url) else { return nil }
-    return ActionImageDecoder.image(from: data)
 }
 
 private func trainingDetailFormat(_ key: String, _ value: CVarArg) -> String { String(format: NSLocalizedString(key, comment: ""), value) }
