@@ -309,6 +309,8 @@ final class PlanViewModel: ObservableObject, UserScopedStateResetting {
 @MainActor
 final class TrainingViewModel: ObservableObject {
     @Published private(set) var editingActions: [MutableTrainingAction]
+    @Published private(set) var currentActionID: Int?
+    @Published private(set) var currentFieldID: String?
     @Published private(set) var completedSets: Set<String>
     @Published private(set) var setNotes: [String: String]
     @Published private(set) var setRestTimers: [String: Int]
@@ -338,6 +340,8 @@ final class TrainingViewModel: ObservableObject {
         self.session = session
         self.completionUseCase = completionUseCase
         editingActions = session.editingActions
+        currentActionID = session.editingActions.first?.id
+        currentFieldID = nil
         completedSets = session.completedSets
         setNotes = session.setNotes
         setRestTimers = session.setRestTimers
@@ -370,6 +374,18 @@ final class TrainingViewModel: ObservableObject {
     func updateActions(_ actions: [MutableTrainingAction]) {
         session.updateActions(actions)
         refresh()
+    }
+
+    func selectAction(id: Int) {
+        guard editingActions.contains(where: { $0.id == id }) else { return }
+        currentActionID = id
+        currentFieldID = nil
+    }
+
+    func selectField(id: String, inAction actionID: Int) {
+        guard editingActions.contains(where: { $0.id == actionID }) else { return }
+        currentActionID = actionID
+        currentFieldID = id
     }
 
     func updateCompletedSets(_ completedSets: Set<String>) {
@@ -487,6 +503,12 @@ final class TrainingViewModel: ObservableObject {
 
     private func refresh() {
         editingActions = session.editingActions
+        if let currentActionID, editingActions.contains(where: { $0.id == currentActionID }) {
+            self.currentActionID = currentActionID
+        } else {
+            currentActionID = editingActions.first?.id
+            currentFieldID = nil
+        }
         completedSets = session.completedSets
         setNotes = session.setNotes
         setRestTimers = session.setRestTimers
