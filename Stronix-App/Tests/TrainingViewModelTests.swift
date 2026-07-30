@@ -289,6 +289,27 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.currentFieldID)
     }
 
+    func testKeyboardViewportPrefersTheFollowingActionHeaderWhenAvailable() {
+        XCTAssertEqual(
+            TrainingKeyboardViewportTarget(actionIDs: [1, 2, 3], activeActionID: 2, activeInputID: "weight_2_20"),
+            .actionHeader(3)
+        )
+    }
+
+    func testKeyboardViewportShowsAddActionForTheFinalAction() {
+        XCTAssertEqual(
+            TrainingKeyboardViewportTarget(actionIDs: [1, 2], activeActionID: 2, activeInputID: "reps_2_20"),
+            .addAction
+        )
+    }
+
+    func testKeyboardViewportFallsBackToTheActiveInputWhenTheActionIsUnknown() {
+        XCTAssertEqual(
+            TrainingKeyboardViewportTarget(actionIDs: [1, 2], activeActionID: 3, activeInputID: "weight_3_30"),
+            .input("weight_3_30")
+        )
+    }
+
     private func makeAction(id: Int, sets: [MutableTrainingSet]) -> MutableTrainingAction {
         MutableTrainingAction(id: id, name: "深蹲", imageUrl: "", sets: sets, restTime: 60, recordBilateral: false)
     }
