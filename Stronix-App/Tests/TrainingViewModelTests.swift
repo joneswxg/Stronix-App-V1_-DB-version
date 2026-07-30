@@ -4,6 +4,132 @@ import Combine
 
 @MainActor
 final class TrainingViewModelTests: XCTestCase {
+    func testBilateralRecordingCopiesScalarWeightsAndRestoresLeftWeightWithoutErasingSides() {
+        var action = makeAction(id: 1, sets: [
+            makeSet(id: 10, weight: 50, leftWeight: 5, rightWeight: 6),
+            makeSet(id: 11, weight: 60, leftWeight: 7, rightWeight: 8)
+        ])
+
+        action.setRecordBilateral(true)
+
+        XCTAssertTrue(action.recordBilateral)
+        XCTAssertEqual(action.sets.map(\.weight), [50, 60])
+        XCTAssertEqual(action.sets.map(\.leftWeight), [50, 60])
+        XCTAssertEqual(action.sets.map(\.rightWeight), [50, 60])
+
+        action.sets[0].leftWeight = 55
+        action.sets[0].rightWeight = 65
+        action.setRecordBilateral(false)
+
+        XCTAssertFalse(action.recordBilateral)
+        XCTAssertEqual(action.sets[0].weight, 55)
+        XCTAssertEqual(action.sets[0].leftWeight, 55)
+        XCTAssertEqual(action.sets[0].rightWeight, 65)
+    }
+
+    func testKeyboardCommandsStayScopedToTheSelectedActionAndPreserveCompletionAndNotes() {
+        let first = makeAction(id: 1, sets: [makeSet(id: 10, weight: 20, reps: 8), makeSet(id: 11, weight: 30, reps: 10)])
+        let second = makeAction(id: 2, sets: [makeSet(id: 20, weight: 80, reps: 5)])
+        let session = TrainingSessionMock(actions: [first, second])
+        session.completedSets = ["1_10"]
+        session.setNotes = ["1_10": "keep"]
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.selectField(id: "weight_1_10", inAction: 1)
+        viewModel.fillCurrentAction()
+
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.weight), [20, 20])
+        XCTAssertEqual(viewModel.editingActions[1].sets.map(\.weight), [80])
+        XCTAssertEqual(session.completedSets, ["1_10"])
+        XCTAssertEqual(session.setNotes, ["1_10": "keep"])
+        XCTAssertEqual(session.updatedActionBatches.count, 1)
+    }
+
+    func testBilateralFillCopiesBothSidesAndRepetitionsFillIndependently() {
+        var action = makeAction(id: 1, sets: [
+            makeSet(id: 10, reps: 8, leftWeight: 20, rightWeight: 25),
+            makeSet(id: 11, reps: 10, leftWeight: 30, rightWeight: 35)
+        ])
+        action.recordBilateral = true
+        let session = TrainingSessionMock(actions: [action])
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.selectField(id: "left_1_10", inAction: 1)
+        viewModel.fillCurrentAction()
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.leftWeight), [20, 20])
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.rightWeight), [25, 25])
+
+        viewModel.selectField(id: "reps_1_11", inAction: 1)
+        viewModel.fillCurrentAction()
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.reps), [10, 10])
+    }
+
+    func testKeyboardAddSetClonesActiveActionFinalSetAndSelectsIt() {
+        var action = makeAction(id: 1, sets: [makeSet(id: 10, weight: 50, reps: 8, leftWeight: 22, rightWeight: 25)])
+        action.recordBilateral = true
+        let other = makeAction(id: 2, sets: [makeSet(id: 20, weight: 80)])
+        let session = TrainingSessionMock(actions: [action, other])
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.selectField(id: "right_1_10", inAction: 1)
+        viewModel.addSetToCurrentAction()
+
+        let added = try! XCTUnwrap(viewModel.editingActions[0].sets.last)
+        XCTAssertEqual(viewModel.editingActions[0].sets.count, 2)
+        XCTAssertEqual(added.weight, 50)
+        XCTAssertEqual(added.reps, 8)
+        XCTAssertEqual(added.leftWeight, 22)
+        XCTAssertEqual(added.rightWeight, 25)
+        XCTAssertEqual(viewModel.editingActions[1].sets.count, 1)
+        XCTAssertEqual(viewModel.currentFieldID, "right_1_21")
+        XCTAssertFalse(session.completedSets.contains("1_\(added.id)"))
+        XCTAssertNil(session.setNotes["1_\(added.id)"])
+    }
+
+    func testKeyboardAddSetUsesDefaultsForAnEmptyAction() {
+        let action = makeAction(id: 1, sets: [])
+        let session = TrainingSessionMock(actions: [action])
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.selectField(id: "weight_1_0", inAction: 1)
+        viewModel.addSetToCurrentAction()
+
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.weight), [10])
+        XCTAssertEqual(viewModel.editingActions[0].sets.map(\.reps), [12])
+        XCTAssertEqual(viewModel.currentFieldID, "weight_1_1")
+    }
+
+    func testTrainingDisplayUnitPersistsDuringSessionAndConvertsInputBackToKilograms() {
+        let session = TrainingSessionMock(actions: [makeAction(id: 1, sets: [makeSet(id: 10, weight: 10)]), makeAction(id: 2, sets: [makeSet(id: 20, weight: 20)])])
+        let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
+
+        viewModel.toggleTrainingDisplayUnit()
+        let pounds = viewModel.displayValue(forKilograms: 10)
+        viewModel.selectField(id: "weight_2_20", inAction: 2)
+
+        XCTAssertEqual(viewModel.trainingDisplayUnit, .pounds)
+        XCTAssertEqual(pounds, 22.0462, accuracy: 0.00001)
+        XCTAssertEqual(viewModel.kilogramsValue(fromDisplay: pounds), 10, accuracy: 0.0000001)
+
+        session.trainingDisplayUnit = .kilograms
+        viewModel.updateActions(session.editingActions)
+        XCTAssertEqual(viewModel.trainingDisplayUnit, .kilograms)
+    }
+
+    func testTrainingSessionResetsDisplayUnitWhenItEndsAndRestarts() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 60, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.trainingDisplayUnit = .pounds
+        manager.stopTraining()
+
+        XCTAssertEqual(manager.trainingDisplayUnit, .kilograms)
+
+        manager.startTraining(with: plan)
+        XCTAssertEqual(manager.trainingDisplayUnit, .kilograms)
+    }
+
     func testActionAndSetUpdatesRefreshSessionState() {
         let session = TrainingSessionMock(actions: [makeAction(id: 1, sets: [makeSet(id: 10)])])
         let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
@@ -184,6 +310,7 @@ private final class TrainingSessionMock: TrainingSessionManaging, ObservableObje
     var editingActions: [MutableTrainingAction]
     var completedSets: Set<String> = []
     var setNotes: [String: String] = [:]
+    var trainingDisplayUnit: TrainingDisplayUnit = .kilograms
     var planName = "计划"
     var setRestTimers: [String: Int] = [:]
     var showRestTimer = false

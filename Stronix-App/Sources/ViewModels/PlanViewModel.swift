@@ -311,6 +311,7 @@ final class TrainingViewModel: ObservableObject {
     @Published private(set) var editingActions: [MutableTrainingAction]
     @Published private(set) var currentActionID: Int?
     @Published private(set) var currentFieldID: String?
+    @Published private(set) var trainingDisplayUnit: TrainingDisplayUnit
     @Published private(set) var completedSets: Set<String>
     @Published private(set) var setNotes: [String: String]
     @Published private(set) var setRestTimers: [String: Int]
@@ -342,6 +343,7 @@ final class TrainingViewModel: ObservableObject {
         editingActions = session.editingActions
         currentActionID = session.editingActions.first?.id
         currentFieldID = nil
+        trainingDisplayUnit = session.trainingDisplayUnit
         completedSets = session.completedSets
         setNotes = session.setNotes
         setRestTimers = session.setRestTimers
@@ -386,6 +388,112 @@ final class TrainingViewModel: ObservableObject {
         guard editingActions.contains(where: { $0.id == actionID }) else { return }
         currentActionID = actionID
         currentFieldID = id
+    }
+
+    func keyboardState() -> TrainingKeyboardState? {
+        guard let target = currentEditingTarget(),
+              let action = editingActions.first(where: { $0.id == target.actionID }),
+              let set = action.sets.first(where: { $0.id == target.setID }) else { return nil }
+
+        let value: Double
+        switch target {
+        case .weight:
+            value = set.weight
+        case .leftWeight:
+            value = set.leftWeight
+        case .rightWeight:
+            value = set.rightWeight
+        case .reps:
+            value = Double(set.reps)
+        }
+        return TrainingKeyboardState(field: target, value: value, displayUnit: trainingDisplayUnit, isBilateralRecording: action.recordBilateral)
+    }
+
+    func updateCurrentKeyboardValue(_ value: Double) {
+        guard let target = currentEditingTarget(),
+              let actionIndex = editingActions.firstIndex(where: { $0.id == target.actionID }),
+              let setIndex = editingActions[actionIndex].sets.firstIndex(where: { $0.id == target.setID }) else { return }
+
+        var actions = editingActions
+        switch target {
+        case .weight:
+            actions[actionIndex].sets[setIndex].weight = kilogramsValue(fromDisplay: value)
+        case .leftWeight:
+            actions[actionIndex].sets[setIndex].leftWeight = kilogramsValue(fromDisplay: value)
+        case .rightWeight:
+            actions[actionIndex].sets[setIndex].rightWeight = kilogramsValue(fromDisplay: value)
+        case .reps:
+            actions[actionIndex].sets[setIndex].reps = Int(value)
+        }
+        updateActions(actions)
+    }
+
+    func toggleTrainingDisplayUnit() {
+        session.trainingDisplayUnit = session.trainingDisplayUnit == .kilograms ? .pounds : .kilograms
+        refresh()
+    }
+
+    func toggleBilateralRecording() {
+        guard let target = currentEditingTarget(),
+              let actionIndex = editingActions.firstIndex(where: { $0.id == target.actionID }) else { return }
+
+        var actions = editingActions
+        let enabled = !actions[actionIndex].recordBilateral
+        actions[actionIndex].setRecordBilateral(enabled)
+        updateActions(actions)
+        selectField(id: (enabled ? TrainingEditingField.leftWeight(actionID: target.actionID, setID: target.setID) : .weight(actionID: target.actionID, setID: target.setID)).id, inAction: target.actionID)
+    }
+
+    func fillCurrentAction() {
+        guard let target = currentEditingTarget(),
+              let actionIndex = editingActions.firstIndex(where: { $0.id == target.actionID }),
+              let sourceIndex = editingActions[actionIndex].sets.firstIndex(where: { $0.id == target.setID }) else { return }
+
+        var actions = editingActions
+        let source = actions[actionIndex].sets[sourceIndex]
+        for setIndex in actions[actionIndex].sets.indices {
+            switch target {
+            case .weight:
+                actions[actionIndex].sets[setIndex].weight = source.weight
+            case .leftWeight, .rightWeight:
+                actions[actionIndex].sets[setIndex].leftWeight = source.leftWeight
+                actions[actionIndex].sets[setIndex].rightWeight = source.rightWeight
+            case .reps:
+                actions[actionIndex].sets[setIndex].reps = source.reps
+            }
+        }
+        updateActions(actions)
+        selectField(id: target.id, inAction: target.actionID)
+    }
+
+    func addSetToCurrentAction() {
+        guard let target = currentEditingTarget(),
+              let actionIndex = editingActions.firstIndex(where: { $0.id == target.actionID }) else { return }
+
+        var actions = editingActions
+        let newSetID = nextSetID(in: actions)
+        let newSet = actions[actionIndex].sets.last.map { MutableTrainingSet(id: newSetID, weight: $0.weight, reps: $0.reps, leftWeight: $0.leftWeight, rightWeight: $0.rightWeight) } ?? MutableTrainingSet(id: newSetID, weight: 10, reps: 12)
+        actions[actionIndex].sets.append(newSet)
+        updateActions(actions)
+        selectField(id: target.forSet(newSetID).id, inAction: target.actionID)
+    }
+
+    func displayValue(forKilograms value: Double) -> Double {
+        trainingDisplayUnit.displayValue(forKilograms: value)
+    }
+
+    func kilogramsValue(fromDisplay value: Double) -> Double {
+        trainingDisplayUnit.kilogramsValue(fromDisplay: value)
+    }
+
+    private func currentEditingTarget() -> TrainingEditingField? {
+        guard let currentActionID, let currentFieldID,
+              let target = TrainingEditingField(id: currentFieldID), target.actionID == currentActionID else { return nil }
+        return target
+    }
+
+    private func nextSetID(in actions: [MutableTrainingAction]) -> Int {
+        (actions.flatMap(\.sets).map(\.id).max() ?? 0) + 1
     }
 
     func updateCompletedSets(_ completedSets: Set<String>) {
@@ -510,6 +618,7 @@ final class TrainingViewModel: ObservableObject {
             currentFieldID = nil
         }
         completedSets = session.completedSets
+        trainingDisplayUnit = session.trainingDisplayUnit
         setNotes = session.setNotes
         setRestTimers = session.setRestTimers
         planName = session.planName

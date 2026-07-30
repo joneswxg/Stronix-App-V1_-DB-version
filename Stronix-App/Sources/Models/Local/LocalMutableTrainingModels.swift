@@ -1,5 +1,97 @@
 import Foundation
 
+enum TrainingDisplayUnit: String, Equatable {
+    case kilograms
+    case pounds
+
+    static let poundsPerKilogram = 2.20462
+
+    func displayValue(forKilograms value: Double) -> Double {
+        switch self {
+        case .kilograms: value
+        case .pounds: value * Self.poundsPerKilogram
+        }
+    }
+
+    func kilogramsValue(fromDisplay value: Double) -> Double {
+        switch self {
+        case .kilograms: value
+        case .pounds: value / Self.poundsPerKilogram
+        }
+    }
+
+    var keyboardLabel: String {
+        switch self {
+        case .kilograms: "kg"
+        case .pounds: "lbs"
+        }
+    }
+}
+
+enum TrainingEditingField: Equatable {
+    case weight(actionID: Int, setID: Int)
+    case leftWeight(actionID: Int, setID: Int)
+    case rightWeight(actionID: Int, setID: Int)
+    case reps(actionID: Int, setID: Int)
+
+    init?(id: String) {
+        let components = id.split(separator: "_")
+        guard components.count == 3,
+              let actionID = Int(components[1]),
+              let setID = Int(components[2]) else { return nil }
+
+        switch components[0] {
+        case "weight": self = .weight(actionID: actionID, setID: setID)
+        case "left": self = .leftWeight(actionID: actionID, setID: setID)
+        case "right": self = .rightWeight(actionID: actionID, setID: setID)
+        case "reps": self = .reps(actionID: actionID, setID: setID)
+        default: return nil
+        }
+    }
+
+    var actionID: Int {
+        switch self {
+        case let .weight(actionID, _), let .leftWeight(actionID, _), let .rightWeight(actionID, _), let .reps(actionID, _): actionID
+        }
+    }
+
+    var setID: Int {
+        switch self {
+        case let .weight(_, setID), let .leftWeight(_, setID), let .rightWeight(_, setID), let .reps(_, setID): setID
+        }
+    }
+
+    var id: String {
+        switch self {
+        case let .weight(actionID, setID): "weight_\(actionID)_\(setID)"
+        case let .leftWeight(actionID, setID): "left_\(actionID)_\(setID)"
+        case let .rightWeight(actionID, setID): "right_\(actionID)_\(setID)"
+        case let .reps(actionID, setID): "reps_\(actionID)_\(setID)"
+        }
+    }
+
+    func forSet(_ setID: Int) -> TrainingEditingField {
+        switch self {
+        case let .weight(actionID, _): .weight(actionID: actionID, setID: setID)
+        case let .leftWeight(actionID, _): .leftWeight(actionID: actionID, setID: setID)
+        case let .rightWeight(actionID, _): .rightWeight(actionID: actionID, setID: setID)
+        case let .reps(actionID, _): .reps(actionID: actionID, setID: setID)
+        }
+    }
+}
+
+struct TrainingKeyboardState: Equatable {
+    let field: TrainingEditingField
+    let value: Double
+    let displayUnit: TrainingDisplayUnit
+    let isBilateralRecording: Bool
+
+    var isInteger: Bool {
+        if case .reps = field { return true }
+        return false
+    }
+}
+
 /// 本地可变的训练模型（用于训练过程中的编辑）
 /// 迁移自 MutableTrainingModels.swift
 
@@ -124,10 +216,10 @@ struct MutableTrainingAction: Identifiable {
         recordBilateral = enabled
         for index in sets.indices {
             if enabled {
-                sets[index].weight = 0
+                sets[index].leftWeight = sets[index].weight
+                sets[index].rightWeight = sets[index].weight
             } else {
-                sets[index].leftWeight = 0
-                sets[index].rightWeight = 0
+                sets[index].weight = sets[index].leftWeight
             }
         }
     }

@@ -75,6 +75,28 @@ final class CreatePlanViewModelTests: XCTestCase {
         XCTAssertFalse(manager.isShowing)
     }
 
+    func testCustomKeyboardCancelClearsTrainingRail() {
+        let manager = CustomKeyboardManager()
+        manager.showKeyboard(
+            inputId: "weight_1_10",
+            initialValue: 10,
+            trainingKeyboardRail: TrainingKeyboardRail(
+                isBilateralRecording: { false },
+                displayUnit: { .kilograms },
+                onToggleBilateral: {},
+                onFill: {},
+                onToggleDisplayUnit: {},
+                onAddSet: {}
+            ),
+            onValueChanged: { _ in }
+        )
+
+        manager.cancelKeyboard()
+
+        XCTAssertNil(manager.trainingKeyboardRail)
+        XCTAssertFalse(manager.isShowing)
+    }
+
     private func populateValidForm(on viewModel: CreatePlanViewModel) {
         viewModel.planName = "力量计划"
         viewModel.planNote = "每周三次"

@@ -9,6 +9,7 @@ protocol TrainingSessionManaging: AnyObject {
     var editingActions: [MutableTrainingAction] { get set }
     var completedSets: Set<String> { get set }
     var setNotes: [String: String] { get set }
+    var trainingDisplayUnit: TrainingDisplayUnit { get set }
     var planName: String { get }
     var setRestTimers: [String: Int] { get }
     var showRestTimer: Bool { get }
@@ -49,6 +50,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     @Published var editingActions: [MutableTrainingAction] = []
     @Published var completedSets: Set<String> = []
     @Published var setNotes: [String: String] = [:]
+    @Published var trainingDisplayUnit: TrainingDisplayUnit = .kilograms
     @Published var planName: String = ""
     
     // MARK: - 私有属性
@@ -88,6 +90,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
         editingActions = actions.map { MutableTrainingAction(from: $0) }
         completedSets.removeAll()
         setNotes.removeAll()
+        trainingDisplayUnit = .kilograms
         completionSnapshotID = UUID()
 
         isTrainingActive = true
@@ -112,6 +115,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
         editingActions.removeAll()
         completedSets.removeAll()
         setNotes.removeAll()
+        trainingDisplayUnit = .kilograms
         completionSnapshotID = nil
 
         stopTrainingTimer()
