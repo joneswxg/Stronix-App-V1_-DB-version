@@ -296,10 +296,10 @@ final class TrainingViewModelTests: XCTestCase {
         )
     }
 
-    func testKeyboardViewportKeepsTheActiveInputVisibleForTheFinalAction() {
+    func testKeyboardViewportShowsAddActionForTheFinalAction() {
         XCTAssertEqual(
             TrainingKeyboardViewportTarget(actionIDs: [1, 2], activeActionID: 2, activeInputID: "reps_2_20"),
-            .input("reps_2_20")
+            .addAction
         )
     }
 

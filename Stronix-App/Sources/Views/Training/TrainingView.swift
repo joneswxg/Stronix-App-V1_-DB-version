@@ -202,6 +202,7 @@ private struct TrainingSessionContent: View {
                         .id(TrainingKeyboardViewportTarget.actionHeader(action.id))
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
+                    .id(TrainingKeyboardViewportTarget.addAction)
             }
             .padding(DesignTokens.Spacing.large)
             }
@@ -246,15 +247,19 @@ private struct TrainingSessionContent: View {
 enum TrainingKeyboardViewportTarget: Hashable {
     case actionHeader(Int)
     case input(String)
+    case addAction
 
     init(actionIDs: [Int], activeActionID: Int?, activeInputID: String) {
         guard let activeActionID,
-              let activeActionIndex = actionIDs.firstIndex(of: activeActionID),
-              actionIDs.indices.contains(activeActionIndex + 1) else {
+              let activeActionIndex = actionIDs.firstIndex(of: activeActionID) else {
             self = .input(activeInputID)
             return
         }
-        self = .actionHeader(actionIDs[activeActionIndex + 1])
+        if actionIDs.indices.contains(activeActionIndex + 1) {
+            self = .actionHeader(actionIDs[activeActionIndex + 1])
+        } else {
+            self = .addAction
+        }
     }
 }
 
