@@ -26,32 +26,32 @@ struct TrainingView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TrainingSessionContent(
-                editingActions: Binding(get: { viewModel.editingActions }, set: viewModel.updateActions),
-                completedSets: Binding(get: { viewModel.completedSets }, set: viewModel.updateCompletedSets),
-                setNotes: Binding(get: { viewModel.setNotes }, set: viewModel.updateSetNotes),
-                volumeText: viewModel.volumeText,
-                elapsedTimeText: viewModel.elapsedTimeText,
-                planName: viewModel.planName,
-                currentActionID: Binding(get: { viewModel.currentActionID }, set: { if let id = $0 { viewModel.selectAction(id: id) } }),
-                trainingDisplayUnit: viewModel.trainingDisplayUnit,
-                onSelectField: viewModel.selectField,
-                onToggleBilateral: viewModel.toggleBilateralRecording,
-                onFill: viewModel.fillCurrentAction,
-                onToggleDisplayUnit: viewModel.toggleTrainingDisplayUnit,
-                onAddSet: viewModel.addSetToCurrentAction,
-                keyboardState: viewModel.keyboardState,
-                onKeyboardValueChanged: viewModel.updateCurrentKeyboardValue,
-                onAdd: { showActionSelect = true },
-                onDelete: viewModel.deleteAction,
-                onSetCompleted: viewModel.toggleSetCompletion,
-                onShowActionHistory: { id, name in
-                    selectedActionForHistory = (id, name)
-                    showActionHistory = true
-                },
-                keyboardManager: keyboardManager
-            )
+        TrainingSessionContent(
+            editingActions: Binding(get: { viewModel.editingActions }, set: viewModel.updateActions),
+            completedSets: Binding(get: { viewModel.completedSets }, set: viewModel.updateCompletedSets),
+            setNotes: Binding(get: { viewModel.setNotes }, set: viewModel.updateSetNotes),
+            volumeText: viewModel.volumeText,
+            elapsedTimeText: viewModel.elapsedTimeText,
+            planName: viewModel.planName,
+            currentActionID: Binding(get: { viewModel.currentActionID }, set: { if let id = $0 { viewModel.selectAction(id: id) } }),
+            trainingDisplayUnit: viewModel.trainingDisplayUnit,
+            onSelectField: viewModel.selectField,
+            onToggleBilateral: viewModel.toggleBilateralRecording,
+            onFill: viewModel.fillCurrentAction,
+            onToggleDisplayUnit: viewModel.toggleTrainingDisplayUnit,
+            onAddSet: viewModel.addSetToCurrentAction,
+            keyboardState: viewModel.keyboardState,
+            onKeyboardValueChanged: viewModel.updateCurrentKeyboardValue,
+            onAdd: { showActionSelect = true },
+            onDelete: viewModel.deleteAction,
+            onSetCompleted: viewModel.toggleSetCompletion,
+            onShowActionHistory: { id, name in
+                selectedActionForHistory = (id, name)
+                showActionHistory = true
+            },
+            keyboardManager: keyboardManager
+        )
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if keyboardManager.isShowing {
                 CustomNumberKeyboard(
                     value: $keyboardManager.currentValue,
@@ -65,6 +65,7 @@ struct TrainingView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.default, value: keyboardManager.isShowing)
         .background(lightTokens.canvas)
         .environment(\.designTokens, lightTokens)
         .environment(\.colorScheme, .light)
@@ -178,8 +179,9 @@ private struct TrainingSessionContent: View {
     let keyboardManager: CustomKeyboardManager
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: DesignTokens.Spacing.medium) {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.medium) {
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Text(planName).font(DesignTokens.Typography.pageTitle).foregroundStyle(tokens.contentPrimary)
                     HStack {
@@ -197,10 +199,20 @@ private struct TrainingSessionContent: View {
 
                 ForEach(editingActions, id: \.id) { action in
                     TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
+                        .id(TrainingKeyboardViewportTarget.actionHeader(action.id))
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
             }
             .padding(DesignTokens.Spacing.large)
+            }
+            .onChange(of: keyboardManager.isShowing) { _, isShowing in
+                guard isShowing else { return }
+                scrollKeyboardTarget(using: proxy)
+            }
+            .onChange(of: keyboardManager.activeInputId) { _, _ in
+                guard keyboardManager.isShowing else { return }
+                scrollKeyboardTarget(using: proxy)
+            }
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -211,10 +223,38 @@ private struct TrainingSessionContent: View {
         .background(tokens.canvas)
     }
 
+    private func scrollKeyboardTarget(using proxy: ScrollViewProxy) {
+        let target = TrainingKeyboardViewportTarget(
+            actionIDs: editingActions.map(\.id),
+            activeActionID: currentActionID,
+            activeInputID: keyboardManager.activeInputId
+        )
+        DispatchQueue.main.async {
+            withAnimation {
+                proxy.scrollTo(target, anchor: .bottom)
+            }
+        }
+    }
+
     private func binding(for action: MutableTrainingAction) -> Binding<MutableTrainingAction> {
         Binding(get: { editingActions.first(where: { $0.id == action.id }) ?? action }, set: { updated in
             if let index = editingActions.firstIndex(where: { $0.id == updated.id }) { editingActions[index] = updated }
         })
+    }
+}
+
+enum TrainingKeyboardViewportTarget: Hashable {
+    case actionHeader(Int)
+    case input(String)
+
+    init(actionIDs: [Int], activeActionID: Int?, activeInputID: String) {
+        guard let activeActionID,
+              let activeActionIndex = actionIDs.firstIndex(of: activeActionID),
+              actionIDs.indices.contains(activeActionIndex + 1) else {
+            self = .input(activeInputID)
+            return
+        }
+        self = .actionHeader(actionIDs[activeActionIndex + 1])
     }
 }
 
@@ -418,6 +458,7 @@ private struct SetEditor: View {
         .accessibilityLabel(LocalizedStringKey(label))
         .accessibilityValue(isInteger ? String(Int(value)) : String(format: "%.1f", value))
         .accessibilityHint("training.accessibility.editValueHint")
+        .id(TrainingKeyboardViewportTarget.input(inputID))
     }
 
     private func showNumericKeyboard(inputID: String, initialValue: Double, isInteger: Bool, supportsBilateralRecording: Bool, update: @escaping (Double) -> Void) {
