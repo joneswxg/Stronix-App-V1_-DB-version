@@ -22,7 +22,7 @@ struct TrainingFloatingIndicator: View {
                             .trim(from: 0, to: progress)
                             .stroke(tokens.primary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                             .rotationEffect(.degrees(-90))
-                        Text(formatRestTime(trainingManager.currentRestTime))
+                        Text(restTimerText(trainingManager.currentRestTime))
                             .font(DesignTokens.Typography.feedback)
                             .monospacedDigit()
                     }
@@ -36,7 +36,7 @@ struct TrainingFloatingIndicator: View {
                 .offset(dragOffset)
                 .gesture(dragGesture(geometry))
                 .accessibilityLabel("training.accessibility.restTimer")
-                .accessibilityValue(formatRestTime(trainingManager.currentRestTime))
+                .accessibilityValue(restTimerText(trainingManager.currentRestTime))
                 .accessibilityHint("training.accessibility.floatingHint")
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -45,12 +45,9 @@ struct TrainingFloatingIndicator: View {
 
     private var progress: CGFloat {
         guard trainingManager.currentRestDuration > 0 else { return 0 }
-        return CGFloat(trainingManager.currentRestTime) / CGFloat(trainingManager.currentRestDuration)
+        return min(1, CGFloat(trainingManager.currentRestTime) / CGFloat(trainingManager.currentRestDuration))
     }
 
-    private func formatRestTime(_ seconds: Int) -> String {
-        String(format: "%02d:%02d", seconds / 60, seconds % 60)
-    }
     private func dragGesture(_ geometry: GeometryProxy) -> some Gesture {
         DragGesture()
             .onChanged { dragOffset = $0.translation }

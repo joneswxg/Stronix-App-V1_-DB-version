@@ -159,6 +159,40 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertFalse(manager.isRestTimerPaused)
     }
 
+    func testRestTimeEditsApplyOnlyToTheNextCompletion() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        var updatedAction = manager.editingActions[0]
+        updatedAction.restTime = 45
+        manager.updateActions([updatedAction])
+        manager.resetRestTimer()
+
+        XCTAssertEqual(manager.currentRestTime, 75)
+
+        manager.toggleSetCompletion(setID: "1_11", restTime: 45)
+        XCTAssertEqual(manager.currentRestTime, 45)
+    }
+
+    func testCompletionSnapshotKeepsRestCountdownOutOfHistory() throws {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.totalTrainingTime = 120
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        manager.addRestTime(30)
+        let snapshot = try XCTUnwrap(manager.captureCompletionSnapshot())
+        let planDraft = try XCTUnwrap(snapshot.planDraft)
+
+        XCTAssertEqual(snapshot.historyRequest.duration, 2)
+        XCTAssertEqual(snapshot.historyRequest.details.count, 1)
+        XCTAssertEqual(snapshot.historyRequest.details[0].is_completed, true)
+        XCTAssertEqual(planDraft.actions[0].rest, 75)
+    }
+
     func testTrainingSessionResetsDisplayUnitWhenItEndsAndRestarts() {
         let manager = TrainingSessionManager()
         let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 60, notes: nil, recordBilateral: false, imageUrl: "")])
