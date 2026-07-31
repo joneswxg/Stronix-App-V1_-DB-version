@@ -18,8 +18,6 @@ final class AuthViewModel: ObservableObject {
     @Published var registrationPassword = ""
     @Published var registrationConfirmation = ""
     @Published var registrationGender = "男"
-    @Published var registrationHeight = ""
-    @Published var registrationWeight = ""
     @Published var agreesToTerms = false
     @Published private(set) var isLoggingIn = false
     @Published private(set) var isRegistering = false
@@ -72,14 +70,6 @@ final class AuthViewModel: ObservableObject {
         isRegistering = true
         defer { isRegistering = false }
 
-        guard let height = optionalNumber(registrationHeight) else {
-            errorMessage = AppStrings.text("auth.error.invalidHeight")
-            return
-        }
-        guard let weight = optionalNumber(registrationWeight) else {
-            errorMessage = AppStrings.text("auth.error.invalidWeight")
-            return
-        }
         do {
             try await session.register(
                 AuthRegistration(
@@ -87,8 +77,8 @@ final class AuthViewModel: ObservableObject {
                     email: registrationEmail,
                     password: registrationPassword,
                     gender: registrationGender,
-                    height: height,
-                    weight: weight
+                    height: nil,
+                    weight: nil
                 )
             )
         } catch {
@@ -106,13 +96,6 @@ final class AuthViewModel: ObservableObject {
         } catch {
             errorMessage = userMessage(for: error)
         }
-    }
-
-    private func optionalNumber(_ value: String) -> Double?? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return .some(nil) }
-        guard let number = Double(trimmed) else { return nil }
-        return .some(number)
     }
 
     private func userMessage(for error: Error) -> String {
