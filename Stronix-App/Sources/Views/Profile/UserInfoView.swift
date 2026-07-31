@@ -4,6 +4,9 @@ struct UserInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme: AppTheme
     @EnvironmentObject private var userSession: UserSession
+    private var rows: [UserInfoRowPresentation] {
+        UserInfoPresentation(user: userSession.currentUser).rows
+    }
 
     var body: some View {
         NavigationView {
@@ -21,9 +24,9 @@ struct UserInfoView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
 
                         VStack(spacing: 12) {
-                            ProfileInfoRow(title: "性别", value: userSession.currentUser?.gender ?? "未填写")
-                            ProfileInfoRow(title: "身高", value: formatted(userSession.currentUser?.height), unit: "cm")
-                            ProfileInfoRow(title: "体重", value: formatted(userSession.currentUser?.weight), unit: "kg")
+                            ForEach(rows) { row in
+                                ProfileInfoRow(title: row.title, value: row.value)
+                            }
                         }
                     }
                     .padding(.horizontal, 16)
@@ -46,10 +49,23 @@ struct UserInfoView: View {
             }
         }
     }
+}
 
-    private func formatted(_ value: Double?) -> String {
-        guard let value else { return "未填写" }
-        return String(format: "%.1f", value)
+struct UserInfoRowPresentation: Identifiable, Equatable {
+    var id: String { title }
+    let title: String
+    let value: String
+}
+
+struct UserInfoPresentation: Equatable {
+    let rows: [UserInfoRowPresentation]
+
+    init(user: User?) {
+        rows = [
+            UserInfoRowPresentation(title: "用户名", value: user?.username ?? "未填写"),
+            UserInfoRowPresentation(title: "注册邮箱", value: user?.email ?? "未填写"),
+            UserInfoRowPresentation(title: "性别", value: user?.gender ?? "未填写")
+        ]
     }
 }
 

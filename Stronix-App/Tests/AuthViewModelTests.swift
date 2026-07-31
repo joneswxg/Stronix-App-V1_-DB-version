@@ -43,23 +43,10 @@ final class AuthViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.errorMessage, AppStrings.text("auth.validation.termsRequired"))
     }
 
-    func testRegistrationRejectsInvalidOptionalHeightBeforeSubmitting() async {
-        let session = AuthSessionIntentStub()
-        let viewModel = validRegistrationViewModel()
-        viewModel.registrationHeight = "not-a-number"
-
-        await viewModel.register(using: session)
-
-        XCTAssertEqual(session.registerCallCount, 0)
-        XCTAssertEqual(viewModel.errorMessage, AppStrings.text("auth.error.invalidHeight"))
-    }
-
-    func testRegistrationPassesUnchangedPayloadToSession() async {
+    func testRegistrationSubmitsAccountFieldsWithoutProfileMeasurements() async {
         let session = AuthSessionIntentStub()
         let viewModel = validRegistrationViewModel()
         viewModel.registrationGender = "女"
-        viewModel.registrationHeight = "168.5"
-        viewModel.registrationWeight = "58"
 
         await viewModel.register(using: session)
 
@@ -71,12 +58,18 @@ final class AuthViewModelTests: XCTestCase {
                 email: "member@example.com",
                 password: "secure-password",
                 gender: "女",
-                height: 168.5,
-                weight: 58
+                height: nil,
+                weight: nil
             )
         )
         XCTAssertNil(viewModel.errorMessage)
         XCTAssertFalse(viewModel.isRegistering)
+    }
+
+    func testRegistrationEligibilityUsesOnlyAccountFieldsAndTerms() {
+        let viewModel = validRegistrationViewModel()
+
+        XCTAssertTrue(viewModel.canRegister)
     }
 
     func testRegistrationMapsDuplicateAndPersistenceFailuresToSafeMessages() async {

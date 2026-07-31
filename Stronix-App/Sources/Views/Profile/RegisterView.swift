@@ -4,7 +4,6 @@ struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userSession: UserSession
     @StateObject private var viewModel = AuthViewModel()
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var showError = false
 
     private let genderOptions = ["男", "女", "其他"]
@@ -78,7 +77,6 @@ struct RegisterView: View {
                 error: passwordsMismatch ? "auth.feedback.passwordMismatch" : nil
             )
             genderPicker
-            measurements
             termsAgreement
         }
     }
@@ -111,29 +109,6 @@ struct RegisterView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("auth.field.gender")
-    }
-
-    @ViewBuilder
-    private var measurements: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(spacing: DesignTokens.Spacing.large) {
-                heightField
-                weightField
-            }
-        } else {
-            HStack(alignment: .top, spacing: DesignTokens.Spacing.medium) {
-                heightField
-                weightField
-            }
-        }
-    }
-
-    private var heightField: some View {
-        AuthTextField(text: $viewModel.registrationHeight, label: "auth.field.height.label", placeholder: "auth.field.height.placeholder", symbol: "ruler", kind: .number)
-    }
-
-    private var weightField: some View {
-        AuthTextField(text: $viewModel.registrationWeight, label: "auth.field.weight.label", placeholder: "auth.field.weight.placeholder", symbol: "scalemass", kind: .number)
     }
 
     private var termsAgreement: some View {
