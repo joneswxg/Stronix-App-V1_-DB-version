@@ -123,8 +123,8 @@ struct TrainingView: View {
     }
 
     @ViewBuilder private var restTimerOverlay: some View {
-        if viewModel.showRestTimer {
-            RestTimerOverlay(restTime: .constant(viewModel.currentRestTime), isRunning: !viewModel.isRestTimerPaused, onPause: viewModel.toggleRestTimer, onReset: viewModel.resetRestTimer, onSkip: viewModel.skipRestTimer, onClose: viewModel.closeRestTimer, onAddTime: { viewModel.addRestTime(10) }, onSubtractTime: { viewModel.subtractRestTime(10) })
+        if viewModel.showRestControls {
+            RestTimerOverlay(restTime: viewModel.currentRestTime, isRunning: !viewModel.isRestTimerPaused && viewModel.currentRestTime > 0, onPause: viewModel.toggleRestTimer, onReset: viewModel.resetRestTimer, onSkip: viewModel.skipRestTimer, onClose: viewModel.closeRestTimer, onAddTime: { viewModel.addRestTime(10) }, onSubtractTime: { viewModel.subtractRestTime(10) })
         }
     }
 }
@@ -538,7 +538,7 @@ private struct CompactSetValueCell: View {
 
 struct RestTimerOverlay: View {
     @Environment(\.designTokens) private var tokens
-    @Binding var restTime: Int
+    let restTime: Int
     let isRunning: Bool
     let onPause: () -> Void
     let onReset: () -> Void

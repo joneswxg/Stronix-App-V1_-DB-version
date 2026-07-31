@@ -314,12 +314,12 @@ final class TrainingViewModel: ObservableObject {
     @Published private(set) var trainingDisplayUnit: TrainingDisplayUnit
     @Published private(set) var completedSets: Set<String>
     @Published private(set) var setNotes: [String: String]
-    @Published private(set) var setRestTimers: [String: Int]
     @Published private(set) var planName: String
     @Published private(set) var elapsedTimeText: String
     @Published private(set) var completedVolume: Double
     @Published private(set) var totalVolume: Double
     @Published private(set) var showRestTimer: Bool
+    @Published private(set) var showRestControls: Bool
     @Published private(set) var currentRestTime: Int
     @Published private(set) var isRestTimerPaused: Bool
     @Published private(set) var isCompleting = false
@@ -346,12 +346,12 @@ final class TrainingViewModel: ObservableObject {
         trainingDisplayUnit = session.trainingDisplayUnit
         completedSets = session.completedSets
         setNotes = session.setNotes
-        setRestTimers = session.setRestTimers
         planName = session.planName
         elapsedTimeText = session.formattedTrainingTime()
         completedVolume = session.completedVolume()
         totalVolume = session.totalVolume()
         showRestTimer = session.showRestTimer
+        showRestControls = session.showRestControls
         currentRestTime = session.currentRestTime
         isRestTimerPaused = session.isRestTimerPaused
 
@@ -516,8 +516,8 @@ final class TrainingViewModel: ObservableObject {
         refresh()
     }
 
-    func showRestTimer(for setID: String, restTime: Int) {
-        session.handleRestTimerTapped(setId: setID, restTime: restTime)
+    func presentRestControls() {
+        session.presentRestControls()
         refresh()
     }
 
@@ -620,12 +620,12 @@ final class TrainingViewModel: ObservableObject {
         completedSets = session.completedSets
         trainingDisplayUnit = session.trainingDisplayUnit
         setNotes = session.setNotes
-        setRestTimers = session.setRestTimers
         planName = session.planName
         elapsedTimeText = session.formattedTrainingTime()
         completedVolume = session.completedVolume()
         totalVolume = session.totalVolume()
         showRestTimer = session.showRestTimer
+        showRestControls = session.showRestControls
         currentRestTime = session.currentRestTime
         isRestTimerPaused = session.isRestTimerPaused
     }

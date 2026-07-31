@@ -12,42 +12,51 @@ struct TrainingFloatingIndicator: View {
     private let padding: CGFloat = DesignTokens.Spacing.large
 
     var body: some View {
-        if trainingManager.isTrainingActive {
+        if trainingManager.isTrainingActive && trainingManager.showRestTimer {
             GeometryReader { geometry in
                 Button(action: onTap) {
-                    HStack(spacing: DesignTokens.Spacing.small) {
-                        Image(systemName: "figure.strengthtraining.traditional").accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
-                            Text("training.floating.active").font(DesignTokens.Typography.label)
-                            Text(trainingManager.formattedTrainingTime()).font(DesignTokens.Typography.feedback).monospacedDigit()
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "line.3.horizontal").accessibilityHidden(true)
+                    ZStack {
+                        Circle()
+                            .stroke(tokens.primary.opacity(0.2), lineWidth: 6)
+                        Circle()
+                            .trim(from: 0, to: progress)
+                            .stroke(tokens.primary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                        Text(formatRestTime(trainingManager.currentRestTime))
+                            .font(DesignTokens.Typography.feedback)
+                            .monospacedDigit()
                     }
-                    .foregroundStyle(tokens.onPrimary)
-                    .padding(DesignTokens.Spacing.medium)
-                    .frame(minWidth: 150, minHeight: DesignTokens.Metric.minimumTapSize)
-                    .background(tokens.primary)
-                    .clipShape(Capsule())
+                    .foregroundStyle(tokens.contentPrimary)
+                    .frame(width: 76, height: 76)
+                    .background(tokens.surface)
+                    .clipShape(Circle())
+                    .overlay { Circle().stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth) }
                 }
-                .fixedSize(horizontal: false, vertical: true)
                 .position(x: xPosition(in: geometry), y: yPosition(in: geometry))
                 .offset(dragOffset)
                 .gesture(dragGesture(geometry))
-                .accessibilityLabel("training.accessibility.floatingLabel")
-                .accessibilityValue(trainingManager.formattedTrainingTime())
+                .accessibilityLabel("training.accessibility.restTimer")
+                .accessibilityValue(formatRestTime(trainingManager.currentRestTime))
                 .accessibilityHint("training.accessibility.floatingHint")
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
 
+    private var progress: CGFloat {
+        guard trainingManager.currentRestDuration > 0 else { return 0 }
+        return CGFloat(trainingManager.currentRestTime) / CGFloat(trainingManager.currentRestDuration)
+    }
+
+    private func formatRestTime(_ seconds: Int) -> String {
+        String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
     private func dragGesture(_ geometry: GeometryProxy) -> some Gesture {
         DragGesture()
             .onChanged { dragOffset = $0.translation }
             .onEnded { value in
-                let width: CGFloat = 150
-                let height: CGFloat = 56
+                let width: CGFloat = 76
+                let height: CGFloat = 76
                 let x = min(max(width / 2 + padding, xPosition(in: geometry) + value.translation.width), geometry.size.width - width / 2 - padding)
                 let y = min(max(height / 2 + padding, yPosition(in: geometry) + value.translation.height), geometry.size.height - height / 2 - padding - (isKeyboardVisible ? 240 : 80))
                 lastDragPosition = CGSize(width: x - (geometry.size.width - width / 2 - padding), height: y - (geometry.size.height - height / 2 - padding - (isKeyboardVisible ? 80 : 0)))
@@ -55,6 +64,6 @@ struct TrainingFloatingIndicator: View {
             }
     }
 
-    private func xPosition(in geometry: GeometryProxy) -> CGFloat { geometry.size.width - 75 - padding + lastDragPosition.width }
-    private func yPosition(in geometry: GeometryProxy) -> CGFloat { geometry.size.height - 28 - padding - (isKeyboardVisible ? 260 : 80) + lastDragPosition.height }
+    private func xPosition(in geometry: GeometryProxy) -> CGFloat { geometry.size.width - 38 - padding + lastDragPosition.width }
+    private func yPosition(in geometry: GeometryProxy) -> CGFloat { geometry.size.height - 38 - padding - (isKeyboardVisible ? 260 : 80) + lastDragPosition.height }
 }
