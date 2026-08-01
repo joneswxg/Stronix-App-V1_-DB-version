@@ -32,23 +32,21 @@ struct Stronix_App_V1App: App {
         WindowGroup {
             Group {
                 switch startupCoordinator.state {
-                case .preparingDatabase:
-                    ProgressView("正在准备本地数据库…")
-                case .restoringSession:
-                    ProgressView("正在恢复登录状态…")
                 case .ready:
                     MainTabView()
                         .id(userSession.scopeID)
-                        .withAppTheme()
-                case .blocked(let reason):
-                    DatabaseStartupBlockedView(
-                        reason: reason,
+                        .accessibilityIdentifier("first-interactive-gateway")
+                default:
+                    StartupGateView(
+                        state: startupCoordinator.state,
                         retry: {
                             Task { await startupCoordinator.retry() }
-                        }
+                        },
+                        markVisible: startupCoordinator.markStartupUIVisible
                     )
                 }
             }
+            .withAppTheme()
             .environmentObject(userSession)
             .task {
                 guard !Self.isRunningUnitTests else { return }
@@ -81,7 +79,7 @@ struct Stronix_App_V1App: App {
     }
 }
 
-private struct DatabaseStartupBlockedView: View {
+struct DatabaseStartupBlockedView: View {
     let reason: DatabaseStartupBlockReason
     let retry: () -> Void
 

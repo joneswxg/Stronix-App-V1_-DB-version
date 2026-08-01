@@ -211,6 +211,77 @@ final class AppStartupCoordinatorTests: XCTestCase {
         XCTAssertEqual(session.currentUserID, user.id)
     }
 
+    func testPerformanceMarksFollowTheSafeReadyPath() async throws {
+        let manager = DatabaseManager(lifecycle: fixture.makeLifecycle())
+        let session = RecordingSessionRestorer()
+        let marks = StartupPerformanceMarkRecorder()
+        let coordinator = AppStartupCoordinator(
+            database: manager,
+            arguments: [],
+            session: session,
+            markPerformance: marks.record
+        )
+
+        await coordinator.start()
+
+        XCTAssertEqual(
+            marks.marks,
+            [.startupEntry, .databasePrepared, .sessionRestored, .firstInteractiveGateway]
+        )
+        XCTAssertEqual(coordinator.state, .ready)
+    }
+
+    func testVisibleStartupMarkIsReportedOnDemandWithoutChangingTheSafetyState() async {
+        let marks = StartupPerformanceMarkRecorder()
+        let coordinator = AppStartupCoordinator(
+            database: DatabaseManager(lifecycle: fixture.makeLifecycle()),
+            arguments: [],
+            session: RecordingSessionRestorer(),
+            markPerformance: marks.record
+        )
+
+        coordinator.markStartupUIVisible()
+
+        XCTAssertEqual(marks.marks, [.startupUIVisible])
+        XCTAssertEqual(coordinator.state, .preparingDatabase)
+        XCTAssertFalse(coordinator.state.permitsProtectedContent)
+    }
+
+    func testBlockedStartupDoesNotEmitInteractivePerformanceMarks() async throws {
+        let sourceURL = fixture.rootURL.appendingPathComponent("missing-source.db")
+        let marks = StartupPerformanceMarkRecorder()
+        let coordinator = AppStartupCoordinator(
+            database: DatabaseManager(lifecycle: fixture.makeLifecycle(sourceDatabaseURL: sourceURL)),
+            arguments: [],
+            session: RecordingSessionRestorer(),
+            markPerformance: marks.record
+        )
+
+        await coordinator.start()
+
+        XCTAssertEqual(coordinator.state, .blocked(.recoverablePreparationFailure))
+        XCTAssertEqual(marks.marks, [.startupEntry, .databasePrepared])
+    }
+
+    func testStartIsIdempotentAndDoesNotDuplicatePerformanceMarks() async throws {
+        let manager = DatabaseManager(lifecycle: fixture.makeLifecycle())
+        let marks = StartupPerformanceMarkRecorder()
+        let coordinator = AppStartupCoordinator(
+            database: manager,
+            arguments: [],
+            session: RecordingSessionRestorer(),
+            markPerformance: marks.record
+        )
+
+        await coordinator.start()
+        await coordinator.start()
+
+        XCTAssertEqual(
+            marks.marks,
+            [.startupEntry, .databasePrepared, .sessionRestored, .firstInteractiveGateway]
+        )
+    }
+
     func testReadyDatabaseKeepsProtectedContentBlockedUntilSessionRestorationFinishes() async {
         let manager = DatabaseManager(lifecycle: fixture.makeLifecycle())
         let restorationStarted = expectation(description: "Session restoration started")
@@ -308,6 +379,15 @@ private final class RestorationFailingSnapshotStore: DatabaseSnapshotStore {
 
     func discardSnapshot(at snapshotURL: URL) {
         underlying.discardSnapshot(at: snapshotURL)
+    }
+}
+
+@MainActor
+private final class StartupPerformanceMarkRecorder {
+    private(set) var marks: [StartupPerformanceMark] = []
+
+    func record(_ mark: StartupPerformanceMark) {
+        marks.append(mark)
     }
 }
 
