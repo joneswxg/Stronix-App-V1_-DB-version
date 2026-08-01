@@ -430,6 +430,7 @@
       }
     },
     "auth.field.height.label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -440,6 +441,7 @@
       }
     },
     "auth.field.height.placeholder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -520,6 +522,7 @@
       }
     },
     "auth.field.weight.label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -530,6 +533,7 @@
       }
     },
     "auth.field.weight.placeholder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1627,6 +1631,7 @@
       }
     },
     "training.accessibility.floatingLabel" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2269,6 +2274,7 @@
       }
     },
     "training.floating.active" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

@@ -8,11 +8,19 @@
 
 /* Begin PBXBuildFile section */
 		9D42BE9D2E029EC9008121CD /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
-		9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */; };
-		9D70A8A12DDD84590085BAAF /* action_images.json in Resources */ = {isa = PBXBuildFile; fileRef = 9D70A8A02DDD84590085BAAF /* action_images.json */; };
 		9D70A7F72DDD84590085BAAF /* Stronix-App/Resources/Images in Copy Images */ = {isa = PBXBuildFile; fileRef = 9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */; };
 		A10000000000000000000001 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9D42BE9C2E029EC9008121CD /* SQLite */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9D70A7BE2DDD84580085BAAF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D70A7C52DDD84580085BAAF;
+			remoteInfo = Stronix;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		9D70A7F62DDD84590085BAAF /* Copy Images */ = {
@@ -31,8 +39,6 @@
 /* Begin PBXFileReference section */
 		9D282DD62DE4118F00A14C75 /* Stronix-App-V1-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stronix-App-V1-Info.plist"; sourceTree = "<group>"; };
 		9D70A7C62DDD84590085BAAF /* Stronix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stronix.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		9D70A8A02DDD84590085BAAF /* action_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = action_images.json; sourceTree = "<group>"; };
 		9D70A7F82DDD84590085BAAF /* Stronix-App/Resources/Images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Stronix-App/Resources/Images"; sourceTree = "<group>"; };
 		A10000000000000000000002 /* StronixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StronixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -41,8 +47,10 @@
 		9D70A7DF2DDD89740085BAAF /* Exceptions for "Resources" folder in "Stronix" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				action_images.json,
 				Assets.xcassets,
 				Database/database_stronix.db,
+				Localizable.xcstrings,
 			);
 			target = 9D70A7C52DDD84580085BAAF /* Stronix */;
 		};
@@ -53,8 +61,8 @@
 				App/StartupGateView.swift,
 				App/Stronix_App_V1App.swift,
 				App/UserSession.swift,
-				Models/Local/LocalActionModels.swift,
 				Models/Local/BodyMeasurementDateFormatting.swift,
+				Models/Local/LocalActionModels.swift,
 				Models/Local/LocalBodyMeasurementModels.swift,
 				Models/Local/LocalMutableTrainingModels.swift,
 				Models/Local/LocalPlanModels.swift,
@@ -66,39 +74,39 @@
 				Services/Database/TemplatePlanMigration.swift,
 				Services/Database/UsernameUniquenessMigration.swift,
 				Services/Local/ActionHistoryRepository.swift,
-				Services/Local/TrainingHistoryRepository.swift,
-				Services/Local/LocalActionService.swift,
 				Services/Local/ActionImageResolver.swift,
 				Services/Local/BodyMeasurementRepository.swift,
+				Services/Local/LocalActionService.swift,
 				Services/Local/LocalCredentialSecurity.swift,
-				Services/Local/SQLiteAuthRepository.swift,
 				Services/Local/LocalPlanService.swift,
-				Services/UpdatePlanUseCase.swift,
 				Services/Local/LocalTrainingHistoryService.swift,
 				Services/Local/NotificationManager.swift,
+				Services/Local/SQLiteAuthRepository.swift,
+				Services/Local/TrainingHistoryRepository.swift,
 				Services/Local/TrainingSessionManager.swift,
 				Services/TrainingHistoryService.swift,
-				Theme/AppTheme.swift,
+				Services/UpdatePlanUseCase.swift,
 				Theme/AppStrings.swift,
+				Theme/AppTheme.swift,
 				"Theme/Color+Theme.swift",
 				Theme/DesignTokens.swift,
 				Theme/ThemeManager.swift,
-				Utilities/AppError.swift,
 				UseCases/AuthenticationUseCases.swift,
 				UseCases/BodyMeasurementUseCases.swift,
 				UseCases/CompleteTrainingUseCase.swift,
 				UseCases/CopyTemplatePlanUseCase.swift,
 				UseCases/CreateUserPlanUseCase.swift,
 				UseCases/LoadTrainingDatesUseCase.swift,
+				Utilities/AppError.swift,
 				ViewModels/ActionHistoryViewModel.swift,
-				ViewModels/HistoryCalendarViewModel.swift,
-				ViewModels/HistoryListViewModel.swift,
-				ViewModels/TrainingHistoryDetailViewModel.swift,
 				ViewModels/AuthViewModel.swift,
 				ViewModels/BodyMeasurementViewModel.swift,
 				ViewModels/CreatePlanViewModel.swift,
 				ViewModels/EditPlanViewModel.swift,
+				ViewModels/HistoryCalendarViewModel.swift,
+				ViewModels/HistoryListViewModel.swift,
 				ViewModels/PlanViewModel.swift,
+				ViewModels/TrainingHistoryDetailViewModel.swift,
 				Views/Actions/ActionDetailView.swift,
 				Views/Actions/ActionListView.swift,
 				Views/BodyMeasurement/AddMeasurementSheet.swift,
@@ -122,8 +130,8 @@
 				Views/MainTabView.swift,
 				Views/Plans/CreatePlanView.swift,
 				Views/Plans/EditPlanView.swift,
-				Views/Plans/PlanFormComponents.swift,
 				Views/Plans/PlanActionSelectView.swift,
+				Views/Plans/PlanFormComponents.swift,
 				Views/Plans/PlanListView.swift,
 				Views/Plans/QuickStartTrainingView.swift,
 				Views/Profile/ArticlesView.swift,
@@ -161,10 +169,6 @@
 			);
 			path = Resources;
 			sourceTree = "<group>";
-			children = (
-				9D70A7F02DDD84590085BAAF /* Localizable.xcstrings */,
-				9D70A8A02DDD84590085BAAF /* action_images.json */,
-			);
 		};
 		9D70A7E72DDDC24C0085BAAF /* Tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -326,8 +330,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9D70A7F12DDD84590085BAAF /* Localizable.xcstrings in Resources */,
-				9D70A8A12DDD84590085BAAF /* action_images.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,16 +358,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXContainerItemProxy section */
-		A10000000000000000000007 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 9D70A7BE2DDD84580085BAAF /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9D70A7C52DDD84580085BAAF;
-			remoteInfo = Stronix;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXTargetDependency section */
 		A10000000000000000000008 /* PBXTargetDependency */ = {

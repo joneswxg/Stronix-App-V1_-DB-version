@@ -32,6 +32,10 @@ _Avoid_: Template copy, system plan
 The database remediation scope focused on the iOS app's bundled and Documents SQLite databases, excluding Supabase migration work.
 _Avoid_: Supabase migration scope, cloud database remediation
 
+**First Interactive Time**:
+The elapsed time from a user launching the app from the Home Screen until an unauthenticated user can operate the login screen or an authenticated user can operate the home screen.
+_Avoid_: Launch animation duration, first-frame time
+
 ## Local SQLite lifecycle
 
 `Stronix-App/Resources/Database/database_stronix.db` is the immutable baseline bundled with the app. On first launch, `DatabaseLifecycle` validates and copies that baseline to the sole mutable database at `<App Documents>/database_stronix.db`. Normal startup retains and migrates the Documents database in place; the bundled baseline never automatically overwrites existing user data. `-StronixRebuildLocalDatabase` is an explicit, destructive, DEBUG-only recovery action.
