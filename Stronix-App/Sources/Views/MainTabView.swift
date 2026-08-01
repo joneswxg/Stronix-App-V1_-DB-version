@@ -68,8 +68,8 @@ struct MainTabView: View {
             TrainingFloatingIndicator(
                 trainingManager: trainingManager,
                 onTap: {
-                    // 点击浮动框时，切换到训练Tab
                     selectedTab = 2
+                    trainingManager.presentRestControls()
                 },
                 keyboardManager: keyboardManager
             )

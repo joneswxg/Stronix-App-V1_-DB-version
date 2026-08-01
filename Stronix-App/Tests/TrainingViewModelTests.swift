@@ -116,6 +116,83 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.trainingDisplayUnit, .kilograms)
     }
 
+    func testCompletedSetImmediatelyStartsTheConfiguredRestCountdown() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+
+        XCTAssertTrue(manager.showRestTimer)
+        XCTAssertEqual(manager.currentRestTime, 75)
+        XCTAssertFalse(manager.isRestTimerPaused)
+    }
+
+    func testCompletionRestartsOneCountdownAndUncheckingDoesNotChangeIt() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        manager.subtractRestTime(20)
+        manager.toggleSetCompletion(setID: "1_11", restTime: 45)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+
+        XCTAssertTrue(manager.showRestTimer)
+        XCTAssertEqual(manager.currentRestTime, 45)
+        XCTAssertFalse(manager.completedSets.contains("1_10"))
+    }
+
+    func testResetUsesTheCapturedRestIntervalAndDismissalClearsIt() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        manager.subtractRestTime(30)
+        manager.resetRestTimer()
+        XCTAssertEqual(manager.currentRestTime, 75)
+        manager.closeRestTimer()
+
+        XCTAssertEqual(manager.currentRestTime, 0)
+        XCTAssertFalse(manager.showRestTimer)
+        XCTAssertFalse(manager.isRestTimerPaused)
+    }
+
+    func testRestTimeEditsApplyOnlyToTheNextCompletion() {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        var updatedAction = manager.editingActions[0]
+        updatedAction.restTime = 45
+        manager.updateActions([updatedAction])
+        manager.resetRestTimer()
+
+        XCTAssertEqual(manager.currentRestTime, 75)
+
+        manager.toggleSetCompletion(setID: "1_11", restTime: 45)
+        XCTAssertEqual(manager.currentRestTime, 45)
+    }
+
+    func testCompletionSnapshotKeepsRestCountdownOutOfHistory() throws {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.totalTrainingTime = 120
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        manager.addRestTime(30)
+        let snapshot = try XCTUnwrap(manager.captureCompletionSnapshot())
+        let planDraft = try XCTUnwrap(snapshot.planDraft)
+
+        XCTAssertEqual(snapshot.historyRequest.duration, 2)
+        XCTAssertEqual(snapshot.historyRequest.details.count, 1)
+        XCTAssertEqual(snapshot.historyRequest.details[0].is_completed, true)
+        XCTAssertEqual(planDraft.actions[0].rest, 75)
+    }
+
     func testTrainingSessionResetsDisplayUnitWhenItEndsAndRestarts() {
         let manager = TrainingSessionManager()
         let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10)], restTime: 60, notes: nil, recordBilateral: false, imageUrl: "")])
@@ -167,7 +244,6 @@ final class TrainingViewModelTests: XCTestCase {
         viewModel.toggleSetCompletion(setID: "1_10", restTime: 60)
 
         XCTAssertFalse(session.completedSets.contains("1_10"))
-        XCTAssertNil(session.setRestTimers["1_10"])
         XCTAssertEqual(viewModel.volumeText, "450/850 kg")
     }
 
@@ -179,7 +255,6 @@ final class TrainingViewModelTests: XCTestCase {
         session.isRestTimerPaused = true
         let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
 
-        viewModel.showRestTimer(for: "1_10", restTime: 60)
         viewModel.toggleRestTimer()
         viewModel.resetRestTimer()
         viewModel.addRestTime(10)
@@ -188,7 +263,6 @@ final class TrainingViewModelTests: XCTestCase {
         viewModel.closeRestTimer()
 
         XCTAssertTrue(viewModel.hasPlanChanges())
-        XCTAssertEqual(session.restTimerTappedIDs, ["1_10"])
         XCTAssertEqual(session.restControlCalls, ["toggle", "reset", "add:10", "subtract:10", "skip", "close"])
     }
 
@@ -333,14 +407,13 @@ private final class TrainingSessionMock: TrainingSessionManaging, ObservableObje
     var setNotes: [String: String] = [:]
     var trainingDisplayUnit: TrainingDisplayUnit = .kilograms
     var planName = "计划"
-    var setRestTimers: [String: Int] = [:]
     var showRestTimer = false
+    var showRestControls = false
     var currentRestTime = 0
     var isRestTimerPaused = false
     var planHasChanges = false
     var updatedActionBatches: [[MutableTrainingAction]] = []
     var deletedActionIDs: [Int] = []
-    var restTimerTappedIDs: [String] = []
     var restControlCalls: [String] = []
     var completeTrainingCalls = 0
     var completionSnapshot: TrainingCompletionSnapshot
@@ -362,13 +435,14 @@ private final class TrainingSessionMock: TrainingSessionManaging, ObservableObje
     func toggleSetCompletion(setID: String, restTime: Int) {
         if !completedSets.insert(setID).inserted {
             completedSets.remove(setID)
-            setRestTimers[setID] = nil
         } else {
-            setRestTimers[setID] = restTime
+            showRestTimer = true
+            currentRestTime = restTime
+            isRestTimerPaused = false
         }
         objectWillChange.send()
     }
-    func handleRestTimerTapped(setId: String, restTime: Int) { restTimerTappedIDs.append(setId); showRestTimer = true; currentRestTime = restTime; objectWillChange.send() }
+    func presentRestControls() { showRestControls = true; objectWillChange.send() }
     func toggleRestTimer() { restControlCalls.append("toggle") }
     func resetRestTimer() { restControlCalls.append("reset") }
     func skipRestTimer() { restControlCalls.append("skip") }

@@ -107,8 +107,9 @@ final class UserScopeTransitionTests: XCTestCase {
         XCTAssertTrue(trainingManager.editingActions.isEmpty)
         XCTAssertTrue(trainingManager.completedSets.isEmpty)
         XCTAssertTrue(trainingManager.setNotes.isEmpty)
-        XCTAssertTrue(trainingManager.setRestTimers.isEmpty)
         XCTAssertFalse(trainingManager.showRestTimer)
+        XCTAssertFalse(trainingManager.showRestControls)
+        XCTAssertEqual(trainingManager.currentRestTime, 0)
 
         XCTAssertTrue(calendarViewModel.trainingDatesInMonth.isEmpty)
         XCTAssertEqual(calendarViewModel.phase, .idle)

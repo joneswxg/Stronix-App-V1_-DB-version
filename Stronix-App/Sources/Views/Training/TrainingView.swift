@@ -123,8 +123,8 @@ struct TrainingView: View {
     }
 
     @ViewBuilder private var restTimerOverlay: some View {
-        if viewModel.showRestTimer {
-            RestTimerOverlay(restTime: .constant(viewModel.currentRestTime), isRunning: !viewModel.isRestTimerPaused, onPause: viewModel.toggleRestTimer, onReset: viewModel.resetRestTimer, onSkip: viewModel.skipRestTimer, onClose: viewModel.closeRestTimer, onAddTime: { viewModel.addRestTime(10) }, onSubtractTime: { viewModel.subtractRestTime(10) })
+        if viewModel.showRestControls {
+            RestTimerOverlay(restTime: viewModel.currentRestTime, isRunning: !viewModel.isRestTimerPaused && viewModel.currentRestTime > 0, onPause: viewModel.toggleRestTimer, onReset: viewModel.resetRestTimer, onSkip: viewModel.skipRestTimer, onClose: viewModel.closeRestTimer, onAddTime: { viewModel.addRestTime(10) }, onSubtractTime: { viewModel.subtractRestTime(10) })
         }
     }
 }
@@ -538,7 +538,7 @@ private struct CompactSetValueCell: View {
 
 struct RestTimerOverlay: View {
     @Environment(\.designTokens) private var tokens
-    @Binding var restTime: Int
+    let restTime: Int
     let isRunning: Bool
     let onPause: () -> Void
     let onReset: () -> Void
@@ -552,7 +552,7 @@ struct RestTimerOverlay: View {
             Color.black.opacity(0.4).ignoresSafeArea().onTapGesture(perform: onClose)
             VStack(spacing: DesignTokens.Spacing.large) {
                 HStack { Spacer(); Button(action: onClose) { Image(systemName: "xmark.circle.fill").frame(minWidth: 44, minHeight: 44) }.accessibilityLabel("training.action.closeRest") }
-                Text(formatRestTime(restTime)).font(.system(.largeTitle, design: .rounded).bold()).monospacedDigit().foregroundStyle(tokens.contentPrimary).accessibilityLabel("training.accessibility.restTimer").accessibilityValue(formatRestTime(restTime))
+                Text(restTimerText(restTime)).font(.system(.largeTitle, design: .rounded).bold()).monospacedDigit().foregroundStyle(tokens.contentPrimary).accessibilityLabel("training.accessibility.restTimer").accessibilityValue(restTimerText(restTime))
                 Text(isRunning ? "training.state.running" : "training.state.paused").font(DesignTokens.Typography.supporting).foregroundStyle(tokens.contentSecondary)
                 HStack(spacing: DesignTokens.Spacing.small) {
                     timerButton("minus", label: "training.action.subtractTenSeconds", action: onSubtractTime)
@@ -583,6 +583,6 @@ private func trainingFormat(_ key: String, _ value: Int) -> String {
     String(format: NSLocalizedString(key, comment: ""), value)
 }
 
-private func formatRestTime(_ seconds: Int) -> String {
+func restTimerText(_ seconds: Int) -> String {
     String(format: "%02d:%02d", seconds / 60, seconds % 60)
 }
