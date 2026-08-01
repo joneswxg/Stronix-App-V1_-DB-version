@@ -3,8 +3,29 @@ import UserNotifications
 import UIKit
 import AVFoundation
 
+protocol RestReminderPermissionRequesting: AnyObject {
+    func requestPermissionForRestReminderIfNeeded()
+}
+
+protocol NotificationAuthorizationClient: AnyObject {
+    func getAuthorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void)
+    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void)
+}
+
+final class UserNotificationAuthorizationClient: NotificationAuthorizationClient {
+    func getAuthorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            completion(settings.authorizationStatus)
+        }
+    }
+
+    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: completion)
+    }
+}
+
 /// 通知管理器 - 处理推送通知、声音提醒和震动反馈
-class NotificationManager: ObservableObject {
+class NotificationManager: ObservableObject, RestReminderPermissionRequesting {
     static let shared = NotificationManager()
     
     // MARK: - 设置状态
@@ -28,8 +49,12 @@ class NotificationManager: ObservableObject {
     
     // MARK: - 音频播放器
     private var audioPlayer: AVAudioPlayer?
-    
-    private init() {
+    private let authorizationClient: NotificationAuthorizationClient
+    private var isRequestingRestReminderPermission = false
+    private var hasRequestedRestReminderPermission = false
+
+    init(authorizationClient: NotificationAuthorizationClient = UserNotificationAuthorizationClient()) {
+        self.authorizationClient = authorizationClient
         // 从UserDefaults加载设置
         self.notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
         self.soundEnabled = UserDefaults.standard.bool(forKey: "soundEnabled")
@@ -47,11 +72,6 @@ class NotificationManager: ObservableObject {
         DispatchQueue.global(qos: .utility).async {
             self.setupAudioSession()
         }
-        
-        // 异步请求通知权限，避免阻塞初始化
-        DispatchQueue.main.async {
-            self.requestNotificationPermission()
-        }
     }
     
     // MARK: - 音频会话设置
@@ -67,40 +87,41 @@ class NotificationManager: ObservableObject {
     }
     
     // MARK: - 通知权限
-    private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, error in
+    func requestPermissionForRestReminderIfNeeded() {
+        guard !hasRequestedRestReminderPermission, !isRequestingRestReminderPermission else { return }
+        isRequestingRestReminderPermission = true
+
+        authorizationClient.getAuthorizationStatus { [weak self] status in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("❌ 通知权限请求失败: \(error)")
-                } else {
-                    print("✅ 通知权限: \(granted ? "已授权" : "被拒绝")")
-                    if granted {
-                        self?.notificationsEnabled = true
-                    }
-                }
-            }
-        }
-    }
-    
-    /// 公开方法：请求通知权限
-    func requestPermissionIfNeeded() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            DispatchQueue.main.async {
-                switch settings.authorizationStatus {
+                guard let self else { return }
+                self.isRequestingRestReminderPermission = false
+                self.hasRequestedRestReminderPermission = true
+
+                switch status {
                 case .notDetermined:
                     self.requestNotificationPermission()
-                case .authorized, .provisional:
+                case .authorized, .provisional, .ephemeral:
                     self.notificationsEnabled = true
                     print("✅ 通知权限已授权")
                 case .denied:
                     self.notificationsEnabled = false
                     print("⚠️ 通知权限被拒绝，请在设置中开启")
-                case .ephemeral:
-                    self.notificationsEnabled = true
-                    print("✅ 通知权限已授权（临时）")
                 @unknown default:
                     self.notificationsEnabled = false
                     print("⚠️ 未知的通知权限状态")
+                }
+            }
+        }
+    }
+
+    private func requestNotificationPermission() {
+        authorizationClient.requestAuthorization { [weak self] granted, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ 通知权限请求失败: \(error)")
+                } else {
+                    print("✅ 通知权限: \(granted ? "已授权" : "被拒绝")")
+                    self?.notificationsEnabled = granted
                 }
             }
         }
