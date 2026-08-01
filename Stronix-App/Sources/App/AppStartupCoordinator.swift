@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 protocol DatabaseStartupPreparing: AnyObject {
     func prepareForStartup(arguments: [String]) -> DatabasePreparationResult
@@ -14,6 +15,14 @@ protocol PersistedSessionRestoring: AnyObject {
 }
 
 extension UserSession: PersistedSessionRestoring {}
+
+enum StartupPerformanceMark: String, Equatable {
+    case startupEntry
+    case startupUIVisible
+    case databasePrepared
+    case sessionRestored
+    case firstInteractiveGateway
+}
 
 enum AppStartupState: Equatable {
     case preparingDatabase
@@ -44,23 +53,27 @@ final class AppStartupCoordinator: ObservableObject {
     private let arguments: [String]
     private let session: any PersistedSessionRestoring
     private let reportDiagnostic: @MainActor (DatabaseStartupBlockReason, String) -> Void
+    private let markPerformance: @MainActor (StartupPerformanceMark) -> Void
     private var didStart = false
 
     init(
         database: any DatabaseStartupPreparing,
         arguments: [String],
         session: any PersistedSessionRestoring,
-        reportDiagnostic: @escaping @MainActor (DatabaseStartupBlockReason, String) -> Void = AppStartupCoordinator.reportToConsole
+        reportDiagnostic: @escaping @MainActor (DatabaseStartupBlockReason, String) -> Void = AppStartupCoordinator.reportToConsole,
+        markPerformance: @escaping @MainActor (StartupPerformanceMark) -> Void = AppStartupCoordinator.markToSignpost
     ) {
         self.database = database
         self.arguments = arguments
         self.session = session
         self.reportDiagnostic = reportDiagnostic
+        self.markPerformance = markPerformance
     }
 
     func start() async {
         guard !didStart else { return }
         didStart = true
+        markPerformance(.startupEntry)
         state = .preparingDatabase
         let result = await Task.detached(priority: .userInitiated) { [database, arguments] in
             database.prepareForStartup(arguments: arguments)
@@ -77,11 +90,18 @@ final class AppStartupCoordinator: ObservableObject {
         await handle(result)
     }
 
+    func markStartupUIVisible() {
+        markPerformance(.startupUIVisible)
+    }
+
     private func handle(_ result: DatabasePreparationResult) async {
+        markPerformance(.databasePrepared)
         switch result {
         case .ready, .recovered:
             state = .restoringSession
             await session.restore()
+            markPerformance(.sessionRestored)
+            markPerformance(.firstInteractiveGateway)
             state = .ready
         case .incompatible:
             block(.incompatibleSchema, result: result)
@@ -101,6 +121,12 @@ final class AppStartupCoordinator: ObservableObject {
         }
         reportDiagnostic(reason, result.diagnostic.summary)
         state = .blocked(reason)
+    }
+
+    private static let startupLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.stronix.app", category: "startup-performance")
+
+    private static func markToSignpost(_ mark: StartupPerformanceMark) {
+        startupLogger.info("Startup performance mark: \(mark.rawValue, privacy: .public)")
     }
 
     private static func reportToConsole(
