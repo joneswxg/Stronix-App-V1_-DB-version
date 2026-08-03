@@ -18,7 +18,7 @@ enum SetRIR: Int, Codable, Equatable, Sendable {
 
 extension Optional where Wrapped == SetRIR {
     var historyDisplayLabel: String {
-        map { "RIR \($0.displayLabel)" } ?? "未记录余力"
+        map { "RIR \($0.displayLabel)" } ?? "RIR N/A"
     }
 }
 

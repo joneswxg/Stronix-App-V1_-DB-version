@@ -167,7 +167,7 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
         XCTAssertEqual(detail.actions[0].sets.map(\.rir), [nil, .zero, .one, .two, .threeOrMore])
         XCTAssertEqual(
             detail.actions[0].sets.map { $0.rir.historyDisplayLabel },
-            ["未记录余力", "RIR 0", "RIR 1", "RIR 2", "RIR 3+"]
+            ["RIR N/A", "RIR 0", "RIR 1", "RIR 2", "RIR 3+"]
         )
         XCTAssertThrowsError(try connection.run(
             "UPDATE training_history_details SET rir = 4 WHERE history_id = ? AND set_number = 1",
