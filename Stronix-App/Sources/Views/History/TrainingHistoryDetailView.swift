@@ -130,6 +130,8 @@ struct TrainingHistoryDetailView: View {
                     } else {
                         Text("\(String(format: "%.1f", set.weight ?? 0)) \(set.weightUnit) × \(set.reps ?? 0)")
                     }
+                    Text(set.rir.historyDisplayLabel)
+                        .foregroundColor(theme.secondary)
                     Spacer()
                     if set.isCompleted { Image(systemName: "checkmark").foregroundColor(theme.success) }
                 }
@@ -158,7 +160,8 @@ struct TrainingHistoryDetailView: View {
                             isCompleted: set.isCompleted,
                             leftWeight: set.leftWeight ?? 0,
                             rightWeight: set.rightWeight ?? 0,
-                            isBilateral: set.isBilateral
+                            isBilateral: set.isBilateral,
+                            rir: set.rir
                         )
                     }
                 )

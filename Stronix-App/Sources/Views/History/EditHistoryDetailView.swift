@@ -47,7 +47,8 @@ struct EditHistoryDetailView: View {
                     isCompleted: set.isCompleted,
                     leftWeight: set.leftWeight,
                     rightWeight: set.rightWeight,
-                    isBilateral: set.isBilateral
+                    isBilateral: set.isBilateral,
+                    rir: set.rir
                 )
             }
             
@@ -333,6 +334,7 @@ struct EditHistoryDetailView: View {
                         weight_unit: "kg",
                         reps: set.actualReps,
                         difficulty: nil,
+                        rir: set.rir,
                         left_weight: set.isBilateral ? Double(set.leftWeight) : nil,
                         right_weight: set.isBilateral ? Double(set.rightWeight) : nil,
                         is_completed: set.isCompleted,
@@ -424,8 +426,9 @@ struct EditingHistorySet: Identifiable {
     var leftWeight: Double
     var rightWeight: Double
     var isBilateral: Bool
-    
-    init(id: UUID = UUID(), number: Int, weight: Double, reps: Int, actualReps: Int, isCompleted: Bool, leftWeight: Double = 0, rightWeight: Double = 0, isBilateral: Bool = false) {
+    var rir: SetRIR?
+
+    init(id: UUID = UUID(), number: Int, weight: Double, reps: Int, actualReps: Int, isCompleted: Bool, leftWeight: Double = 0, rightWeight: Double = 0, isBilateral: Bool = false, rir: SetRIR? = nil) {
         self.id = id
         self.number = number
         self.weight = weight
@@ -435,6 +438,7 @@ struct EditingHistorySet: Identifiable {
         self.leftWeight = leftWeight
         self.rightWeight = rightWeight
         self.isBilateral = isBilateral
+        self.rir = rir
     }
 }
 
