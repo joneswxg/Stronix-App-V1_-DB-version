@@ -65,7 +65,7 @@ final class TrainingViewModelTests: XCTestCase {
     }
 
     func testKeyboardAddSetClonesActiveActionFinalSetAndSelectsIt() {
-        var action = makeAction(id: 1, sets: [makeSet(id: 10, weight: 50, reps: 8, leftWeight: 22, rightWeight: 25)])
+        var action = makeAction(id: 1, sets: [makeSet(id: 10, weight: 50, reps: 8, leftWeight: 22, rightWeight: 25, rir: .two)])
         action.recordBilateral = true
         let other = makeAction(id: 2, sets: [makeSet(id: 20, weight: 80)])
         let session = TrainingSessionMock(actions: [action, other])
@@ -80,6 +80,7 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertEqual(added.reps, 8)
         XCTAssertEqual(added.leftWeight, 22)
         XCTAssertEqual(added.rightWeight, 25)
+        XCTAssertNil(added.rir)
         XCTAssertEqual(viewModel.editingActions[1].sets.count, 1)
         XCTAssertEqual(viewModel.currentFieldID, "right_1_21")
         XCTAssertFalse(session.completedSets.contains("1_\(added.id)"))
@@ -208,7 +209,32 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertEqual(snapshot.historyRequest.duration, 2)
         XCTAssertEqual(snapshot.historyRequest.details.count, 1)
         XCTAssertEqual(snapshot.historyRequest.details[0].is_completed, true)
+        XCTAssertNil(snapshot.historyRequest.details[0].rir)
         XCTAssertEqual(planDraft.actions[0].rest, 75)
+    }
+
+    func testCompletionSnapshotKeepsRIRInHistoryAndOutOfPlanDraft() throws {
+        let manager = TrainingSessionManager()
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [
+            TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 20, reps: 8)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: ""),
+            TrainingAction(id: 2, name: "划船", sets: [TrainingSet(id: 20, weight: 30, reps: 12)], restTime: 60, notes: nil, recordBilateral: true, imageUrl: "")
+        ])
+
+        manager.startTraining(with: plan)
+        var actions = manager.editingActions
+        actions[0].sets[0].rir = .zero
+        actions[1].sets[0].rir = .threeOrMore
+        manager.updateActions(actions)
+
+        let snapshot = try XCTUnwrap(manager.captureCompletionSnapshot())
+        let planDraft = try XCTUnwrap(snapshot.planDraft)
+
+        XCTAssertEqual(snapshot.historyRequest.details.map(\.rir), [.zero, nil, .threeOrMore])
+        XCTAssertEqual(snapshot.historyRequest.details.map(\.history_record_bilateral), [false, false, true])
+        XCTAssertEqual(planDraft.actions[0].sets.map(\.weight), [10, 20])
+        XCTAssertEqual(planDraft.actions[1].sets.map(\.weight), [nil])
+        XCTAssertEqual(planDraft.actions[1].sets.map(\.leftWeight), [0])
+        XCTAssertEqual(planDraft.actions[1].sets.map(\.rightWeight), [0])
     }
 
     func testTrainingSessionResetsDisplayUnitWhenItEndsAndRestarts() {
@@ -227,8 +253,10 @@ final class TrainingViewModelTests: XCTestCase {
 
     func testActionAndSetUpdatesRefreshSessionState() {
         let session = TrainingSessionMock(actions: [makeAction(id: 1, sets: [makeSet(id: 10)])])
+        session.completedSets = ["1_10"]
+        session.setNotes = ["1_10": "keep"]
         let viewModel = TrainingViewModel(session: session, completionUseCase: CompletionUseCaseStub())
-        var updated = makeAction(id: 1, sets: [makeSet(id: 10, weight: 80), makeSet(id: 11)])
+        var updated = makeAction(id: 1, sets: [makeSet(id: 10, weight: 80, rir: .one), makeSet(id: 11, rir: .threeOrMore)])
         updated.restTime = 90
 
         viewModel.updateActions([updated])
@@ -236,6 +264,9 @@ final class TrainingViewModelTests: XCTestCase {
 
         XCTAssertEqual(session.updatedActionBatches.count, 1)
         XCTAssertEqual(session.updatedActionBatches[0][0].sets.count, 2)
+        XCTAssertEqual(session.updatedActionBatches[0][0].sets.map(\.rir), [.one, .threeOrMore])
+        XCTAssertEqual(session.completedSets, ["1_10"])
+        XCTAssertEqual(session.setNotes, ["1_10": "keep"])
         XCTAssertEqual(session.deletedActionIDs, [1])
     }
 
@@ -406,8 +437,8 @@ final class TrainingViewModelTests: XCTestCase {
         MutableTrainingAction(id: id, name: "深蹲", imageUrl: "", sets: sets, restTime: 60, recordBilateral: false)
     }
 
-    private func makeSet(id: Int, weight: Double = 0, reps: Int = 10, leftWeight: Double = 0, rightWeight: Double = 0) -> MutableTrainingSet {
-        MutableTrainingSet(id: id, weight: weight, reps: reps, leftWeight: leftWeight, rightWeight: rightWeight)
+    private func makeSet(id: Int, weight: Double = 0, reps: Int = 10, leftWeight: Double = 0, rightWeight: Double = 0, rir: SetRIR? = nil) -> MutableTrainingSet {
+        MutableTrainingSet(id: id, weight: weight, reps: reps, leftWeight: leftWeight, rightWeight: rightWeight, rir: rir)
     }
 }
 

@@ -1661,6 +1661,16 @@
         }
       }
     },
+    "training.accessibility.selectRIRHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双击后选择剩余重复次数"
+          }
+        }
+      }
+    },
     "training.accessibility.setMenu" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2247,6 +2257,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "次数"
+          }
+        }
+      }
+    },
+    "training.rir.info" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "什么是 RIR？"
+          }
+        }
+      }
+    },
+    "training.rir.info.choices" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0：力竭，无法再完成一次；1–2：预计还能完成 1 到 2 次；3+：预计还能完成至少 3 次。"
+          }
+        }
+      }
+    },
+    "training.rir.info.definition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RIR（剩余重复次数）是指完成这一组后，您估计还能以相同动作和重量完成多少次。"
+          }
+        }
+      }
+    },
+    "training.rir.info.subjective" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RIR 是主观训练反馈，不是医疗、疲劳或恢复状况的诊断。"
+          }
+        }
+      }
+    },
+    "training.rir.notSet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未设置"
+          }
+        }
+      }
+    },
+    "training.field.rir" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RIR"
           }
         }
       }

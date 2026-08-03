@@ -1,6 +1,6 @@
 import Foundation
 
-enum SetRIR: Int, Codable, Equatable, Sendable {
+enum SetRIR: Int, Codable, Equatable, Hashable, Sendable {
     case zero = 0
     case one = 1
     case two = 2
