@@ -375,6 +375,7 @@ private struct SetEditor: View {
     let keyboardManager: CustomKeyboardManager
 
     @State private var showNoteInput = false
+    @State private var showRIRInfo = false
 
     private var setID: String { "\(action.id)_\(set.id)" }
     private var isCompleted: Bool { completedSets.contains(setID) }
@@ -398,6 +399,10 @@ private struct SetEditor: View {
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("training.field.note")
             }
+            rirSelector
+        }
+        .sheet(isPresented: $showRIRInfo) {
+            rirInformation
         }
         .padding(DesignTokens.Spacing.small)
         .background(tokens.controlSurface)
@@ -421,6 +426,62 @@ private struct SetEditor: View {
         .foregroundStyle(isCompleted ? tokens.primary : tokens.contentSecondary)
         .accessibilityLabel(isCompleted ? "training.state.completed" : "training.action.markComplete")
         .accessibilityValue(isCompleted ? Text("training.state.completed") : Text("training.state.incomplete"))
+    }
+
+    private var rirSelector: some View {
+        let selection = Binding<SetRIR?>(
+            get: { action.sets[index].rir },
+            set: { action.sets[index].rir = $0 }
+        )
+        return HStack(spacing: DesignTokens.Spacing.small) {
+            Menu {
+                Picker("training.field.rir", selection: selection) {
+                    Text("training.rir.notSet").tag(nil as SetRIR?)
+                    ForEach([SetRIR.zero, .one, .two, .threeOrMore], id: \.rawValue) { rir in
+                        Text(rir.displayLabel).tag(Optional(rir))
+                    }
+                }
+            } label: {
+                HStack(spacing: DesignTokens.Spacing.xSmall) {
+                    Text("training.field.rir")
+                    Text(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
+                    Image(systemName: "chevron.up.chevron.down")
+                }
+                .font(DesignTokens.Typography.supporting)
+                .foregroundStyle(tokens.contentPrimary)
+                .frame(minHeight: DesignTokens.Metric.minimumTapSize)
+            }
+            .accessibilityLabel("training.field.rir")
+            .accessibilityValue(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
+            .accessibilityHint("training.accessibility.selectRIRHint")
+
+            Button { showRIRInfo = true } label: {
+                Image(systemName: "info.circle")
+                    .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
+            }
+            .foregroundStyle(tokens.primary)
+            .accessibilityLabel("training.rir.info")
+        }
+    }
+
+    private var rirInformation: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                Text("training.rir.info.definition")
+                Text("training.rir.info.choices")
+                Text("training.rir.info.subjective")
+                Spacer()
+            }
+            .font(DesignTokens.Typography.supporting)
+            .foregroundStyle(tokens.contentPrimary)
+            .padding(DesignTokens.Spacing.large)
+            .navigationTitle("training.rir.info")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("training.action.confirm") { showRIRInfo = false }
+                }
+            }
+        }
     }
 
     private var setMenu: some View {
