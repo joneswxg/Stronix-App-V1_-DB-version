@@ -461,9 +461,10 @@ struct SetDetail {
     let leftWeight: Double
     let rightWeight: Double
     let isBilateral: Bool
-    
+    let rir: SetRIR?
+
     // 为了保持向后兼容性，提供默认初始化器
-    init(number: Int, weight: Double, reps: Int, actualReps: Int, isCompleted: Bool, leftWeight: Double = 0, rightWeight: Double = 0, isBilateral: Bool = false) {
+    init(number: Int, weight: Double, reps: Int, actualReps: Int, isCompleted: Bool, leftWeight: Double = 0, rightWeight: Double = 0, isBilateral: Bool = false, rir: SetRIR? = nil) {
         self.number = number
         self.weight = weight
         self.reps = reps
@@ -472,5 +473,6 @@ struct SetDetail {
         self.leftWeight = leftWeight
         self.rightWeight = rightWeight
         self.isBilateral = isBilateral
+        self.rir = rir
     }
 }

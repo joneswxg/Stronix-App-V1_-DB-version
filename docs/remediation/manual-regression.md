@@ -489,6 +489,7 @@ Validate `ContentStateView` where the existing plan-list state seam uses it; thi
 | Active training | Edit a value, complete a set, open/pause/resume/skip rest, use key menus, complete/cancel confirmation | Key controls retain meaningful VoiceOver labels, values, and hints; edits and timer behavior preserve existing training-session behavior. |
 | Completion | Complete a session; exercise completion error/retry only if reproducible | Completion records the session once and preserves the existing recovery behavior without duplicate history. |
 | History regression | Open history list, detail, and statistics after completion | The completed session appears with matching actions and sets; History paths do not crash. Record appearance/localization/accessibility findings separately rather than redesigning History here. |
+| RIR history detail | Open standard and bilateral history sets with RIR 0, 1, 2, 3+, and an absent legacy value; edit/save/reopen a recorded set | Each row retains its existing load, repetitions, sides, and completion mark while showing `RIR 0`, `RIR 1`, `RIR 2`, or `RIR 3+`; absent RIR shows `未记录余力`, never `RIR 0`; editing preserves the original recorded RIR and volume. |
 
 #### Body measurement
 

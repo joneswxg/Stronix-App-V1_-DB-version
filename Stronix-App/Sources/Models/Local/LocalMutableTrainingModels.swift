@@ -16,6 +16,12 @@ enum SetRIR: Int, Codable, Equatable, Hashable, Sendable {
     }
 }
 
+extension Optional where Wrapped == SetRIR {
+    var historyDisplayLabel: String {
+        map { "RIR \($0.displayLabel)" } ?? "未记录余力"
+    }
+}
+
 enum TrainingDisplayUnit: String, Equatable {
     case kilograms
     case pounds
