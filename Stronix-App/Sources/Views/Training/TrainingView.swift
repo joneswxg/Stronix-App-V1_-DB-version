@@ -225,6 +225,23 @@ private struct TrainingSessionContent: View {
             }
         }
         .background(tokens.canvas)
+        .overlayPreferenceValue(RIRPickerAnchorPreferenceKey.self) { anchors in
+            GeometryReader { proxy in
+                if let target = activeRIRPicker, let anchor = anchors[target] {
+                    let frame = proxy[anchor]
+                    ZStack(alignment: .topLeading) {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { activeRIRPicker = nil }
+                            .accessibilityHidden(true)
+                        RIRPickerPopup(selection: rirBinding(for: target)) {
+                            activeRIRPicker = nil
+                        }
+                        .offset(x: frame.midX - 29, y: frame.maxY + DesignTokens.Spacing.xSmall)
+                    }
+                }
+            }
+        }
     }
 
     private func scrollKeyboardTarget(using proxy: ScrollViewProxy) {
@@ -238,6 +255,21 @@ private struct TrainingSessionContent: View {
                 proxy.scrollTo(target, anchor: .bottom)
             }
         }
+    }
+
+    private func rirBinding(for target: RIRPickerTarget) -> Binding<SetRIR?> {
+        Binding(
+            get: {
+                guard let action = editingActions.first(where: { $0.id == target.actionID }),
+                      let set = action.sets.first(where: { "\(action.id)_\($0.id)" == target.setID }) else { return nil }
+                return set.rir
+            },
+            set: { rir in
+                guard let actionIndex = editingActions.firstIndex(where: { $0.id == target.actionID }),
+                      let setIndex = editingActions[actionIndex].sets.firstIndex(where: { "\(target.actionID)_\($0.id)" == target.setID }) else { return }
+                editingActions[actionIndex].sets[setIndex].rir = rir
+            }
+        )
     }
 
     private func binding(for action: MutableTrainingAction) -> Binding<MutableTrainingAction> {
@@ -436,34 +468,29 @@ private struct SetEditor: View {
             get: { action.sets[index].rir },
             set: { action.sets[index].rir = $0 }
         )
-        return ZStack(alignment: .top) {
-            Button {
-                if activeRIRPicker?.setID == setID {
-                    activeRIRPicker = nil
-                } else {
-                    keyboardManager.hideKeyboard()
-                    activeRIRPicker = RIRPickerTarget(actionID: action.id, setID: setID)
-                }
-            } label: {
-                CompactSetValueCell(
-                    label: "RIR",
-                    value: selection.wrappedValue?.displayLabel ?? "N/A",
-                    width: 46,
-                    isSelected: activeRIRPicker?.setID == setID
-                )
-            }
-            .accessibilityLabel("training.field.rir")
-            .accessibilityValue(selection.wrappedValue?.displayLabel ?? "N/A")
-            .accessibilityHint("training.accessibility.selectRIRHint")
-
+        return Button {
             if activeRIRPicker?.setID == setID {
-                RIRPickerPopup(selection: selection) {
-                    activeRIRPicker = nil
-                }
-                .offset(y: DesignTokens.Metric.minimumTapSize + DesignTokens.Spacing.xSmall)
-                .zIndex(1)
+                activeRIRPicker = nil
+            } else {
+                keyboardManager.hideKeyboard()
+                activeRIRPicker = RIRPickerTarget(actionID: action.id, setID: setID)
             }
+        } label: {
+            CompactSetValueCell(
+                label: "RIR",
+                value: selection.wrappedValue?.displayLabel ?? "N/A",
+                width: 46,
+                isSelected: activeRIRPicker?.setID == setID
+            )
         }
+        .anchorPreference(
+            key: RIRPickerAnchorPreferenceKey.self,
+            value: .bounds,
+            transform: { [RIRPickerTarget(actionID: action.id, setID: setID): $0] }
+        )
+        .accessibilityLabel("training.field.rir")
+        .accessibilityValue(selection.wrappedValue?.displayLabel ?? "N/A")
+        .accessibilityHint("training.accessibility.selectRIRHint")
     }
 
     private var rirInformation: some View {
@@ -571,9 +598,17 @@ private struct SetEditor: View {
     }
 }
 
-private struct RIRPickerTarget: Equatable {
+private struct RIRPickerTarget: Hashable {
     let actionID: Int
     let setID: String
+}
+
+private struct RIRPickerAnchorPreferenceKey: PreferenceKey {
+    static var defaultValue: [RIRPickerTarget: Anchor<CGRect>] = [:]
+
+    static func reduce(value: inout [RIRPickerTarget: Anchor<CGRect>], nextValue: () -> [RIRPickerTarget: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, newest in newest })
+    }
 }
 
 private struct RIRPickerPopup: View {
