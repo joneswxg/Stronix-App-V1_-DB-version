@@ -130,6 +130,11 @@ struct DatabaseMigrationCatalog {
             disablesForeignKeys: true,
             apply: UsernameUniquenessMigration.apply,
             validate: UsernameUniquenessMigration.validate
+        ),
+        DatabaseMigration(
+            id: "20260803_0005_add_training_history_rir",
+            apply: TrainingHistoryRIRMigration.apply,
+            validate: TrainingHistoryRIRMigration.validate
         )
     ])
 }

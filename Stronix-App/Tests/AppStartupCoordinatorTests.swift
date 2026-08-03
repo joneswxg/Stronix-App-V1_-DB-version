@@ -107,7 +107,7 @@ final class AppStartupCoordinatorTests: XCTestCase {
         try FileManager.default.copyItem(at: fixture.baselineSourceURL, to: databaseURL)
         let migrationCatalog = DatabaseMigrationCatalog(
             migrations: DatabaseMigrationCatalog.production.migrations + [
-                DatabaseMigration(id: "20260727_0005_unrecoverable_startup") { _ in
+                DatabaseMigration(id: "20260804_0006_unrecoverable_startup") { _ in
                     throw DatabasePreparationFailure(message: "private-migration-marker")
                 }
             ]
@@ -179,7 +179,7 @@ final class AppStartupCoordinatorTests: XCTestCase {
         ).insert(into: connection)
         let migrationCatalog = DatabaseMigrationCatalog(
             migrations: DatabaseMigrationCatalog.production.migrations + [
-                DatabaseMigration(id: "20260727_0006_startup_recovery") { _ in
+                DatabaseMigration(id: "20260804_0007_startup_recovery") { _ in
                     throw DatabasePreparationFailure(message: "startup-recovery-private-marker")
                 }
             ]

@@ -41,6 +41,7 @@ class LocalTrainingHistoryService {
     private let thd_weight_unit = Expression<String>("weight_unit")
     private let thd_reps = Expression<Int?>("reps")
     private let thd_difficulty = Expression<String?>("difficulty")
+    private let thd_rir = Expression<Int?>("rir")
     private let thd_left_weight = Expression<Double?>("left_weight")
     private let thd_right_weight = Expression<Double?>("right_weight")
     private let thd_is_completed = Expression<Bool>("is_completed")
@@ -161,6 +162,7 @@ class LocalTrainingHistoryService {
                         thd_weight_unit <- detail.weight_unit,
                         thd_reps <- detail.reps,
                         thd_difficulty <- detail.difficulty,
+                        thd_rir <- detail.rir?.rawValue,
                         thd_left_weight <- detail.left_weight,
                         thd_right_weight <- detail.right_weight,
                         thd_is_completed <- detail.is_completed,
@@ -502,7 +504,7 @@ class LocalTrainingHistoryService {
             // 获取训练历史详情（包含动作名称）
             let detailQuery = """
                 SELECT thd.action_id, thd.set_number, thd.weight, thd.weight_unit,
-                       thd.reps, thd.difficulty, thd.left_weight, thd.right_weight,
+                       thd.reps, thd.difficulty, thd.rir, thd.left_weight, thd.right_weight,
                        thd.is_completed, a.name as action_name, thd.history_record_bilateral
                 FROM training_history_details thd
                 LEFT JOIN action a ON thd.action_id = a.id
@@ -515,7 +517,7 @@ class LocalTrainingHistoryService {
             let detailRows = try db.prepare(detailQuery, [historyId])
             for row in detailRows {
                 // 安全检查：确保行数据包含足够的列
-                guard row.count >= 11 else {
+                guard row.count >= 12 else {
                     print("⚠️ LocalTrainingHistoryService: 跳过不完整的详情行数据，列数: \(row.count)")
                     continue
                 }
@@ -527,11 +529,12 @@ class LocalTrainingHistoryService {
                     weight_unit: row[3] as? String ?? "kg",
                     reps: row[4] as? Int64 != nil ? Int(row[4] as! Int64) : nil,
                     difficulty: row[5] as? String,
-                    left_weight: row[6] as? Double,
-                    right_weight: row[7] as? Double,
-                    is_completed: (row[8] as? Int64 ?? 0) == 1,
-                    action_name: row[9] as? String,
-                    history_record_bilateral: (row[10] as? Int64 ?? 0) == 1
+                    rir: (row[6] as? Int64).flatMap { SetRIR(rawValue: Int($0)) },
+                    left_weight: row[7] as? Double,
+                    right_weight: row[8] as? Double,
+                    is_completed: (row[9] as? Int64 ?? 0) == 1,
+                    action_name: row[10] as? String,
+                    history_record_bilateral: (row[11] as? Int64 ?? 0) == 1
                 )
                 details.append(detail)
             }
@@ -589,6 +592,7 @@ class LocalTrainingHistoryService {
                             thd_weight_unit <- detail.weight_unit,
                             thd_reps <- detail.reps,
                             thd_difficulty <- detail.difficulty,
+                            thd_rir <- detail.rir?.rawValue,
                             thd_left_weight <- detail.left_weight,
                             thd_right_weight <- detail.right_weight,
                             thd_is_completed <- detail.is_completed,

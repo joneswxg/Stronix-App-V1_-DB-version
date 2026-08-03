@@ -50,10 +50,34 @@ struct TrainingHistoryDetailSet: Equatable, Sendable {
     let weightUnit: String
     let reps: Int?
     let difficulty: String?
+    let rir: SetRIR?
     let leftWeight: Double?
     let rightWeight: Double?
     let isCompleted: Bool
     let isBilateral: Bool
+    init(
+        setNumber: Int,
+        weight: Double?,
+        weightUnit: String,
+        reps: Int?,
+        difficulty: String?,
+        rir: SetRIR? = nil,
+        leftWeight: Double?,
+        rightWeight: Double?,
+        isCompleted: Bool,
+        isBilateral: Bool
+    ) {
+        self.setNumber = setNumber
+        self.weight = weight
+        self.weightUnit = weightUnit
+        self.reps = reps
+        self.difficulty = difficulty
+        self.rir = rir
+        self.leftWeight = leftWeight
+        self.rightWeight = rightWeight
+        self.isCompleted = isCompleted
+        self.isBilateral = isBilateral
+    }
 }
 
 struct TrainingHistoryDetailAction: Equatable, Sendable {
@@ -178,7 +202,7 @@ final class SQLiteTrainingHistoryRepository: TrainingHistoryRepository, @uncheck
             let detailRows = try connection.prepare(
                 """
                 SELECT thd.action_id, a.name, thd.set_number, thd.weight, thd.weight_unit,
-                       thd.reps, thd.difficulty, thd.left_weight, thd.right_weight,
+                       thd.reps, thd.difficulty, thd.rir, thd.left_weight, thd.right_weight,
                        thd.is_completed, thd.history_record_bilateral
                 FROM training_history_details thd
                 LEFT JOIN action a ON a.id = thd.action_id
@@ -193,8 +217,8 @@ final class SQLiteTrainingHistoryRepository: TrainingHistoryRepository, @uncheck
                 guard
                     let actionID = int(row[0]),
                     let setNumber = int(row[2]),
-                    let isCompleted = bool(row[9]),
-                    let isBilateral = bool(row[10])
+                    let isCompleted = bool(row[10]),
+                    let isBilateral = bool(row[11])
                 else { continue }
 
                 let set = TrainingHistoryDetailSet(
@@ -203,8 +227,9 @@ final class SQLiteTrainingHistoryRepository: TrainingHistoryRepository, @uncheck
                     weightUnit: row[4] as? String ?? "kg",
                     reps: int(row[5]),
                     difficulty: row[6] as? String,
-                    leftWeight: double(row[7]),
-                    rightWeight: double(row[8]),
+                    rir: rir(from: row[7]),
+                    leftWeight: double(row[8]),
+                    rightWeight: double(row[9]),
                     isCompleted: isCompleted,
                     isBilateral: isBilateral
                 )
@@ -315,6 +340,10 @@ final class SQLiteTrainingHistoryRepository: TrainingHistoryRepository, @uncheck
         if let value = value as? Int { return Double(value) }
         if let value = value as? Int64 { return Double(value) }
         return nil
+    }
+
+    private func rir(from value: Binding?) -> SetRIR? {
+        int(value).flatMap(SetRIR.init(rawValue:))
     }
 
     private func bool(_ value: Binding?) -> Bool? {

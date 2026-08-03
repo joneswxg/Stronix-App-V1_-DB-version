@@ -370,6 +370,7 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
                         weight_unit: "kg",
                         reps: set.reps,
                         difficulty: nil,
+                        rir: set.rir,
                         left_weight: action.recordBilateral ? set.leftWeight : 0.0,
                         right_weight: action.recordBilateral ? set.rightWeight : 0.0,
                         is_completed: completedSets.contains(setID),

@@ -149,6 +149,32 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
         XCTAssertEqual(detail.actions[1].sets.map(\.weight), [35, 40])
     }
 
+    func testDetailPreservesOptionalRIRValues() throws {
+        let historyID = try insertHistory(
+            ownerID: ownerID,
+            planID: ownerPlanID,
+            planName: "RIR",
+            trainingDate: "2026-08-03T12:00:00Z"
+        )
+        try insertDetail(historyID: historyID, actionID: squatID, setNumber: 1, weight: 40, reps: 8, isCompleted: true, rir: nil)
+        try insertDetail(historyID: historyID, actionID: squatID, setNumber: 2, weight: 42.5, reps: 8, isCompleted: true, rir: 0)
+        try insertDetail(historyID: historyID, actionID: squatID, setNumber: 3, weight: 45, reps: 8, isCompleted: true, rir: 1)
+        try insertDetail(historyID: historyID, actionID: squatID, setNumber: 4, weight: 47.5, reps: 8, isCompleted: true, rir: 2)
+        try insertDetail(historyID: historyID, actionID: squatID, setNumber: 5, weight: 50, reps: 8, isCompleted: true, rir: 3)
+
+        let detail = try repository.trainingHistoryDetail(id: historyID, ownerID: ownerID)
+
+        XCTAssertEqual(detail.actions[0].sets.map(\.rir), [nil, .zero, .one, .two, .threeOrMore])
+        XCTAssertThrowsError(try connection.run(
+            "UPDATE training_history_details SET rir = 4 WHERE history_id = ? AND set_number = 1",
+            historyID
+        ))
+        XCTAssertThrowsError(try connection.run(
+            "UPDATE training_history_details SET rir = -1 WHERE history_id = ? AND set_number = 1",
+            historyID
+        ))
+    }
+
     func testDetailDoesNotRevealForeignOrMissingHistory() throws {
         let foreignHistoryID = try insertHistory(ownerID: otherUserID, planID: nil, planName: "Foreign", trainingDate: "2026-07-22T12:00:00Z")
 
@@ -237,14 +263,15 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
         leftWeight: Double? = nil,
         rightWeight: Double? = nil,
         isCompleted: Bool,
-        isBilateral: Bool = false
+        isBilateral: Bool = false,
+        rir: Int? = nil
     ) throws {
         try connection.run(
             """
             INSERT INTO training_history_details (
                 history_id, action_id, set_number, weight, reps, left_weight, right_weight,
-                is_completed, history_record_bilateral
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_completed, history_record_bilateral, rir
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             historyID,
             actionID,
@@ -254,7 +281,8 @@ final class TrainingHistoryRepositoryTests: XCTestCase {
             leftWeight,
             rightWeight,
             isCompleted ? 1 : 0,
-            isBilateral ? 1 : 0
+            isBilateral ? 1 : 0,
+            rir
         )
     }
 }
