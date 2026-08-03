@@ -66,6 +66,8 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     private var restTimer: Timer?
     private var restIntervalAtStart = 0
     private var didDeliverRestEndFeedback = false
+    private var didRequestRestReminderPermission = false
+    private let restReminderPermissionRequester: RestReminderPermissionRequesting
 
     // MARK: - 后台状态管理
     private var backgroundTime: Date?
@@ -73,7 +75,9 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     private var wasRestTimerRunning = false
     private var completionSnapshotID: UUID?
     
-    init() {}
+    init(restReminderPermissionRequester: RestReminderPermissionRequesting = NotificationManager.shared) {
+        self.restReminderPermissionRequester = restReminderPermissionRequester
+    }
     
     // MARK: - 训练控制方法
     
@@ -162,6 +166,10 @@ final class TrainingSessionManager: ObservableObject, TrainingSessionManaging, U
     // MARK: - 休息计时器管理
 
     private func startRestCountdown(for setID: String, duration: Int) {
+        if !didRequestRestReminderPermission {
+            didRequestRestReminderPermission = true
+            restReminderPermissionRequester.requestPermissionForRestReminderIfNeeded()
+        }
         stopRestTimer()
         currentSetId = setID
         restIntervalAtStart = max(0, duration)

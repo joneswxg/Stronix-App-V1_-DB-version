@@ -21,11 +21,6 @@ struct Stronix_App_V1App: App {
                 session: userSession
             )
         )
-
-        guard !Self.isRunningUnitTests else { return }
-        DispatchQueue.main.async {
-            NotificationManager.shared.requestPermissionIfNeeded()
-        }
     }
 
     var body: some Scene {

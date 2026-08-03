@@ -128,6 +128,24 @@ final class TrainingViewModelTests: XCTestCase {
         XCTAssertFalse(manager.isRestTimerPaused)
     }
 
+    func testFirstRestCountdownRequestsPermissionOnceAndKeepsControlsUsable() {
+        let permissionRequester = RestReminderPermissionRequesterSpy()
+        let manager = TrainingSessionManager(restReminderPermissionRequester: permissionRequester)
+        let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
+
+        manager.startTraining(with: plan)
+        manager.toggleSetCompletion(setID: "1_10", restTime: 75)
+        manager.toggleSetCompletion(setID: "1_11", restTime: 45)
+        manager.presentRestControls()
+        manager.toggleRestTimer()
+
+        XCTAssertEqual(permissionRequester.requestCount, 1)
+        XCTAssertTrue(manager.showRestTimer)
+        XCTAssertTrue(manager.showRestControls)
+        XCTAssertTrue(manager.isRestTimerPaused)
+        XCTAssertEqual(manager.currentRestTime, 45)
+    }
+
     func testCompletionRestartsOneCountdownAndUncheckingDoesNotChangeIt() {
         let manager = TrainingSessionManager()
         let plan = TrainingPlan(id: 9, name: "计划", creator: "User", createdDate: "", lastTraining: "", volume: 0, isTemplate: false, actions: [TrainingAction(id: 1, name: "深蹲", sets: [TrainingSet(id: 10, weight: 10, reps: 10), TrainingSet(id: 11, weight: 10, reps: 10)], restTime: 75, notes: nil, recordBilateral: false, imageUrl: "")])
@@ -395,6 +413,14 @@ final class TrainingViewModelTests: XCTestCase {
 
 private enum TestError: Error {
     case failed
+}
+
+private final class RestReminderPermissionRequesterSpy: RestReminderPermissionRequesting {
+    private(set) var requestCount = 0
+
+    func requestPermissionForRestReminderIfNeeded() {
+        requestCount += 1
+    }
 }
 
 @MainActor
