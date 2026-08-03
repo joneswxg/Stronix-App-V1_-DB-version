@@ -43,8 +43,8 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertNotEqual(readyDatabase.databaseURL, sourceDatabaseURL)
         XCTAssertEqual(readyDatabase.preparation, .initialized)
         XCTAssertEqual(readyDatabase.diagnostic.databaseLocation, readyDatabase.databaseURL.path)
-        XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260727_0004_allow_duplicate_usernames")
-        XCTAssertEqual(readyDatabase.diagnostic.supportedSchemaVersion, "20260727_0004_allow_duplicate_usernames")
+        XCTAssertEqual(readyDatabase.diagnostic.schemaVersion, "20260803_0005_add_training_history_rir")
+        XCTAssertEqual(readyDatabase.diagnostic.supportedSchemaVersion, "20260803_0005_add_training_history_rir")
         XCTAssertEqual(readyDatabase.diagnostic.foreignKeysEnabled, true)
         XCTAssertEqual(readyDatabase.diagnostic.busyTimeoutMilliseconds, 5000)
         XCTAssertEqual(readyDatabase.diagnostic.journalMode, "wal")
@@ -54,7 +54,8 @@ final class DatabaseLifecycleTests: XCTestCase {
             [
                 "20260721_0002_protect_schema_ledger",
                 "20260722_0003_split_template_and_user_plans",
-                "20260727_0004_allow_duplicate_usernames"
+                "20260727_0004_allow_duplicate_usernames",
+                "20260803_0005_add_training_history_rir"
             ]
         )
         XCTAssertEqual(
@@ -400,6 +401,47 @@ final class DatabaseLifecycleTests: XCTestCase {
         XCTAssertTrue(diagnostic.summary.contains("recovery=restored"))
     }
 
+    func testTrainingHistoryRIRMigrationPreservesLegacyDetailAndConstrainsNewValues() throws {
+        let connection = try Connection(.inMemory)
+        try connection.run(
+            """
+            CREATE TABLE training_history_details (
+                id INTEGER PRIMARY KEY,
+                difficulty TEXT,
+                is_completed INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        try connection.run(
+            "INSERT INTO training_history_details (id, difficulty, is_completed) VALUES (1, 'hard', 1)"
+        )
+
+        try TrainingHistoryRIRMigration.apply(to: connection)
+        try TrainingHistoryRIRMigration.validate(connection)
+
+        let legacy = try XCTUnwrap(
+            try connection.prepare(
+                "SELECT difficulty, rir, is_completed FROM training_history_details WHERE id = 1"
+            ).makeIterator().next()
+        )
+        XCTAssertEqual(legacy[0] as? String, "hard")
+        XCTAssertNil(legacy[1])
+        XCTAssertEqual(legacy[2] as? Int64, 1)
+        for value in [0, 1, 2, 3] {
+            XCTAssertNoThrow(try connection.run(
+                "INSERT INTO training_history_details (id, difficulty, rir) VALUES (?, 'normal', ?)",
+                value + 2,
+                value
+            ))
+        }
+        XCTAssertThrowsError(try connection.run(
+            "INSERT INTO training_history_details (id, difficulty, rir) VALUES (10, 'normal', -1)"
+        ))
+        XCTAssertThrowsError(try connection.run(
+            "INSERT INTO training_history_details (id, difficulty, rir) VALUES (11, 'normal', 4)"
+        ))
+    }
+
     func testPrepareMigratesBaselineDatabaseAndPreservesSyntheticUserData() throws {
         let documentsURL = fixture.rootURL.appendingPathComponent(
             "Documents",
@@ -524,7 +566,8 @@ final class DatabaseLifecycleTests: XCTestCase {
             [
                 "20260721_0002_protect_schema_ledger",
                 "20260722_0003_split_template_and_user_plans",
-                "20260727_0004_allow_duplicate_usernames"
+                "20260727_0004_allow_duplicate_usernames",
+                "20260803_0005_add_training_history_rir"
             ]
         )
         XCTAssertEqual(
@@ -960,7 +1003,7 @@ final class DatabaseLifecycleTests: XCTestCase {
 
         XCTAssertEqual(
             incompatibility.supportedMigrationID,
-            "20260727_0004_allow_duplicate_usernames"
+            "20260803_0005_add_training_history_rir"
         )
         XCTAssertNil(lifecycle.readyConnection())
         XCTAssertEqual(

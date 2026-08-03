@@ -46,6 +46,7 @@ struct LocalTrainingHistoryDetail {
     let weight_unit: String
     let reps: Int?
     let difficulty: String?
+    let rir: SetRIR?
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
@@ -53,7 +54,7 @@ struct LocalTrainingHistoryDetail {
     let history_record_bilateral: Bool
     
     init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg",
-         reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil,
+         reps: Int? = nil, difficulty: String? = nil, rir: SetRIR? = nil, left_weight: Double? = nil,
          right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil,
          history_record_bilateral: Bool = false) {
         self.action_id = action_id
@@ -62,6 +63,7 @@ struct LocalTrainingHistoryDetail {
         self.weight_unit = weight_unit
         self.reps = reps
         self.difficulty = difficulty
+        self.rir = rir
         self.left_weight = left_weight
         self.right_weight = right_weight
         self.is_completed = is_completed
@@ -77,6 +79,7 @@ struct LocalTrainingHistoryDetail {
         self.weight_unit = detail.weight_unit
         self.reps = detail.reps
         self.difficulty = detail.difficulty
+        self.rir = detail.rir
         self.left_weight = detail.left_weight
         self.right_weight = detail.right_weight
         self.is_completed = detail.is_completed
@@ -148,6 +151,7 @@ struct LocalTrainingHistoryDetailData {
     let weight_unit: String
     let reps: Int?
     let difficulty: String?
+    let rir: SetRIR?
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
@@ -362,14 +366,15 @@ struct TrainingHistoryDetail: Codable {
     let weight_unit: String
     let reps: Int?
     let difficulty: String?
+    let rir: SetRIR?
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
     let note: String?
     let history_record_bilateral: Bool
     
-    init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg", 
-         reps: Int? = nil, difficulty: String? = nil, left_weight: Double? = nil, 
+    init(action_id: Int, set_number: Int, weight: Double? = nil, weight_unit: String = "kg",
+         reps: Int? = nil, difficulty: String? = nil, rir: SetRIR? = nil, left_weight: Double? = nil,
          right_weight: Double? = nil, is_completed: Bool = false, note: String? = nil,
          history_record_bilateral: Bool = false) {
         self.action_id = action_id
@@ -378,6 +383,7 @@ struct TrainingHistoryDetail: Codable {
         self.weight_unit = weight_unit
         self.reps = reps
         self.difficulty = difficulty
+        self.rir = rir
         self.left_weight = left_weight
         self.right_weight = right_weight
         self.is_completed = is_completed

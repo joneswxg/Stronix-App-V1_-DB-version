@@ -35,6 +35,11 @@ final class TrainingCompletionHistoryIntegrationTests: XCTestCase {
     func testCompletedUserPlanBecomesReadableOwnerScopedHistory() async throws {
         let session = TrainingSessionManager()
         session.startTraining(with: makeTrainingPlan())
+        var actions = session.editingActions
+        actions[0].sets[0].rir = .one
+        actions[0].sets[1].rir = .two
+        actions[1].sets[0].rir = .threeOrMore
+        session.updateActions(actions)
         session.completedSets = ["\(squatID!)_101", "\(pressID!)_201"]
         let viewModel = await makeViewModel(session: session, planWriter: ResultUserPlanWriter())
 
@@ -62,6 +67,8 @@ final class TrainingCompletionHistoryIntegrationTests: XCTestCase {
         XCTAssertTrue(detail.actions[0].sets.allSatisfy(\.isBilateral))
         XCTAssertEqual(detail.actions[1].sets.map(\.weight), [30])
         XCTAssertEqual(detail.actions[1].sets.map(\.reps), [8])
+        XCTAssertEqual(detail.actions[0].sets.map(\.rir), [.one, .two])
+        XCTAssertEqual(detail.actions[1].sets.map(\.rir), [.threeOrMore])
         XCTAssertEqual(detail.actions[1].sets.map(\.isCompleted), [true])
 
         let otherPage = try reader.trainingHistory(query(ownerID: otherUser.id))

@@ -246,6 +246,7 @@ CREATE TABLE training_history_details (
     weight_unit TEXT NOT NULL DEFAULT 'kg',
     reps INTEGER,
     difficulty TEXT,
+    rir INTEGER CHECK (rir IS NULL OR rir BETWEEN 0 AND 3),
     left_weight REAL,
     right_weight REAL,
     is_completed INTEGER NOT NULL DEFAULT 0 CHECK (is_completed IN (0, 1)),

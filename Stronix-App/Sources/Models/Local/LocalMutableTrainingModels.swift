@@ -1,5 +1,21 @@
 import Foundation
 
+enum SetRIR: Int, Codable, Equatable, Sendable {
+    case zero = 0
+    case one = 1
+    case two = 2
+    case threeOrMore = 3
+
+    var displayLabel: String {
+        switch self {
+        case .zero: "0"
+        case .one: "1"
+        case .two: "2"
+        case .threeOrMore: "3+"
+        }
+    }
+}
+
 enum TrainingDisplayUnit: String, Equatable {
     case kilograms
     case pounds
@@ -147,6 +163,7 @@ struct LocalMutableTrainingSet: Identifiable {
     var reps: Int
     var leftWeight: Double
     var rightWeight: Double
+    var rir: SetRIR?
     
     // 从不可变模型转换
     init(from set: TrainingSet) {
@@ -155,19 +172,21 @@ struct LocalMutableTrainingSet: Identifiable {
         self.reps = set.reps
         self.leftWeight = set.leftWeight
         self.rightWeight = set.rightWeight
+        self.rir = nil
     }
     
 
     
     // 直接创建
-    init(id: Int, weight: Double, reps: Int, leftWeight: Double = 0.0, rightWeight: Double = 0.0) {
+    init(id: Int, weight: Double, reps: Int, leftWeight: Double = 0.0, rightWeight: Double = 0.0, rir: SetRIR? = nil) {
         self.id = id
         self.weight = weight
         self.reps = reps
         self.leftWeight = leftWeight
         self.rightWeight = rightWeight
+        self.rir = rir
     }
-    
+
     /// 转换为前端兼容的MutableTrainingSet模型
     func toMutableTrainingSet() -> MutableTrainingSet {
         return MutableTrainingSet(
@@ -175,7 +194,8 @@ struct LocalMutableTrainingSet: Identifiable {
             weight: weight,
             reps: reps,
             leftWeight: leftWeight,
-            rightWeight: rightWeight
+            rightWeight: rightWeight,
+            rir: rir
         )
     }
 }
@@ -232,6 +252,7 @@ struct MutableTrainingSet: Identifiable {
     var reps: Int
     var leftWeight: Double
     var rightWeight: Double
+    var rir: SetRIR?
     
     // 从不可变模型转换
     init(from set: TrainingSet) {
@@ -240,14 +261,16 @@ struct MutableTrainingSet: Identifiable {
         self.reps = set.reps
         self.leftWeight = set.leftWeight
         self.rightWeight = set.rightWeight
+        self.rir = nil
     }
     
     // 直接创建
-    init(id: Int, weight: Double, reps: Int, leftWeight: Double = 0.0, rightWeight: Double = 0.0) {
+    init(id: Int, weight: Double, reps: Int, leftWeight: Double = 0.0, rightWeight: Double = 0.0, rir: SetRIR? = nil) {
         self.id = id
         self.weight = weight
         self.reps = reps
         self.leftWeight = leftWeight
         self.rightWeight = rightWeight
+        self.rir = rir
     }
 } 

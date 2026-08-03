@@ -177,6 +177,7 @@ struct TrainingHistoryDetailItem: Codable {
     let weight_unit: String
     let reps: Int?
     let difficulty: String?
+    let rir: SetRIR?
     let left_weight: Double?
     let right_weight: Double?
     let is_completed: Bool
