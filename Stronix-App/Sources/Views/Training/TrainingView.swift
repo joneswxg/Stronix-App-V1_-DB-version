@@ -382,15 +382,16 @@ private struct SetEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-            HStack(spacing: DesignTokens.Spacing.xSmall) {
+            HStack(spacing: 3) {
                 setNumber
                 if action.recordBilateral {
-                    compactNumericButton("左 \(trainingDisplayUnit.keyboardLabel)", value: set.leftWeight, inputID: "left_\(setID)", supportsBilateralRecording: true) { action.sets[index].leftWeight = $0 }
-                    compactNumericButton("右 \(trainingDisplayUnit.keyboardLabel)", value: set.rightWeight, inputID: "right_\(setID)", supportsBilateralRecording: true) { action.sets[index].rightWeight = $0 }
+                    compactNumericButton("L", value: set.leftWeight, inputID: "left_\(setID)", supportsBilateralRecording: true) { action.sets[index].leftWeight = $0 }
+                    compactNumericButton("R", value: set.rightWeight, inputID: "right_\(setID)", supportsBilateralRecording: true) { action.sets[index].rightWeight = $0 }
                 } else {
                     compactNumericButton(trainingDisplayUnit.keyboardLabel, value: set.weight, inputID: "weight_\(setID)", supportsBilateralRecording: true) { action.sets[index].weight = $0 }
                 }
                 compactNumericButton("次", value: Double(set.reps), inputID: "reps_\(setID)", isInteger: true) { action.sets[index].reps = Int($0) }
+                rirSelector
                 completionButton
                 setMenu
             }
@@ -399,7 +400,6 @@ private struct SetEditor: View {
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("training.field.note")
             }
-            rirSelector
         }
         .sheet(isPresented: $showRIRInfo) {
             rirInformation
@@ -413,7 +413,7 @@ private struct SetEditor: View {
         Text("\(index + 1)")
             .font(DesignTokens.Typography.action)
             .foregroundStyle(tokens.contentPrimary)
-            .frame(width: 32, height: DesignTokens.Metric.minimumTapSize)
+            .frame(width: 24, height: DesignTokens.Metric.minimumTapSize)
             .accessibilityLabel(trainingFormat("training.set.number", index + 1))
     }
 
@@ -433,35 +433,24 @@ private struct SetEditor: View {
             get: { action.sets[index].rir },
             set: { action.sets[index].rir = $0 }
         )
-        return HStack(spacing: DesignTokens.Spacing.small) {
-            Menu {
-                Picker("training.field.rir", selection: selection) {
-                    Text("training.rir.notSet").tag(nil as SetRIR?)
-                    ForEach([SetRIR.zero, .one, .two, .threeOrMore], id: \.rawValue) { rir in
-                        Text(rir.displayLabel).tag(Optional(rir))
-                    }
+        return Menu {
+            Picker("training.field.rir", selection: selection) {
+                Text("training.rir.notSet").tag(nil as SetRIR?)
+                ForEach([SetRIR.zero, .one, .two, .threeOrMore], id: \.rawValue) { rir in
+                    Text(rir.displayLabel).tag(Optional(rir))
                 }
-            } label: {
-                HStack(spacing: DesignTokens.Spacing.xSmall) {
-                    Text("training.field.rir")
-                    Text(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
-                    Image(systemName: "chevron.up.chevron.down")
-                }
-                .font(DesignTokens.Typography.supporting)
-                .foregroundStyle(tokens.contentPrimary)
-                .frame(minHeight: DesignTokens.Metric.minimumTapSize)
             }
-            .accessibilityLabel("training.field.rir")
-            .accessibilityValue(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
-            .accessibilityHint("training.accessibility.selectRIRHint")
-
-            Button { showRIRInfo = true } label: {
-                Image(systemName: "info.circle")
-                    .frame(minWidth: DesignTokens.Metric.minimumTapSize, minHeight: DesignTokens.Metric.minimumTapSize)
-            }
-            .foregroundStyle(tokens.primary)
-            .accessibilityLabel("training.rir.info")
+        } label: {
+            CompactSetValueCell(
+                label: "RIR",
+                value: selection.wrappedValue?.displayLabel ?? "N/A",
+                width: 46,
+                isSelected: false
+            )
         }
+        .accessibilityLabel("training.field.rir")
+        .accessibilityValue(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
+        .accessibilityHint("training.accessibility.selectRIRHint")
     }
 
     private var rirInformation: some View {
@@ -469,7 +458,6 @@ private struct SetEditor: View {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 Text("training.rir.info.definition")
                 Text("training.rir.info.choices")
-                Text("training.rir.info.subjective")
                 Spacer()
             }
             .font(DesignTokens.Typography.supporting)
@@ -487,6 +475,7 @@ private struct SetEditor: View {
     private var setMenu: some View {
         Menu {
             Button(showNoteInput ? "training.action.hideNote" : "training.action.addNote") { showNoteInput.toggle() }
+            Button("training.rir.info") { showRIRInfo = true }
             if action.sets.count > 1 {
                 Button("training.action.deleteSet", role: .destructive) {
                     action.sets.removeAll { $0.id == set.id }
@@ -504,7 +493,14 @@ private struct SetEditor: View {
     private func compactNumericButton(_ label: String, value: Double, inputID: String, isInteger: Bool = false, supportsBilateralRecording: Bool = false, update: @escaping (Double) -> Void) -> some View {
         let displayedNumber = isInteger ? value : trainingDisplayUnit.displayValue(forKilograms: value)
         let displayedValue = isInteger ? String(Int(displayedNumber)) : String(format: "%.1f", displayedNumber)
-        let controlWidth: CGFloat = action.recordBilateral && supportsBilateralRecording ? 58 : 76
+        let controlWidth: CGFloat
+        if isInteger {
+            controlWidth = 40
+        } else if action.recordBilateral && supportsBilateralRecording {
+            controlWidth = 44
+        } else {
+            controlWidth = 64
+        }
         return Button {
             showNumericKeyboard(
                 inputID: inputID,
