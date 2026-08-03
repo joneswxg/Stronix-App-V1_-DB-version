@@ -177,6 +177,7 @@ private struct TrainingSessionContent: View {
     let onSetCompleted: (String, Int) -> Void
     let onShowActionHistory: (Int, String) -> Void
     let keyboardManager: CustomKeyboardManager
+    @State private var activeRIRPicker: RIRPickerTarget?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -198,7 +199,7 @@ private struct TrainingSessionContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
 
                 ForEach(editingActions, id: \.id) { action in
-                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
+                    TrainingActionCard(action: binding(for: action), completedSets: $completedSets, setNotes: $setNotes, activeRIRPicker: $activeRIRPicker, isExpanded: currentActionID == action.id, onSelect: { currentActionID = action.id }, onDelete: { onDelete(action) }, onSetCompleted: onSetCompleted, onShowActionHistory: onShowActionHistory, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, canDelete: editingActions.count > 1, keyboardManager: keyboardManager)
                         .id(TrainingKeyboardViewportTarget.actionHeader(action.id))
                 }
                 SemanticActionButton(title: "training.action.addAction", loadingTitle: "training.action.addAction", style: .secondary, isEnabled: true, isLoading: false, action: onAdd)
@@ -217,7 +218,9 @@ private struct TrainingSessionContent: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            if keyboardManager.isShowing {
+            if activeRIRPicker != nil {
+                activeRIRPicker = nil
+            } else if keyboardManager.isShowing {
                 keyboardManager.hideKeyboard()
             }
         }
@@ -269,6 +272,7 @@ private struct TrainingActionCard: View {
     @Binding var action: MutableTrainingAction
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
+    @Binding var activeRIRPicker: RIRPickerTarget?
     let isExpanded: Bool
     let onSelect: () -> Void
     let onDelete: () -> Void
@@ -315,7 +319,7 @@ private struct TrainingActionCard: View {
             .onTapGesture(perform: onSelect)
             if isExpanded {
                 ForEach(Array(action.sets.enumerated()), id: \.element.id) { index, set in
-                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, onSetCompleted: onSetCompleted, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, keyboardManager: keyboardManager)
+                    SetEditor(index: index, set: set, action: $action, completedSets: $completedSets, setNotes: $setNotes, activeRIRPicker: $activeRIRPicker, onSetCompleted: onSetCompleted, onSelectField: onSelectField, onToggleBilateral: onToggleBilateral, onFill: onFill, onToggleDisplayUnit: onToggleDisplayUnit, onAddSet: onAddSet, trainingDisplayUnit: trainingDisplayUnit, keyboardState: keyboardState, onKeyboardValueChanged: onKeyboardValueChanged, keyboardManager: keyboardManager)
                 }
                 HStack {
                     Button("training.action.addSet") { action.sets.append(MutableTrainingSet(id: Int.random(in: 100000 ... 999999), weight: 10, reps: 12)) }
@@ -326,8 +330,7 @@ private struct TrainingActionCard: View {
             }
         }
         .padding(DesignTokens.Spacing.large)
-        .background(tokens.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
+        .background(tokens.surface, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous))
         .overlay { RoundedRectangle(cornerRadius: DesignTokens.Radius.action, style: .continuous).stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth) }
         .alert("training.alert.deleteAction.title", isPresented: $showDeleteAlert) {
             Button("training.action.cancel", role: .cancel) {}
@@ -363,6 +366,7 @@ private struct SetEditor: View {
     @Binding var action: MutableTrainingAction
     @Binding var completedSets: Set<String>
     @Binding var setNotes: [String: String]
+    @Binding var activeRIRPicker: RIRPickerTarget?
     let onSetCompleted: (String, Int) -> Void
     let onSelectField: (String, Int) -> Void
     let onToggleBilateral: () -> Void
@@ -405,8 +409,7 @@ private struct SetEditor: View {
             rirInformation
         }
         .padding(DesignTokens.Spacing.small)
-        .background(tokens.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .background(tokens.controlSurface, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
     }
 
     private var setNumber: some View {
@@ -433,24 +436,34 @@ private struct SetEditor: View {
             get: { action.sets[index].rir },
             set: { action.sets[index].rir = $0 }
         )
-        return Menu {
-            Picker("training.field.rir", selection: selection) {
-                Text("training.rir.notSet").tag(nil as SetRIR?)
-                ForEach([SetRIR.zero, .one, .two, .threeOrMore], id: \.rawValue) { rir in
-                    Text(rir.displayLabel).tag(Optional(rir))
+        return ZStack(alignment: .top) {
+            Button {
+                if activeRIRPicker?.setID == setID {
+                    activeRIRPicker = nil
+                } else {
+                    keyboardManager.hideKeyboard()
+                    activeRIRPicker = RIRPickerTarget(actionID: action.id, setID: setID)
                 }
+            } label: {
+                CompactSetValueCell(
+                    label: "RIR",
+                    value: selection.wrappedValue?.displayLabel ?? "N/A",
+                    width: 46,
+                    isSelected: activeRIRPicker?.setID == setID
+                )
             }
-        } label: {
-            CompactSetValueCell(
-                label: "RIR",
-                value: selection.wrappedValue?.displayLabel ?? "N/A",
-                width: 46,
-                isSelected: false
-            )
+            .accessibilityLabel("training.field.rir")
+            .accessibilityValue(selection.wrappedValue?.displayLabel ?? "N/A")
+            .accessibilityHint("training.accessibility.selectRIRHint")
+
+            if activeRIRPicker?.setID == setID {
+                RIRPickerPopup(selection: selection) {
+                    activeRIRPicker = nil
+                }
+                .offset(y: DesignTokens.Metric.minimumTapSize + DesignTokens.Spacing.xSmall)
+                .zIndex(1)
+            }
         }
-        .accessibilityLabel("training.field.rir")
-        .accessibilityValue(selection.wrappedValue?.displayLabel ?? String(localized: "training.rir.notSet"))
-        .accessibilityHint("training.accessibility.selectRIRHint")
     }
 
     private var rirInformation: some View {
@@ -555,6 +568,55 @@ private struct SetEditor: View {
         keyboardManager.currentValue = displayValue
         keyboardManager.isInteger = state.isInteger
         keyboardManager.isValueSelected = true
+    }
+}
+
+private struct RIRPickerTarget: Equatable {
+    let actionID: Int
+    let setID: String
+}
+
+private struct RIRPickerPopup: View {
+    @Environment(\.designTokens) private var tokens
+    @Binding var selection: SetRIR?
+    let dismiss: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            option("N/A", value: nil)
+            option("0", value: .zero)
+            option("1", value: .one)
+            option("2", value: .two)
+            option("3+", value: .threeOrMore)
+        }
+        .frame(width: 58)
+        .background(tokens.surface, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous)
+                .stroke(tokens.border, lineWidth: DesignTokens.Metric.borderWidth)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func option(_ label: String, value: SetRIR?) -> some View {
+        Button {
+            selection = value
+            dismiss()
+        } label: {
+            HStack(spacing: 0) {
+                Text(label)
+                if selection == value {
+                    Image(systemName: "checkmark")
+                        .font(.caption2)
+                }
+            }
+            .font(DesignTokens.Typography.supporting)
+            .foregroundStyle(tokens.contentPrimary)
+            .frame(width: 58)
+            .frame(minHeight: DesignTokens.Metric.minimumTapSize)
+        }
+        .accessibilityLabel(label == "N/A" ? "N/A" : "RIR \(label)")
+        .accessibilityValue(selection == value ? Text("training.state.selected") : Text(""))
     }
 }
 
